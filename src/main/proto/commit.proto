@@ -1,0 +1,28 @@
+// Copyright 2017 Sourcerer, Inc. All Rights Reserved.
+
+syntax = "proto3";
+
+package app;
+
+option java_package = "app";
+option java_outer_classname = "CommitProtos";
+
+// Stats on a commit message.
+message Stats {
+    int32 num_lines_add = 1;  // Number of lines for specific technology.
+    int32 num_lines_deleted = 2;
+    string language = 3;  // A programming language used in a commit.
+    string technology = 4;  // A technology used in a commit.
+}
+
+// Commit information message.
+message Commit {
+    int32 id = 1;  // Commit id. Hashed initial id.
+    int32 repo_id = 2;  // Repo id. TODO(anatoly): add details on how it is
+        // computed.
+    string author_name = 3;
+    string author_email = 4;
+    string date = 5;
+    bool qommit = 6;  // Quality commit.
+    repeated Stats commit_stats = 9;  // Stats on a commit.
+}
