@@ -20,10 +20,6 @@ apply plugin: "com.google.protobuf"
 
 mainClassName = "app.MainKt"
 
-sourceSets {
-    deploy
-}
-
 repositories {
     mavenCentral()
 }
@@ -32,10 +28,24 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "com.beust:jcommander:1.72"
     compile 'com.google.protobuf:protobuf-java:3.0.0'
+    compile group: 'commons-configuration', name: 'commons-configuration',
+            version: '1.10'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.5'
 }
 
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.0.0"
+    }
+}
+
+// Include dependent libraries in archive.
+jar {
+    manifest {
+        attributes "Main-Class": "$mainClassName"
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }

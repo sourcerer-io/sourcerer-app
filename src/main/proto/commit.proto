@@ -24,5 +24,7 @@ message Commit {
     string author_email = 4;
     string date = 5;
     bool qommit = 6;  // Quality commit.
+    int32 num_lines_add = 7;  // Number of lines for whole commit.
+    int32 num_lines_deleted = 8;
     repeated Stats commit_stats = 9;  // Stats on a commit.
 }
