@@ -1,0 +1,48 @@
+# Copyright 2017 Sourcerer, Inc. All Rights Reserved.
+#
+
+echo "Installing sourcerer app.."
+
+SERVER=https://sourcerer.io
+DOWNLOAD_URL=$SERVER/download
+JAR_DIR=/usr/local/lib
+SCRIPT_DIR=/usr/local/bin
+
+if [ -f $SCRIPT_DIR/sourcerer ] ; then
+  read -p "Previous version of sourcerer is detected. Reinstall it? [Y/n] " yesno < /dev/tty
+  if [ "$yesno" ] && [ "$yesno" = "n" ] ; then
+    echo "Exiting"
+    exit
+  fi
+fi
+
+curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
+
+cat <<EOF > $SCRIPT_DIR/sourcerer
+
+if [ "\$1" = "--uninstall" ] ; then
+  read -p "The script will uninstall sourcerer app. Proceed? [Y/n] " yesno < /dev/tty
+  if [ "$yesno" ] && [ "$yesno" = "n" ] ; then
+    echo "Exiting"
+    exit
+  fi
+
+  rm $SCRIPT_DIR/sourcerer
+  rm $JAR_DIR/sourcerer.jar
+
+  echo "Done!"
+  exit
+fi
+
+java -jar $JAR_DIR/sourcerer.jar "\$@"
+EOF
+
+chmod +x $SCRIPT_DIR/sourcerer
+
+echo "Done!"
+echo "Run sourcerer to start hashing your repos!"
+
+if ! which java > /dev/null ; then
+  echo "Please also install JDK on your machine"
+  echo "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html"
+fi
