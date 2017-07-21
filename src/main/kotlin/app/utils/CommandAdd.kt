@@ -7,12 +7,12 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 
 @Parameters(separators = "=",
-        commandDescription = "Configure Sourcerer app")
-class CommandConfig {
+        commandDescription = "Add a repository to tracking list")
+class CommandAdd {
     // Command name for CLI.
-    val name = "config"
+    val name = "add"
 
-    // Key value pair of configurable parameters.
-    @Parameter(description = "KEY VALUE", arity = 2, order = 0)
-    var pair: List<String> = arrayListOf()
+    // Path to analyzed repository.
+    @Parameter(description = "REPOPATH")
+    var path: String? = null
 }

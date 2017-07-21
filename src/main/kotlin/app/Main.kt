@@ -3,60 +3,116 @@
 
 package app
 
+import app.ui.ConsoleUi
 import app.utils.CommandConfig
-import app.utils.CommandExplore
+import app.utils.CommandAdd
+import app.utils.CommandList
+import app.utils.CommandRemove
 import app.utils.Options
+import app.utils.PasswordHelper
+import app.utils.RepoHelper
 import com.beust.jcommander.JCommander
-import com.beust.jcommander.ParameterException
-import kotlin.system.exitProcess
 
 fun main(argv: Array<String>) {
-    val commandExplore = "explore"
-    val commandConfig = "config"
-
     val options = Options()
-    val explore = CommandExplore()
-    val config = CommandConfig()
+    val commandAdd = CommandAdd()
+    val commandConfig = CommandConfig()
+    val commandList = CommandList()
+    val commandRemove = CommandRemove()
     val jc: JCommander = JCommander.newBuilder()
             .programName("sourcerer")  // Used for usage method.
             .addObject(options)
-            .addCommand(commandExplore, explore)
-            .addCommand(commandConfig, config)
+            .addCommand(commandAdd.name, commandAdd)
+            .addCommand(commandConfig.name, commandConfig)
+            .addCommand(commandList.name, commandList)
+            .addCommand(commandRemove.name, commandRemove)
             .build()
 
-    Configurator.setCurrentOptions(options)
+    jc.parse(*argv)
 
-    try {
-        jc.parse(*argv)
-    } catch (e: ParameterException) {
-        println(e.message)
-        exitProcess(1)  // Reporting failure with non-zero exit code.
+    options.password = PasswordHelper.hashPassword(options.password)
+    Configurator.options = options
+
+    if (options.help) {
+        showHelp(jc)
+        return
+    }
+
+    if (options.setup) {
+        doSetup()
+        return
     }
 
     when (jc.parsedCommand) {
-        commandExplore -> explore(explore)
-        commandConfig -> config(config)
-        else -> help(jc)  // Show help info if no command specified.
-    }
-
-    println(arrayOf(options.username, options.password).joinToString())
-    println(jc.parsedCommand)
-    println(explore.path)
-}
-
-fun explore(commandOptions: CommandExplore) {
-    RepoExplorer(commandOptions).explore()
-}
-
-fun config(commandOptions: CommandConfig) {
-    val options = Configurator.createOptions(commandOptions.pair)
-    val userDir = Configurator.userDir
-    if (userDir != null) {
-        Configurator.saveConfig(userDir, options)
+        commandAdd.name -> doAdd(commandAdd)
+        commandConfig.name -> doConfig(commandConfig)
+        commandList.name -> doList(commandList)
+        commandRemove.name -> doRemove(commandRemove)
+        else -> startUi()
     }
 }
 
-fun help(jc: JCommander) {
-    println("Sourcerer app. More info at http://sourcerer.io.")
+fun startUi() {
+    val consoleUi = ConsoleUi()
+}
+
+fun doAdd(commandAdd: CommandAdd) {
+    val path = commandAdd.path
+    if (path != null && RepoHelper.isValidRepo(path)) {
+        Configurator.addRepoPersistent(Repo(path))
+        Configurator.saveToFile()
+        println("Added git repository at $path.")
+    } else {
+        Logger.error("No valid git repository found at $path.")
+    }
+}
+
+fun doConfig(commandOptions: CommandConfig) {
+    val (key, value) = commandOptions.pair
+
+    if (!arrayListOf("username", "password").contains(key)) {
+        Logger.error("No such key $key")
+        return
+    }
+
+    when (key) {
+        "username" -> Configurator.setUsernamePersistent(value)
+        "password" -> Configurator.setPasswordPersistent(value)
+    }
+
+    Configurator.saveToFile()
+}
+
+fun doList(commandList: CommandList) {
+    RepoHelper.printRepos(Configurator.getRepos(), "Tracked repositories:",
+            "No tracked repositories")
+}
+
+fun doRemove(commandRemove: CommandRemove) {
+    val path = commandRemove.path
+    if (path != null) {  // Don't validate because path can be deleted already.
+        Configurator.removeRepoPersistent(Repo(path))
+        Configurator.saveToFile()
+        println("Repository removed from tracking list.")
+    } else {
+        println("Repository not found in tracking list.")
+    }
+}
+
+fun doSetup() {
+    if (!Configurator.isFirstLaunch()) {
+        println("Are you sure that you want to setup Sourcerer again? [y/n]")
+        if ((readLine() ?: "").toLowerCase() == "y") {
+            Configurator.resetAndSave()
+        }
+    }
+    startUi()
+}
+
+fun showHelp(jc: JCommander) {
+    println("Sourcerer hashes your git repositories into intelligent "
+            + "engineering profiles. If you don't have an account, "
+            + "please, proceed to http://sourcerer.io/register. More info at "
+            + "http://sourcerer.io.")
     jc.usage()  // Will show detailed info about usage based on annotations.
 }

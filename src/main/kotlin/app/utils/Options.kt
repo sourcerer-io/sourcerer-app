@@ -8,21 +8,25 @@ import com.beust.jcommander.Parameter
 class Options {
     // Sourcerer account username.
     @Parameter(names = arrayOf("-u", "--username"),
-            validateWith = arrayOf(UsernameValidator::class),
             description = "Sourcerer account username",
             order = 0)
-    var username: String? = null
+    var username: String = ""
 
     // Sourcerer account password.
     @Parameter(names = arrayOf("-p", "--password"),
             description = "Sourcerer account password",
-            password = true,
             order = 1)
-    var password: String? = null
+    var password: String = ""
 
-    // Mode without displaying messages.
-    @Parameter(names = arrayOf("-s", "--silent"),
-            description = "Silent mode",
+    // List options and commands.
+    @Parameter(names = arrayOf("-h", "--help"),
+            description = "List options and commands",
             order = 2)
-    var silent: Boolean? = null
+    var help: Boolean = false
+
+    // Cleanup configs and run setup again.
+    @Parameter(names = arrayOf("--setup"),
+            description = "Cleanup configs and run setup again",
+            order = 3)
+    var setup: Boolean = false
 }

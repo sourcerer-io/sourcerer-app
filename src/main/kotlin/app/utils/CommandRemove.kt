@@ -7,10 +7,12 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 
 @Parameters(separators = "=",
-        commandDescription = "Explore statistics on specific repository")
-class CommandExplore {
+        commandDescription = "Remove a repository from tracking list")
+class CommandRemove {
+    // Command name for CLI.
+    val name = "remove"
+
     // Path to analyzed repository.
-    @Parameter(description = "REPOPATH",
-            validateWith = arrayOf(PathValidator::class))
+    @Parameter(description = "REPOPATH")
     var path: String? = null
 }

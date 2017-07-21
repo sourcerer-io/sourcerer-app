@@ -3,25 +3,14 @@
 
 package app
 
-import app.utils.CommandExplore
-import java.io.File
+import app.utils.RepoHelper
 
 /**
- * RepoExplorer analyzes repositories and uploads stats to server.
+ * RepoExplorer hashes repository and uploads stats to server.
  */
-class RepoExplorer(options: CommandExplore) {
-    val path = options.path
-
+class RepoExplorer(val repoPath: String) {
     fun explore() {
-        var isValidPath = false
-
-        try {
-            val f = File(path)
-            isValidPath = f.isDirectory
-        } catch (e: SecurityException) {
-        }
-
-        println(isValidPath)
+        println(RepoHelper.isValidRepo(repoPath))
 
         //TODO(anatoly): Implement repository analysis.
         //TODO(anatoly): Implement data transfer.

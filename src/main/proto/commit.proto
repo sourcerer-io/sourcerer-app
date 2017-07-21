@@ -17,8 +17,8 @@ message Stats {
 
 // Commit information message.
 message Commit {
-    int32 id = 1;  // Commit id. Hashed initial id.
-    int32 repo_id = 2;  // Repo id. TODO(anatoly): add details on how it is
+    string id = 1;  // Re-hashed original commit id.
+    string repo_id = 2;  // Repo id. TODO(anatoly): add details on how it is
         // computed.
     string author_name = 3;
     string author_email = 4;
@@ -27,4 +27,16 @@ message Commit {
     int32 num_lines_add = 7;  // Number of lines for whole commit.
     int32 num_lines_deleted = 8;
     repeated Stats commit_stats = 9;  // Stats on a commit.
+}
+
+// User information.
+message UserInfo {
+    string url = 2;  // User profile URL.
+    repeated Repo repos = 3;  // List of hashed repos.
+}
+
+// Repository.
+message Repo {
+    string id = 1;  // Repository id.
+    string last_commit_id = 2;  // Re-hashed original id of the last commit.
 }

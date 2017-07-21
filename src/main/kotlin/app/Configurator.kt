@@ -4,163 +4,229 @@
 package app
 
 import app.utils.Options
-import app.utils.UsernameValidator
-import org.apache.commons.codec.digest.DigestUtils
-import java.io.File
+import app.utils.PasswordHelper
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.IOException
-import org.apache.commons.configuration.ConfigurationException
-import org.apache.commons.configuration.PropertiesConfiguration
+import java.lang.IllegalStateException
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
 
 /**
- * Configurator is a singleton class that manages configuration files and
- * values of non-command specific options.
+ * Singleton class that manage configs and CLI options.
  */
 object Configurator {
-    val configFileName = "sourcerer.properties"
-    val configUsername = "username"
-    val configPassword = "password"
-    val configSilent = "silent"
+    /**
+     * Persistent configuration file name.
+     */
+    private const val CONFIG_FILE_NAME = ".sourcerer"
 
-    // Options levels are presented in priority decreasing order.
-    private var current: Options = Options()  // Command-line arguments.
-    private var config: Options = Options()  // Global user defined config file.
-    private val default: Options  // Default values.
-        get() {
-            val default = Options()
-            default.silent = false
-            return default
+    // Config levels are presented in priority decreasing order.
+
+    /**
+     * Configuration based on CLI arguments or temporary user entered data.
+     */
+    private var current: Config = Config()
+
+    /**
+     * Persistent configuration saved in [userDir] in YAML format.
+     */
+    private var persistent: Config = Config()
+
+    /**
+     * Default configuration.
+     */
+    private val default: Config = Config()
+
+    /**
+     * Merger of all configuration levels. Is used to get properties.
+     */
+    private val config: Config
+        get() = default.merge(persistent).merge(current)
+
+    /**
+     * Command-line arguments. Updates [current] on set.
+     */
+    var options: Options = Options()
+        set(value) {
+            current.merge(options)
+            field = value
         }
 
-    val options: Options  // Final options that will be used by app.
-        get() = mergeLevels()
-
-    // User directory path.
+    /**
+     * User directory path is where persistent config stored.
+     */
     val userDir = try {
         System.getProperty("user.home")
     }
-    catch (e: SecurityException) { null }
+    catch (e: SecurityException) {
+        Logger.error("Cannot access user directory", e)
+        null
+    }
 
+    /**
+     * Initializer that loads persistent config.
+     */
     init {
-        if (userDir != null) {
-            config = loadConfig(userDir)
-        }
+        loadFromFile()
     }
 
-    // Merges different levels of options into one options object in the next
-    // order: current, local, user, default.
-    private fun mergeLevels(): Options {
-        val levels = arrayListOf(current, config, default)
-        val merged = Options()
-
-        for (level in levels) {
-            if (merged.username == null) {
-                merged.username = level.username
-            }
-            if (merged.password == null) {
-                merged.password = level.password
-            }
-            if (merged.silent == null) {
-                merged.silent = level.silent
-            }
-        }
-
-        return merged
+    /**
+     * Gets username from merger of all configuration levels.
+     */
+    fun getUsername(): String {
+        return config.username
     }
 
-    // Loads config file from specified path.
-    fun loadConfig(path: String): Options {
-        val options = Options()
+    /**
+     * Gets hashed password from merger of all configuration levels.
+     */
+    fun getPassword(): String {
+        return config.password
+    }
+
+    /**
+     * Checks for non empty credentials from merger of all configuration levels.
+     */
+    fun isValidCredentials(): Boolean {
+        return config.username.isNotEmpty() && config.password.isNotEmpty()
+    }
+
+    /**
+     * Gets list of repos from merger of all configuration levels.
+     */
+    fun getRepos(): List<Repo> {
+        return config.repos
+    }
+
+    /**
+     * Sets username to current launch temprorary config.
+     */
+    fun setUsernameCurrent(username: String) {
+        current.username = username
+    }
+
+    /**
+     * Sets and hashes password to current launch temprorary config.
+     */
+    fun setPasswordCurrent(password: String) {
+        current.password = PasswordHelper.hashPassword(password)
+    }
+
+    /**
+     * Sets username to persistent config. Use [saveToFile] to save.
+     */
+    fun setUsernamePersistent(username: String) {
+        persistent.username = username
+    }
+
+    /**
+     * Sets and hashes password to persistent config. Use [saveToFile] to save.
+     */
+    fun setPasswordPersistent(password: String) {
+        persistent.password = PasswordHelper.hashPassword(password)
+    }
+
+    /**
+     * Add repo to persistent config. Use [saveToFile] to save.
+     */
+    fun addRepoPersistent(repo: Repo) {
+        persistent.addRepo(repo)
+    }
+
+    /**
+     * Remove repo from persistent config. Use [saveToFile] to save.
+     */
+    fun removeRepoPersistent(repo: Repo) {
+        persistent.removeRepo(repo)
+    }
+
+    /**
+     * Defines whether this is the first run. If any fields are defined then no.
+     */
+    fun isFirstLaunch(): Boolean {
+        return persistent.password.isEmpty()
+                && persistent.username.isEmpty()
+                && persistent.repos.isEmpty()
+    }
+
+    /**
+     * Loads [persistent] configuration from config file stored in [userDir].
+     */
+    fun loadFromFile() {
+        if (userDir == null) {
+            return
+        }
+
+        val mapper = ObjectMapper(YAMLFactory()) // Enable YAML parsing.
+        mapper.registerModule(KotlinModule()) // Enable Kotlin support.
+
+        // Сonfig initialization in case an exception is thrown.
+        var loadConfig = Config()
 
         try {
-            val file = File(path, configFileName)
-
-            if (!file.exists() || !file.isFile) {
-                return options  // No configuration file
+            loadConfig = Files.newBufferedReader(Paths.get(userDir,
+                    CONFIG_FILE_NAME)).use {
+                mapper.readValue(it, Config::class.java)
             }
-
-            val config = PropertiesConfiguration(file)
-
-            // Accessing configuration properties. Unknown values should be
-            // null to distinguish them from specified values from other levels.
-            options.username = config.getString(configUsername, null)
-            options.password = config.getString(configPassword, null)
-            options.silent = config.getBoolean(configSilent, null)
+        } catch (e: IOException) {
+            if(e is NoSuchFileException){
+                Logger.info("No config file found")
+            } else {
+                Logger.error("Cannot access config file", e)
+            }
+        } catch (e: SecurityException) {
+            Logger.error("Cannot access config file", e)
+        } catch (e: InvalidPathException) {
+            Logger.error("Cannot access config file", e)
+        } catch (e: JsonParseException) {
+            Logger.error("Cannot parse config file", e)
+        } catch (e: JsonMappingException) {
+            Logger.error("Cannot parse config file", e)
+        } catch (e: IllegalStateException) {
+            Logger.error("Cannot parse config file", e)
         }
-        catch (e: ConfigurationException) {
-            // Error while loading the properties file.
-        }
-        catch (e: SecurityException) {
-            // Read access denied.
-        }
 
-        return options
+        persistent = loadConfig
     }
 
-    // Saves config file to specified path. Returns true on success.
-    fun saveConfig(path: String, options: Options): Boolean {
+    /**
+     * Saves [persistent] configuration to config file stored in [userDir].
+     */
+    fun saveToFile() {
+        val mapper = ObjectMapper(YAMLFactory()) // Enable YAML parsing.
+        mapper.registerModule(KotlinModule()) // Enable Kotlin support.
+
         try {
-            val file = File(path, configFileName)
-
-            file.createNewFile()  // Creates a new file if it didn't exist.
-
-            val config = PropertiesConfiguration(file)
-
-            if (options.username != null) {
-                config.setProperty(configUsername, options.username)
+            Files.newBufferedWriter(Paths.get(userDir, CONFIG_FILE_NAME)).use {
+                mapper.writeValue(it, persistent)
             }
-            if (options.password != null) {
-                config.setProperty(configPassword, options.password)
-            }
-            if (options.silent != null) {
-                config.setProperty(configSilent, options.silent)
-            }
-
-            config.save(file)
-
-            return true
+        } catch (e: IOException) {
+            Logger.error("Cannot save config file", e)
+        } catch (e: SecurityException) {
+            Logger.error("Cannot save config file", e)
+        } catch (e: InvalidPathException) {
+            Logger.error("Cannot save config file", e)
+        } catch (e: JsonParseException) {
+            Logger.error("Cannot parse config file", e)
+        } catch (e: JsonMappingException) {
+            Logger.error("Cannot parse config file", e)
+        } catch (e: IllegalStateException) {
+            Logger.error("Cannot parse config file", e)
         }
-        catch (e: IOException) {
-            // IO error occurred.
-        }
-        catch (e: SecurityException) {
-            // Read access denied.
-        }
-        catch (e: ConfigurationException) {
-            // Error while loading or saving the properties file.
-        }
-
-        return false
     }
 
-    fun setCurrentOptions(options: Options) {
-        options.password = DigestUtils.sha256Hex(options.password)
-        current = options
-    }
-
-    fun createOptions(pair: List<String>): Options {
-        val options = Options()
-
-        if (pair.count() != 2) {
-            return options
-        }
-
-        val (key, value) = pair
-
-        when (key) {
-            configUsername -> {
-                if (UsernameValidator().isValidUsername(value)) {
-                    options.username = value
-                }
-            }
-            configPassword -> {
-                options.password = DigestUtils.sha256Hex(value)
-
-            }
-            configSilent -> {
-                options.silent = value.toBoolean()
-            }
-        }
-
-        return options
+    /**
+     * Resets all configurations, CLI options and config file.
+     */
+    fun resetAndSave() {
+        options = Options()
+        persistent = Config()
+        saveToFile()
     }
 }

@@ -22,15 +22,18 @@ mainClassName = "app.MainKt"
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "com.beust:jcommander:1.72"
     compile 'com.google.protobuf:protobuf-java:3.0.0'
-    compile group: 'commons-configuration', name: 'commons-configuration',
-            version: '1.10'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.5'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
+    compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.9'
 }
 
 protobuf {
@@ -38,6 +41,9 @@ protobuf {
         artifact = "com.google.protobuf:protoc:3.0.0"
     }
 }
+
+sourceSets.main.java.srcDirs += 'build/generated/source/proto/main/java'
+compileKotlin.dependsOn ':generateProto'
 
 // Include dependent libraries in archive.
 jar {
