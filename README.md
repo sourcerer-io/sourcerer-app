@@ -4,7 +4,9 @@ Sourcerer hashes your git repos into intelligent engineering profiles.
 Install/uninstall
 =================
 
-Sourcerer requires JRE to be installed on the system. Install last version from [Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html).
+Sourcerer requires Java Platform installed on the system.
+* Proceed with JRE(http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) if on Linux,
+* or with JDK(http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) if on OS X.
 
 To install sourcerer run the following command:
 

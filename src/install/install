@@ -34,6 +34,17 @@ if [ "\$1" = "--uninstall" ] ; then
   exit
 fi
 
+if ! which java > /dev/null ; then
+  if [ `uname` = "Darwin" ] ; then
+    echo "Sourcerer requires JDK installed on the system. You can download it from here:"
+    echo "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html"
+  else
+    echo "Sourcerer requires JRE installed on the system. You can download it from here:"
+    echo "http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html"
+  fi
+  exit 1
+fi
+
 java -jar $JAR_DIR/sourcerer.jar "\$@"
 EOF
 
@@ -41,8 +52,3 @@ chmod +x $SCRIPT_DIR/sourcerer
 
 echo "Done!"
 echo "Run sourcerer to start hashing your repos!"
-
-if ! which java > /dev/null ; then
-  echo "Please also install JDK on your machine"
-  echo "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html"
-fi
