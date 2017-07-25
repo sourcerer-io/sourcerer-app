@@ -34,6 +34,9 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.9'
+    compile "io.reactivex.rxjava2:rxjava:2.1.1"
+    compile 'com.github.kittinunf.fuel:fuel:1.9.0'
+    compile 'com.github.kittinunf.fuel:fuel-rxjava:1.9.0'
 }
 
 protobuf {

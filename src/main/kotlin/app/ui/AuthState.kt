@@ -30,7 +30,7 @@ class AuthState constructor(val context: Context) : ConsoleState {
             }
 
             println("Authorising...")
-            val result = SourcererApi.getUserInfoBlocking()
+            val result = SourcererApi.getUserBlocking().profileUrl
 
             if (result.isNotEmpty()) {  // TODO(anatoly): Check for status 200.
                 println("You are successfully authorised. Your profile page is "

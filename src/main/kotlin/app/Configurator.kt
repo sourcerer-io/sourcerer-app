@@ -3,6 +3,7 @@
 
 package app
 
+import app.model.Repo
 import app.utils.Options
 import app.utils.PasswordHelper
 import com.fasterxml.jackson.core.JsonParseException

@@ -4,7 +4,7 @@
 package app.ui
 
 import app.Configurator
-import app.Repo
+import app.model.Repo
 import app.utils.RepoHelper
 
 /**

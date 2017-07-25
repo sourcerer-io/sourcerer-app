@@ -3,7 +3,7 @@
 
 package app.utils
 
-import app.Repo
+import app.model.Repo
 import java.lang.UnsupportedOperationException
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths

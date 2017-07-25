@@ -22,7 +22,7 @@ message Commit {
         // computed.
     string author_name = 3;
     string author_email = 4;
-    string date = 5;
+    uint32 date = 5;  // Timestamp.
     bool qommit = 6;  // Quality commit.
     int32 num_lines_add = 7;  // Number of lines for whole commit.
     int32 num_lines_deleted = 8;
@@ -30,7 +30,7 @@ message Commit {
 }
 
 // User information.
-message UserInfo {
+message User {
     string url = 2;  // User profile URL.
     repeated Repo repos = 3;  // List of hashed repos.
 }

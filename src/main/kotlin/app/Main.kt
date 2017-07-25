@@ -3,6 +3,7 @@
 
 package app
 
+import app.model.Repo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
 import app.utils.CommandAdd
