@@ -5,20 +5,29 @@ package app.model
 
 import app.CommitProtos
 import com.google.protobuf.InvalidProtocolBufferException
+import org.apache.commons.codec.digest.DigestUtils
+import org.eclipse.jgit.revwalk.RevCommit
 import java.security.InvalidParameterException
 
 /**
  * Commit.
  */
-class Commit : ProtoWrapper<Commit, CommitProtos.Commit> {
+class Commit() : ProtoWrapper<Commit, CommitProtos.Commit> {
     var id: String = ""
     var repo: Repo = Repo("")
     var author: Author = Author("", "")
     var dateTimestamp: Int = 0
     var qommit: Boolean = false
-    var numLinesAdd: Int = 0
-    var numLinesDelete: Int = 0
+    var numLinesAdded: Int = 0
+    var numLinesDeleted: Int = 0
     // TODO(anatoly): add Stats.
+
+    constructor(revCommit: RevCommit) : this() {
+        this.id = DigestUtils.sha256Hex(revCommit.id.name)
+        this.author = Author(revCommit.authorIdent.name,
+                             revCommit.authorIdent.emailAddress)
+        this.dateTimestamp = revCommit.commitTime
+    }
 
     override fun getProto(): CommitProtos.Commit {
         return CommitProtos.Commit.newBuilder()
@@ -28,8 +37,8 @@ class Commit : ProtoWrapper<Commit, CommitProtos.Commit> {
                 .setAuthorEmail(author.email)
                 .setDate(dateTimestamp)
                 .setQommit(qommit)
-                .setNumLinesAdd(numLinesAdd)
-                .setNumLinesDeleted(numLinesDelete)
+                .setNumLinesAdd(numLinesAdded)
+                .setNumLinesDeleted(numLinesDeleted)
                 .build()
     }
 
@@ -40,8 +49,8 @@ class Commit : ProtoWrapper<Commit, CommitProtos.Commit> {
         author = Author(proto.authorName, proto.authorEmail)
         dateTimestamp = proto.date
         qommit = proto.qommit
-        numLinesAdd = proto.numLinesAdd
-        numLinesDelete = proto.numLinesDeleted
+        numLinesAdded = proto.numLinesAdd
+        numLinesDeleted = proto.numLinesDeleted
         return this
     }
 

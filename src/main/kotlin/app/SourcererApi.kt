@@ -5,11 +5,12 @@ package app
 
 import app.model.Commit
 import app.model.User
+import app.utils.RequestException
 import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
-import com.github.kittinunf.fuel.core.HttpException
+import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.result.Result
-import java.io.IOException
 
 /**
  * Sourcerer API.
@@ -25,74 +26,69 @@ object SourcererApi {
     val password
         get() = Configurator.getPassword()
 
-    @Throws(IOException::class, HttpException::class)
-    fun getUserBlocking(): User {
-        val name = "getUserBlocking"
-        Logger.debug("Request $name initialized")
-
-        val (request, response, result) = Fuel.get("/user/info")
-                .authenticate(username, password)
-                .responseString()
-        val body = result.get()
-        Logger.debug("Request $name success")
-        return User().parseFrom(body)
+    private fun createRequestGetUser(): Request {
+        return Fuel.get("/user/info").authenticate(username, password)
     }
 
-    @Throws(IOException::class, HttpException::class)
-    fun postCommitBlocking(commit: Commit): String {
-        val name = "postCommitBlocking"
-        Logger.debug("Request $name initialized")
-        val (request, response, result) = Fuel.get("/commit")
-                .authenticate(username, password)
-                .body(commit.serialize())
-                .responseString()
+    private fun createRequestPostCommit(commit: Commit): Request {
+        return Fuel.post("/commit").authenticate(username, password)
+                   .body(commit.serialize())
+    }
 
-        val body = result.get()
-        Logger.debug("Request $name success")
-        return body
+    private fun <T> makeBlockingRequest(request: Request, requestName: String,
+                                        parser: (String) -> T): T {
+        try {
+            Logger.debug("Request $requestName initialized")
+            val (_, _, result) = request.responseString()
+            val body = result.get()
+            Logger.debug("Request $requestName success")
+            return parser(body)
+        } catch (e: FuelError) {
+            Logger.error("Request $requestName error", e)
+            throw RequestException(e)
+        }
+
+    }
+
+    private fun makeAsyncRequest(request: Request, requestName: String,
+                                 success: (String) -> Unit,
+                                 failure: (String) -> Unit) {
+        Logger.debug("Request $requestName initialized")
+        request.responseString { _, _, result ->
+            when (result) {
+                is Result.Success -> {
+                    Logger.debug("Request $requestName success")
+                    success(result.get())
+                }
+                is Result.Failure -> {
+                    Logger.error("Request $requestName error",
+                                 result.getException())
+                    failure(result.get())
+                }
+            }
+        }
+        Logger.debug("Request $requestName success")
+    }
+
+    fun getUserBlocking(): User {
+        return makeBlockingRequest(createRequestGetUser(),
+                       "getUserBlocking",
+                                   { body -> User().parseFrom(body) })
     }
 
     fun getUserAsync(success: (String) -> Unit, failure: (String) -> Unit) {
-        val name = "getUserAsync"
-        Logger.debug("Request $name initialized")
-        Fuel.get("/user")
-                .authenticate(username, password)
-                .responseString { request, response, result ->
-                    when (result) {
-                        is Result.Failure -> {
-                            Logger.error("Request $name error",
-                                    result.getException())
-                            failure(result.get())
-                        }
-                        is Result.Success -> {
-                            Logger.debug("Request $name success")
-                            Logger.debug(result.get())
-                            success(result.get())
-                        }
-                    }
-                }
+        makeAsyncRequest(createRequestGetUser(), "getUserAsync",
+                success, failure)
+    }
+
+    fun postCommitBlocking(commit: Commit): String {
+        return makeBlockingRequest(createRequestPostCommit(commit),
+                       "postCommitBlocking", { it })
     }
 
     fun postCommitAsync(commit: Commit, success: (String) -> Unit,
                    failure: (String) -> Unit) {
-        val name = "postCommitAsync"
-        Logger.debug("Request $name initialized")
-        Fuel.post("/commit")
-                .authenticate(username, password)
-                .body(commit.serialize())
-                .responseString { request, response, result ->
-                    when (result) {
-                        is Result.Failure -> {
-                            Logger.error("Request $name error",
-                                    result.getException())
-                            failure(result.get())
-                        }
-                        is Result.Success -> {
-                            Logger.debug("Request $name success")
-                            Logger.debug(result.get())
-                            success(result.get())
-                        }
-                    }
-                }
+        makeAsyncRequest(createRequestPostCommit(commit),
+                "postCommitAsync", success, failure)
     }
 }

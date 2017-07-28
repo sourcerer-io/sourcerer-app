@@ -7,7 +7,7 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 
 @Parameters(separators = "=",
-        commandDescription = "Add a repository to tracking list")
+            commandDescription = "Add a repository to tracking list")
 class CommandAdd {
     // Command name for CLI.
     val name = "add"

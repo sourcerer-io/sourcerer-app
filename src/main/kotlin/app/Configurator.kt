@@ -6,6 +6,8 @@ package app
 import app.model.Repo
 import app.utils.Options
 import app.utils.PasswordHelper
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
+import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -71,10 +73,26 @@ object Configurator {
     }
 
     /**
+     * Jackson's ObjectMapper.
+     */
+    val mapper = createMapper()
+
+    /**
      * Initializer that loads persistent config.
      */
     init {
         loadFromFile()
+    }
+
+    /**
+     * Creates and setups Jackson's ObjectMapper.
+     */
+    private fun createMapper(): ObjectMapper {
+        return ObjectMapper(YAMLFactory())  // Enable YAML parsing.
+                // Map only fields (not getters, etc).
+                .setVisibility(PropertyAccessor.ALL, Visibility.NONE)
+                .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+                .registerModule(KotlinModule())  // Enable Kotlin support.
     }
 
     /**
@@ -164,9 +182,6 @@ object Configurator {
             return
         }
 
-        val mapper = ObjectMapper(YAMLFactory()) // Enable YAML parsing.
-        mapper.registerModule(KotlinModule()) // Enable Kotlin support.
-
         // Сonfig initialization in case an exception is thrown.
         var loadConfig = Config()
 
@@ -200,9 +215,6 @@ object Configurator {
      * Saves [persistent] configuration to config file stored in [userDir].
      */
     fun saveToFile() {
-        val mapper = ObjectMapper(YAMLFactory()) // Enable YAML parsing.
-        mapper.registerModule(KotlinModule()) // Enable Kotlin support.
-
         try {
             Files.newBufferedWriter(Paths.get(userDir, CONFIG_FILE_NAME)).use {
                 mapper.writeValue(it, persistent)

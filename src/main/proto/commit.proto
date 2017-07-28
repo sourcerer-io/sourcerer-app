@@ -1,4 +1,5 @@
 // Copyright 2017 Sourcerer, Inc. All Rights Reserved.
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 syntax = "proto3";
 
