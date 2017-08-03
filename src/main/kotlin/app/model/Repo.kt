@@ -3,40 +3,37 @@
 
 package app.model
 
-import app.CommitProtos
+import app.Protos
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
 /**
  * Repository.
  */
-class Repo() : ProtoWrapper<Repo, CommitProtos.Repo> {
+class Repo() : ProtoWrapper<Repo, Protos.Repo> {
     var path: String = ""
-    var id: String = ""
-    var lastCommitId: String = ""
+    var rehash: String = ""
 
     constructor(path: String) : this() {
         this.path = path
     }
 
-    override fun getProto(): CommitProtos.Repo {
-        return CommitProtos.Repo.newBuilder()
-                .setId(id)
-                .setLastCommitId(lastCommitId)
+    override fun getProto(): Protos.Repo {
+        return Protos.Repo.newBuilder()
+                .setRehash(rehash)
                 .build()
     }
 
     @Throws(InvalidParameterException::class)
-    override fun parseFrom(proto: CommitProtos.Repo): Repo {
+    override fun parseFrom(proto: Protos.Repo): Repo {
         path = ""
-        id = proto.id
-        lastCommitId = proto.lastCommitId
+        rehash = proto.rehash
         return this
     }
 
     @Throws(InvalidProtocolBufferException::class)
     override fun parseFrom(bytes: ByteArray): Repo {
-        return parseFrom(CommitProtos.Repo.parseFrom(bytes))
+        return parseFrom(Protos.Repo.parseFrom(bytes))
     }
 
     override fun toString(): String {

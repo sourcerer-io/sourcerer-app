@@ -3,26 +3,26 @@
 
 package app.model
 
-import app.CommitProtos
+import app.Protos
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
 /**
  * User information.
  */
-class User : ProtoWrapper<User, CommitProtos.User> {
+class User : ProtoWrapper<User, Protos.User> {
     var profileUrl: String = ""
     var repos: MutableList<Repo> = mutableListOf()
 
-    override fun getProto(): CommitProtos.User {
-        return CommitProtos.User.newBuilder()
+    override fun getProto(): Protos.User {
+        return Protos.User.newBuilder()
                 .setUrl(profileUrl)
                 .addAllRepos(repos.map { repo -> repo.getProto() })
                 .build()
     }
 
     @Throws(InvalidParameterException::class)
-    override fun parseFrom(proto: CommitProtos.User): User {
+    override fun parseFrom(proto: Protos.User): User {
         profileUrl = proto.url
         repos = proto.reposList.map { repo -> Repo("").parseFrom(repo) }
                 .toMutableList()
@@ -32,6 +32,6 @@ class User : ProtoWrapper<User, CommitProtos.User> {
     @Throws(InvalidParameterException::class,
             InvalidProtocolBufferException::class)
     override fun parseFrom(bytes: ByteArray): User {
-        return parseFrom(CommitProtos.User.parseFrom(bytes))
+        return parseFrom(Protos.User.parseFrom(bytes))
     }
 }
