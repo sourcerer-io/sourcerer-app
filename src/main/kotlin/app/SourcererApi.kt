@@ -73,7 +73,7 @@ object SourcererApi {
     fun getUserBlocking(): User {
         return makeBlockingRequest(createRequestGetUser(),
                        "getUserBlocking",
-                                   { body -> User().parseFrom(body) })
+                                   { body -> User(body) })
     }
 
     fun getUserAsync(success: (String) -> Unit, failure: (String) -> Unit) {

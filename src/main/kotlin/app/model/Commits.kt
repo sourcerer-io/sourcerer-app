@@ -8,28 +8,24 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
 /**
- * User information.
+ * Tech stats on a commit.
  */
-class User (
-        var profileUrl: String = "",
-        var repos: MutableList<Repo> = mutableListOf()
+class Commits(
+        var commits: List<Commit> = listOf()
 ) {
     @Throws(InvalidParameterException::class)
-    constructor(proto: Protos.User) : this() {
-        profileUrl = proto.url
-        repos = proto.reposList.map { repo -> Repo(repo) }
-                .toMutableList()
+    constructor(proto: Protos.Commits) : this() {
+        commits = proto.commitsList.map { it -> Commit(it) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
-    constructor(bytes: ByteArray) : this(Protos.User.parseFrom(bytes))
+    constructor(bytes: ByteArray) : this(Protos.Commits.parseFrom(bytes))
 
     constructor(serialized: String) : this(serialized.toByteArray())
 
-    fun getProto(): Protos.User {
-        return Protos.User.newBuilder()
-                .setUrl(profileUrl)
-                .addAllRepos(repos.map { repo -> repo.getProto() })
+    fun getProto(): Protos.Commits {
+        return Protos.Commits.newBuilder()
+                .addAllCommits(commits.map { it -> it.getProto() })
                 .build()
     }
 

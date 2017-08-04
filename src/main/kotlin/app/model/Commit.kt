@@ -12,50 +12,53 @@ import java.security.InvalidParameterException
 /**
  * Commit.
  */
-class Commit() : ProtoWrapper<Commit, Protos.Commit> {
-    var rehash: String = ""
-    var repo: Repo = Repo("")
-    var author: Author = Author("", "")
-    var dateTimestamp: Int = 0
-    var qommit: Boolean = false
-    var numLinesAdded: Int = 0
-    var numLinesDeleted: Int = 0
-    // TODO(anatoly): add Stats.
-
+class Commit(
+        var rehash: String = "",
+        var repo: Repo = Repo(""),
+        var author: Author = Author("", ""),
+        var dateTimestamp: Int = 0,
+        var isQommit: Boolean = false,
+        var numLinesAdded: Int = 0,
+        var numLinesDeleted: Int = 0
+        // TODO(anatoly): add Stats.
+) {
     constructor(revCommit: RevCommit) : this() {
-        this.rehash = DigestUtils.sha256Hex(revCommit.id.name)
-        this.author = Author(revCommit.authorIdent.name,
+        rehash = DigestUtils.sha256Hex(revCommit.id.name)
+        author = Author(revCommit.authorIdent.name,
                              revCommit.authorIdent.emailAddress)
-        this.dateTimestamp = revCommit.commitTime
+        dateTimestamp = revCommit.commitTime
     }
 
-    override fun getProto(): Protos.Commit {
+    @Throws(InvalidParameterException::class)
+    constructor(proto: Protos.Commit) : this() {
+        rehash = proto.rehash
+        repo = Repo() // TODO(anatoly): fill Repo.
+        author = Author(proto.authorName, proto.authorEmail)
+        dateTimestamp = proto.date
+        isQommit = proto.isQommit
+        numLinesAdded = proto.numLinesAdded
+        numLinesDeleted = proto.numLinesDeleted
+    }
+
+    @Throws(InvalidProtocolBufferException::class)
+    constructor(bytes: ByteArray) : this(Protos.Commit.parseFrom(bytes))
+
+    constructor(serialized: String) : this(serialized.toByteArray())
+
+    fun getProto(): Protos.Commit {
         return Protos.Commit.newBuilder()
                 .setRehash(rehash)
                 .setRepoRehash(repo.rehash)
                 .setAuthorName(author.name)
                 .setAuthorEmail(author.email)
                 .setDate(dateTimestamp)
-                .setQommit(qommit)
-                .setNumLinesAdd(numLinesAdded)
+                .setIsQommit(isQommit)
+                .setNumLinesAdded(numLinesAdded)
                 .setNumLinesDeleted(numLinesDeleted)
                 .build()
     }
 
-    @Throws(InvalidParameterException::class)
-    override fun parseFrom(proto: Protos.Commit): Commit {
-        rehash = proto.rehash
-        repo = Repo() // TODO(anatoly): fill Repo.
-        author = Author(proto.authorName, proto.authorEmail)
-        dateTimestamp = proto.date
-        qommit = proto.qommit
-        numLinesAdded = proto.numLinesAdd
-        numLinesDeleted = proto.numLinesDeleted
-        return this
-    }
-
-    @Throws(InvalidProtocolBufferException::class)
-    override fun parseFrom(bytes: ByteArray): Commit {
-        return parseFrom(Protos.Commit.parseFrom(bytes))
+    fun serialize(): ByteArray {
+        return getProto().toByteArray()
     }
 }

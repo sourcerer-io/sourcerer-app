@@ -27,10 +27,10 @@ message Commit {
     uint32 date = 6;
 
     // Is quality commit.
-    bool qommit = 7;
+    bool is_qommit = 7;
 
     // Number of lines for a whole commit.
-    int32 num_lines_add = 8;
+    int32 num_lines_added = 8;
     int32 num_lines_deleted = 9;
 
     // Tech stats on a commit.
@@ -40,7 +40,7 @@ message Commit {
 // Tech stats on a commit.
 message Stats {
     // Number of lines for a specific technology.
-    int32 num_lines_add = 1;
+    int32 num_lines_added = 1;
     int32 num_lines_deleted = 2;
 
     // Technology type (language/framework/library).
@@ -68,13 +68,13 @@ message Repo {
     // Rehash of first commit in repo. Used for indentifying forks.
     string initial_commit_rehash = 2;
 
-    // Authors' email filter for hashed commits.
-    bool email_filter_enabled = 3;
-    repeated string emails = 4;
+    // Authors' email filter for hashed commits. If empty list then hash only
+    // commits that created by current user.
+    repeated string emails = 3;
 
     // Raw commits server history. Used to find overlap of commits. Hashing
     // starts after last commit from the overlap.
-    repeated Commit commits = 5;
+    repeated Commit commits = 4;
 }
 
 // Used to send multiple commits in one request.
