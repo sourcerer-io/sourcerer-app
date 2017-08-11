@@ -3,7 +3,7 @@
 
 package app
 
-import app.model.Repo
+import app.model.LocalRepo
 import app.utils.Options
 
 /**
@@ -12,17 +12,14 @@ import app.utils.Options
 class Config (
         var username: String = "",
         var password: String = "",
-        var repos: MutableList<Repo> = mutableListOf<Repo>()
+        var localRepos: MutableSet<LocalRepo> = mutableSetOf()
 ) {
-    fun addRepo(repo: Repo) {
-        // Add without duplicates.
-        if (!repos.contains(repo)) {
-            repos.add(repo)
-        }
+    fun addRepo(repo: LocalRepo) {
+        localRepos.add(repo)
     }
 
-    fun removeRepo(repo: Repo) {
-        repos.remove(repo)
+    fun removeRepo(repo: LocalRepo) {
+        localRepos.remove(repo)
     }
 
     fun merge(config: Config): Config {
@@ -32,8 +29,8 @@ class Config (
         if (config.password.isNotEmpty()) {
             password = config.password
         }
-        if (config.repos.isNotEmpty()) {
-            repos = config.repos
+        if (config.localRepos.isNotEmpty()) {
+            localRepos = config.localRepos
         }
 
         return this

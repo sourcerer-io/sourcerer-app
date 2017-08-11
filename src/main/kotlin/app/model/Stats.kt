@@ -10,7 +10,7 @@ import java.security.InvalidParameterException
 /**
  * Tech stats on a commit.
  */
-class Stats(
+data class Stats(
         var numLinesAdded: Int = 0,
         var numLinesDeleted: Int = 0,
         var type: Int = 0,

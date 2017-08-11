@@ -3,6 +3,7 @@
 
 package app
 
+import app.model.LocalRepo
 import app.model.Repo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
@@ -60,7 +61,7 @@ fun startUi() {
 fun doAdd(commandAdd: CommandAdd) {
     val path = commandAdd.path
     if (path != null && RepoHelper.isValidRepo(path)) {
-        Configurator.addRepoPersistent(Repo(path))
+        Configurator.addLocalRepoPersistent(LocalRepo(path))
         Configurator.saveToFile()
         println("Added git repository at $path.")
     } else {
@@ -85,14 +86,14 @@ fun doConfig(commandOptions: CommandConfig) {
 }
 
 fun doList(commandList: CommandList) {
-    RepoHelper.printRepos(Configurator.getRepos(), "Tracked repositories:",
+    RepoHelper.printRepos(Configurator.getLocalRepos(), "Tracked repositories:",
             "No tracked repositories")
 }
 
 fun doRemove(commandRemove: CommandRemove) {
     val path = commandRemove.path
     if (path != null) {  // Don't validate because path can be deleted already.
-        Configurator.removeRepoPersistent(Repo(path))
+        Configurator.removeLocalRepoPersistent(LocalRepo(path))
         Configurator.saveToFile()
         println("Repository removed from tracking list.")
     } else {

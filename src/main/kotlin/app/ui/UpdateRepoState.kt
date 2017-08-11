@@ -4,7 +4,9 @@
 package app.ui
 
 import app.Configurator
+import app.Logger
 import app.RepoHasher
+import app.utils.RequestException
 
 /**
  * Update repositories console UI state.
@@ -12,8 +14,13 @@ import app.RepoHasher
 class UpdateRepoState constructor(val context: Context) : ConsoleState {
     override fun doAction() {
         println("Hashing your git repositories.")
-        for (repo in Configurator.getRepos()) {
-            RepoHasher(repo).update()
+        for (repo in Configurator.getLocalRepos()) {
+            try {
+                RepoHasher(repo).update()
+            } catch (e: RequestException) {
+                Logger.error("Network error while hashing $repo, "
+                        + "skipping...", e)
+            }
         }
         println("The repositories have been hashed. See result online on your "
                 + "Sourcerer profile.")

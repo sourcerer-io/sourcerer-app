@@ -6,4 +6,4 @@ package app.model
 /**
  * Commit author.
  */
-data class Author(var name: String, var email: String)
+data class Author(var name: String = "", var email: String = "")

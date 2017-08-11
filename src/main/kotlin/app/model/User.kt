@@ -10,13 +10,11 @@ import java.security.InvalidParameterException
 /**
  * User information.
  */
-class User (
-        var profileUrl: String = "",
+data class User (
         var repos: MutableList<Repo> = mutableListOf()
 ) {
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.User) : this() {
-        profileUrl = proto.url
         repos = proto.reposList.map { repo -> Repo(repo) }
                 .toMutableList()
     }
@@ -28,7 +26,6 @@ class User (
 
     fun getProto(): Protos.User {
         return Protos.User.newBuilder()
-                .setUrl(profileUrl)
                 .addAllRepos(repos.map { repo -> repo.getProto() })
                 .build()
     }

@@ -47,7 +47,7 @@ class AuthState constructor(val context: Context) : ConsoleState {
         Configurator.setPasswordCurrent(password)
     }
 
-    fun saveConfigIfChanged() {
+    fun saveCredentialsIfChanged() {
         if (username.isNotEmpty()) {
             Configurator.setUsernamePersistent(username)
         }
@@ -62,14 +62,17 @@ class AuthState constructor(val context: Context) : ConsoleState {
     fun tryAuth(): Boolean {
         try {
             println("Authenticating...")
-            val user = SourcererApi.getUserBlocking()
-            // TODO(anatoly): Save received data.
-            println("You are successfully authorised. Your profile page is "
-                    + "${user.profileUrl}.")
-            saveConfigIfChanged()
+            SourcererApi.authorize()
+
+            val user = SourcererApi.getUser()
+            Configurator.setRepos(user.repos)
+
+            println("You are successfully authenticated. Your profile page is "
+                    + Configurator.getUsername())
+            saveCredentialsIfChanged()
             return true
         } catch (e: RequestException) {
-            if (e.isAuthError()) {
+            if (e.isAuthError) {
                 println("Incorrect username or password. Try again.")
             } else {
                 connectionError = true

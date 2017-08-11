@@ -12,11 +12,22 @@ buildscript {
     }
 }
 
+plugins {
+    id 'de.fuerstenau.buildconfig' version '1.1.8'
+}
+
 apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "kotlin"
 apply plugin: "application"
 apply plugin: "com.google.protobuf"
+
+buildConfig {
+    clsName = 'BuildConfig'
+    packageName = 'app'
+    buildConfigField 'int', 'VERSION_CODE', '1'
+    buildConfigField 'String', 'VERSION', '0.0.1'
+}
 
 mainClassName = "app.MainKt"
 
@@ -58,5 +69,9 @@ jar {
 
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
     }
 }

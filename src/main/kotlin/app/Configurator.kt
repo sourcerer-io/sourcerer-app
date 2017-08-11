@@ -3,6 +3,7 @@
 
 package app
 
+import app.model.LocalRepo
 import app.model.Repo
 import app.utils.Options
 import app.utils.PasswordHelper
@@ -62,6 +63,11 @@ object Configurator {
         }
 
     /**
+     * Used to temporarily save list of repos that known by server.
+     */
+    private var repos: List<Repo> = listOf()
+
+    /**
      * User directory path is where persistent config stored.
      */
     val userDir = try {
@@ -75,7 +81,7 @@ object Configurator {
     /**
      * Jackson's ObjectMapper.
      */
-    val mapper = createMapper()
+    private val mapper = createMapper()
 
     /**
      * Initializer that loads persistent config.
@@ -119,8 +125,15 @@ object Configurator {
     /**
      * Gets list of repos from merger of all configuration levels.
      */
+    fun getLocalRepos(): List<LocalRepo> {
+        return config.localRepos.toList()
+    }
+
+    /**
+     * Gets list of temprorary saved repos.
+     */
     fun getRepos(): List<Repo> {
-        return config.repos
+        return repos
     }
 
     /**
@@ -154,15 +167,22 @@ object Configurator {
     /**
      * Add repo to persistent config. Use [saveToFile] to save.
      */
-    fun addRepoPersistent(repo: Repo) {
-        persistent.addRepo(repo)
+    fun addLocalRepoPersistent(localRepo: LocalRepo) {
+        persistent.addRepo(localRepo)
     }
 
     /**
      * Remove repo from persistent config. Use [saveToFile] to save.
      */
-    fun removeRepoPersistent(repo: Repo) {
-        persistent.removeRepo(repo)
+    fun removeLocalRepoPersistent(localRepo: LocalRepo) {
+        persistent.removeRepo(localRepo)
+    }
+
+    /**
+     * Temporarily sets list of repos.
+     */
+    fun setRepos(repos: List<Repo>) {
+        this.repos = repos
     }
 
     /**
@@ -171,7 +191,7 @@ object Configurator {
     fun isFirstLaunch(): Boolean {
         return persistent.password.isEmpty()
                 && persistent.username.isEmpty()
-                && persistent.repos.isEmpty()
+                && persistent.localRepos.isEmpty()
     }
 
     /**

@@ -52,11 +52,8 @@ message Stats {
 
 // User properties and indentity information about repos.
 message User {
-    // User profile URL.
-    string url = 1;
-
     // List of known repos containing basic information for indentifying repo.
-    repeated Repo repos = 2;
+    repeated Repo repos = 1;
 }
 
 // Repository parameters for hashing.
@@ -80,4 +77,9 @@ message Repo {
 // Used to send multiple commits in one request.
 message Commits {
     repeated Commit commits = 1;
+}
+
+// Authorization token.
+message Token {
+    string token = 1;
 }

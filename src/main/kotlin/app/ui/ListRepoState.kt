@@ -11,7 +11,8 @@ import app.utils.RepoHelper
  */
 class ListRepoState constructor(val context: Context) : ConsoleState {
     override fun doAction() {
-        RepoHelper.printRepos(Configurator.getRepos(), "Tracked repositories:")
+        RepoHelper.printRepos(Configurator.getLocalRepos(),
+                "Tracked repositories:")
     }
 
     override fun next() {

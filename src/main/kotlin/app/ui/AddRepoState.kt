@@ -4,7 +4,7 @@
 package app.ui
 
 import app.Configurator
-import app.model.Repo
+import app.model.LocalRepo
 import app.utils.RepoHelper
 
 /**
@@ -12,26 +12,27 @@ import app.utils.RepoHelper
  */
 class AddRepoState constructor(val context: Context) : ConsoleState {
     override fun doAction() {
-        if (Configurator.getRepos().isEmpty()) {
-            while (true) {
-                println("Type a path to repository, or hit Enter to start "
-                        + "hashing.")
-                val pathString = readLine() ?: ""
+        if (Configurator.getLocalRepos().isEmpty()) return
 
-                if (pathString.isEmpty()) {
-                    if (Configurator.getRepos().isEmpty()) {
-                        println("Add at least one valid repository.")
-                    } else {
-                        break // User finished to add repos.
-                    }
+        while (true) {
+            println("Type a path to repository, or hit Enter to start "
+                    + "hashing.")
+            val pathString = readLine() ?: ""
+
+            if (pathString.isEmpty()) {
+                if (Configurator.getLocalRepos().isEmpty()) {
+                    println("Add at least one valid repository.")
                 } else {
-                    if (RepoHelper.isValidRepo(pathString)) {
-                        println("Added git repository at $pathString.")
-                        Configurator.addRepoPersistent(Repo(pathString))
-                        Configurator.saveToFile()
-                    } else {
-                        println("No valid git repository found at $pathString.")
-                    }
+                    break // User finished to add repos.
+                }
+            } else {
+                if (RepoHelper.isValidRepo(pathString)) {
+                    println("Added git repository at $pathString.")
+                    Configurator.addLocalRepoPersistent(
+                            LocalRepo(pathString))
+                    Configurator.saveToFile()
+                } else {
+                    println("No valid git repository found at $pathString.")
                 }
             }
         }

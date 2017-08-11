@@ -10,7 +10,7 @@ import java.security.InvalidParameterException
 /**
  * Tech stats on a commit.
  */
-class Commits(
+data class Commits(
         var commits: List<Commit> = listOf()
 ) {
     @Throws(InvalidParameterException::class)

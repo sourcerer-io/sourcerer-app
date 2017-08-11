@@ -10,11 +10,10 @@ import java.security.InvalidParameterException
 /**
  * Repository.
  */
-class Repo(
+data class Repo(
         // Basic info.
-        var path: String = "",
         var rehash: String = "",
-        var initialCommit: Commit = Commit(),
+        var initialCommitRehash: String = "",
 
         // Authors' email filter for hashed commits. If empty list then hash
         // only commits that created by current user.
@@ -26,9 +25,9 @@ class Repo(
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.Repo) : this() {
         rehash = proto.rehash
-        initialCommit = Commit(rehash = proto.initialCommitRehash)
+        initialCommitRehash = proto.initialCommitRehash
         emails = proto.emailsList
-        commits = proto.commitsList.map { it -> Commit(it) }
+        commits = proto.commitsList.map { Commit(it) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -39,6 +38,9 @@ class Repo(
     fun getProto(): Protos.Repo {
         return Protos.Repo.newBuilder()
                 .setRehash(rehash)
+                .setInitialCommitRehash(rehash)
+                .addAllEmails(emails)
+                .addAllCommits(commits.map { it.getProto() })
                 .build()
     }
 
@@ -46,7 +48,13 @@ class Repo(
         return getProto().toByteArray()
     }
 
-    override fun toString(): String {
-        return path
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+        return rehash == (other as Commit).rehash
+    }
+
+    override fun hashCode(): Int {
+        return rehash.hashCode()
     }
 }
