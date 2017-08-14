@@ -5,6 +5,7 @@ package app.utils
 
 import app.Logger
 import app.model.LocalRepo
+import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
@@ -58,6 +59,26 @@ object RepoHelper {
             Logger.error("Cannot access repository at path $path", e)
             false
         }
+    }
+
+    /* To identify and distinguish different repos we calculate its rehash.
+    Repos may have forks. Such repos should be tracked independently.
+    Therefore, rehash of repo calculated by values of:
+    - Rehash of initial commit;
+    - Hash of remote origin;
+    - If remote origin not presented: repo local path and username.
+    To associate forked repos with primary repo rehash of initial commit
+    stored separately too. */
+    fun calculateRepoRehash(initialCommitRehash: String,
+                            localRepo: LocalRepo): String {
+        var repoRehash = initialCommitRehash
+        if (localRepo.remoteOrigin.isNotBlank()) {
+            repoRehash += localRepo.remoteOrigin
+        } else {
+            repoRehash += localRepo.path + localRepo.userName
+        }
+
+        return DigestUtils.sha256Hex(repoRehash)
     }
 
     fun printRepos(localRepos: List<LocalRepo>)

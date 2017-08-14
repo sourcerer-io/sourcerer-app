@@ -4,7 +4,6 @@
 package app
 
 import app.extractors.Extractor
-import app.model.Author
 import app.model.Commit
 import app.model.DiffContent
 import app.model.LocalRepo
@@ -12,7 +11,6 @@ import app.model.Repo
 import app.utils.RepoHelper
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.Repository
@@ -51,37 +49,11 @@ class RepoHasher(val localRepo: LocalRepo) {
         git.close()
     }
 
-    /* To identify and distinguish different repos we calculate its rehash.
-    Repos may have forks. Such repos should be tracked independently.
-    Therefore, rehash of repo calculated by values of:
-    - Rehash of initial commit;
-    - Hash of remote origin;
-    - If remote origin not presented: repo local path and username.
-    To associate forked repos with primary repo rehash of initial commit
-    stored separately too. */
-    private fun getRepoRehashes() {
+    private fun calculateRepoRehashes() {
         val initialCommit = getObservableCommits().blockingLast()
         repo.initialCommitRehash  = initialCommit.rehash
-
-        var repoRehash = repo.initialCommitRehash
-        if (localRepo.remoteOrigin.isNotBlank()) {
-            repoRehash += localRepo.remoteOrigin
-        } else {
-            repoRehash += localRepo.path + localRepo.userName
-        }
-
-        repo.rehash = DigestUtils.sha256Hex(repoRehash)
-    }
-
-    private fun getRepoConfig() {
-        val config = gitRepo.config
-        localRepo.author = Author(
-                name = config.getString("user", null, "name") ?: "",
-                email = config.getString("user", null, "email") ?: "")
-        localRepo.remoteOrigin = config.getString("remote", "origin",
-                "url") ?: ""
-        localRepo.userName = try { System.getProperty("user.name") }
-                             catch (e: Exception) { "" }
+        repo.rehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
+                                                     localRepo)
     }
 
     private fun isKnownRepo(): Boolean {
@@ -244,8 +216,8 @@ class RepoHasher(val localRepo: LocalRepo) {
         }
 
         println("Hashing $localRepo...")
-        getRepoConfig()
-        getRepoRehashes()
+        localRepo.parseGitConfig(gitRepo.config)
+        calculateRepoRehashes()
 
         if (isKnownRepo()) {
             getRepoFromServer()
