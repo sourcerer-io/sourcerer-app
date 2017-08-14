@@ -15,4 +15,9 @@ class CommandAdd {
     // Path to analyzed repository.
     @Parameter(description = "REPOPATH")
     var path: String? = null
+
+    // Hash commits of all contributors.
+    @Parameter(names = arrayOf("-a", "--all"),
+               description = "Hash commits of all contributors.")
+    var hashAll: Boolean = false
 }

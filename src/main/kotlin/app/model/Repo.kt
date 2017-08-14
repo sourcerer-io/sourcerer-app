@@ -51,7 +51,7 @@ data class Repo(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
-        return rehash == (other as Commit).rehash
+        return rehash == (other as Repo).rehash
     }
 
     override fun hashCode(): Int {

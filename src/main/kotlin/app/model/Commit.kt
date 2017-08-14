@@ -21,16 +21,20 @@ data class Commit(
         var dateTimestamp: Int = 0,
         var isQommit: Boolean = false,
         var numLinesAdded: Int = 0,
-        var numLinesDeleted: Int = 0
-        // TODO(anatoly): add Stats.
+        var numLinesDeleted: Int = 0,
+        var stats: List<Stats> = mutableListOf()
 ) {
+    // Wrapping JGit's RevCommit.
+    var raw: RevCommit? = null  // Not sent to sever.
+
     constructor(revCommit: RevCommit) : this() {
+        raw = revCommit
+
         rehash = DigestUtils.sha256Hex(revCommit.id.name)
         author = Author(revCommit.authorIdent.name,
                         revCommit.authorIdent.emailAddress)
         dateTimestamp = revCommit.commitTime
         treeRehash = DigestUtils.sha256Hex(revCommit.tree.name)
-        // TODO(anatoly): add Stats, isQommit, numLines.
     }
 
     @Throws(InvalidParameterException::class)
@@ -43,7 +47,7 @@ data class Commit(
         isQommit = proto.isQommit
         numLinesAdded = proto.numLinesAdded
         numLinesDeleted = proto.numLinesDeleted
-        // TODO(anatoly): add Stats.
+        stats = proto.statsList.map { Stats(it) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -62,8 +66,8 @@ data class Commit(
                 .setIsQommit(isQommit)
                 .setNumLinesAdded(numLinesAdded)
                 .setNumLinesDeleted(numLinesDeleted)
+                .addAllStats(stats.map { it.getProto() })
                 .build()
-        // TODO(anatoly): add Stats.
     }
 
     fun serialize(): ByteArray {

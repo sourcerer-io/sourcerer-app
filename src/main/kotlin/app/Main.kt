@@ -4,7 +4,6 @@
 package app
 
 import app.model.LocalRepo
-import app.model.Repo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
 import app.utils.CommandAdd
@@ -13,6 +12,7 @@ import app.utils.CommandRemove
 import app.utils.Options
 import app.utils.PasswordHelper
 import app.utils.RepoHelper
+import app.utils.UiHelper
 import com.beust.jcommander.JCommander
 
 fun main(argv: Array<String>) {
@@ -61,7 +61,9 @@ fun startUi() {
 fun doAdd(commandAdd: CommandAdd) {
     val path = commandAdd.path
     if (path != null && RepoHelper.isValidRepo(path)) {
-        Configurator.addLocalRepoPersistent(LocalRepo(path))
+        val localRepo = LocalRepo(path)
+        localRepo.hashAllContributors = commandAdd.hashAll
+        Configurator.addLocalRepoPersistent(localRepo)
         Configurator.saveToFile()
         println("Added git repository at $path.")
     } else {
@@ -103,8 +105,8 @@ fun doRemove(commandRemove: CommandRemove) {
 
 fun doSetup() {
     if (!Configurator.isFirstLaunch()) {
-        println("Are you sure that you want to setup Sourcerer again? [y/n]")
-        if ((readLine() ?: "").toLowerCase() == "y") {
+        if (UiHelper.confirm("Are you sure that you want to setup Sourcerer "
+            + "again?", defaultIsYes = false)) {
             Configurator.resetAndSave()
         }
     }

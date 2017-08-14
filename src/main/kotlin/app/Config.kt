@@ -15,6 +15,7 @@ class Config (
         var localRepos: MutableSet<LocalRepo> = mutableSetOf()
 ) {
     fun addRepo(repo: LocalRepo) {
+        localRepos.remove(repo)  // Fields may be updated.
         localRepos.add(repo)
     }
 

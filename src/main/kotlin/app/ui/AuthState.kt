@@ -3,6 +3,7 @@
 
 package app.ui
 
+import app.BuildConfig
 import app.Configurator
 import app.SourcererApi
 import app.utils.PasswordHelper
@@ -68,7 +69,7 @@ class AuthState constructor(val context: Context) : ConsoleState {
             Configurator.setRepos(user.repos)
 
             println("You are successfully authenticated. Your profile page is "
-                    + Configurator.getUsername())
+                    + BuildConfig.PROFILE_URL + Configurator.getUsername())
             saveCredentialsIfChanged()
             return true
         } catch (e: RequestException) {

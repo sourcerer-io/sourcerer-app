@@ -27,6 +27,7 @@ buildConfig {
     packageName = 'app'
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
+    buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 }
 
 mainClassName = "app.MainKt"
@@ -37,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "com.beust:jcommander:1.72"
     compile 'com.google.protobuf:protobuf-java:3.0.0'

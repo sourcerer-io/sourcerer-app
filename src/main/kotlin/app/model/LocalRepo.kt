@@ -3,8 +3,8 @@
 
 package app.model
 
-data class LocalRepo(var path: String = "",
-                     var hashAllAuthors: Boolean = false) {
+data class LocalRepo(var path: String = "") {
+    var hashAllContributors: Boolean = false
     var author: Author = Author()
     var remoteOrigin: String = ""
     var userName: String = ""

@@ -3,41 +3,38 @@
 
 package app
 
+import app.extractors.Extractor
 import app.model.Author
 import app.model.Commit
+import app.model.DiffContent
 import app.model.LocalRepo
 import app.model.Repo
 import app.utils.RepoHelper
 import io.reactivex.Observable
+import io.reactivex.schedulers.Schedulers
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
 import java.io.IOException
-
-// TODO(anatoly): Implement commit statistics.
+import java.nio.charset.Charset
+import org.eclipse.jgit.diff.DiffFormatter
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.errors.MissingObjectException
+import org.eclipse.jgit.util.io.DisabledOutputStream
+import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
 /**
  * RepoHasher hashes repository and uploads stats to server.
  */
 class RepoHasher(val localRepo: LocalRepo) {
     private var repo: Repo = Repo()
-    private val git: Git? = loadGit()
-    private val gitRepo: Repository? = git?.repository
-
-    // Added and removed commits in local repo in comparison to server history.
-    private var addedCommits: MutableList<Commit> = mutableListOf()
-    private var removedCommits: MutableList<Commit> = mutableListOf()
-
-    private val commitMapper: (RevCommit) -> Commit = { Commit(it) }
-
-    private val emailFilter: (Commit) -> Boolean = {
-        val email = it.author.email
-        localRepo.hashAllAuthors || (email == localRepo.author.email ||
-                repo.emails.contains(email))
-    }
+    private val git: Git = loadGit() ?:
+            throw IllegalStateException("Git failed to load")
+    private val gitRepo: Repository = git.repository
 
     private fun loadGit(): Git? {
         return try {
@@ -50,10 +47,9 @@ class RepoHasher(val localRepo: LocalRepo) {
     }
 
     private fun closeGit() {
-        gitRepo?.close()
-        git?.close()
+        gitRepo.close()
+        git.close()
     }
-
 
     /* To identify and distinguish different repos we calculate its rehash.
     Repos may have forks. Such repos should be tracked independently.
@@ -64,8 +60,8 @@ class RepoHasher(val localRepo: LocalRepo) {
     To associate forked repos with primary repo rehash of initial commit
     stored separately too. */
     private fun getRepoRehashes() {
-        val initialRevCommit = getObservableRevCommits().blockingLast()
-        repo.initialCommitRehash  = Commit(initialRevCommit).rehash
+        val initialCommit = getObservableCommits().blockingLast()
+        repo.initialCommitRehash  = initialCommit.rehash
 
         var repoRehash = repo.initialCommitRehash
         if (localRepo.remoteOrigin.isNotBlank()) {
@@ -78,8 +74,7 @@ class RepoHasher(val localRepo: LocalRepo) {
     }
 
     private fun getRepoConfig() {
-        gitRepo ?: return
-        val config = gitRepo.getConfig()
+        val config = gitRepo.config
         localRepo.author = Author(
                 name = config.getString("user", null, "name") ?: "",
                 email = config.getString("user", null, "email") ?: "")
@@ -90,89 +85,156 @@ class RepoHasher(val localRepo: LocalRepo) {
     }
 
     private fun isKnownRepo(): Boolean {
-        if (Configurator.getRepos().find { it.rehash == repo.rehash } != null) {
-            return true
+        return Configurator.getRepos()
+            .find { it.rehash == repo.rehash } != null
+    }
+
+    private fun findFirstOverlappingCommit(): Commit? {
+        val serverHistoryCommits = repo.commits.toHashSet()
+        return getObservableCommits()
+            .skipWhile { commit -> !serverHistoryCommits.contains(commit) }
+            .blockingFirst(null)
+    }
+
+    private fun hashAndSendCommits() {
+        val lastKnownCommit = repo.commits.lastOrNull()
+        val knownCommits = repo.commits.toHashSet()
+        getObservableCommits()
+            .pairWithNext()  // Pair commits to get diff.
+            .takeWhile { (new, _) ->  // Hash until last known commit.
+                new.rehash != lastKnownCommit?.rehash }
+            .filter { (new, _) -> knownCommits.isEmpty()  // Don't hash known.
+                || !knownCommits.contains(new) }
+            .filter { (new, _) -> emailFilter(new) }  // Email filtering.
+            .map { (new, old) ->  // Mapping and stats extraction.
+                val diffContents = getDiffContents(new, old)
+                Logger.debug("Commit: ${new.raw?.name ?: ""}: "
+                    + new.raw?.shortMessage)
+                Logger.debug("Diff: ${diffContents.size} entries")
+                new.stats = Extractor.extract(diffContents)
+                Logger.debug("Stats: ${new.stats.size} entries")
+                new
+            }
+            .observeOn(Schedulers.io())  // Different thread for data sending.
+            .buffer(20, TimeUnit.SECONDS)  // Group ready commits by time.
+            .doOnNext { commitsBundle ->  // Send ready commits.
+                postCommitsToServer(commitsBundle) }
+            .blockingSubscribe({
+                // OnNext
+            }, { t ->  // OnError
+                Logger.error("Error while hashing: $t")
+            })
+    }
+
+    fun getDiffContents(commitNew: Commit,
+                        commitOld: Commit): List<DiffContent> {
+        // TODO(anatoly): Binary files.
+        val revCommitNew = commitNew.raw
+        val revCommitOld = commitOld.raw
+        if (revCommitNew == null || revCommitOld == null) {
+            return listOf()
         }
-        return false
+
+        return DiffFormatter(DisabledOutputStream.INSTANCE).use { formatter ->
+            formatter.setRepository(gitRepo)
+            formatter.scan(revCommitOld.tree, revCommitNew.tree)
+                // RENAME change type doesn't change file content.
+                .filter { it.changeType != DiffEntry.ChangeType.RENAME }
+                .map { diff ->
+                    val added = mutableListOf<String>()
+                    val deleted = mutableListOf<String>()
+
+                    val new = getContentByObjectId(diff.newId.toObjectId())
+                    val old = getContentByObjectId(diff.oldId.toObjectId())
+
+                    formatter.toFileHeader(diff).toEditList().forEach { edit ->
+                        val addBegin = edit.beginB
+                        val addEnd = edit.endB - 1
+                        val delBegin = edit.beginA
+                        val delEnd = edit.endA - 1
+                        added.addAll(new.filterIndexed(
+                            inRange(addBegin, addEnd)))
+                        deleted.addAll(old.filterIndexed(
+                            inRange(delBegin, delEnd)))
+                    }
+
+                    val path = when (diff.changeType) {
+                        DiffEntry.ChangeType.DELETE -> diff.oldPath
+                        else -> diff.newPath
+                    }
+
+                    DiffContent(Paths.get(path), added, deleted)
+                }
+        }
     }
 
-    private fun rehashNewCommits() {
-        addedCommits = mutableListOf()
-        removedCommits = repo.commits.toMutableList()
-        val lastServerCommit: Commit = repo.commits.last()
-        var isLastServerCommitChecked: Boolean = false
-
-        val commitsObservable = getObservableRevCommits()
-        commitsObservable.map(commitMapper).filter(emailFilter)
-                .filter { !isLastServerCommitChecked }
-                .blockingSubscribe({  // OnNext
-            Logger.info("Commit: ${it.rehash}")
-            if (it == lastServerCommit) {
-                isLastServerCommitChecked = true
-            }
-            if (removedCommits.contains(it)) {
-                removedCommits.remove(it)
-            } else {
-                addedCommits.add(it)
-            }
-        }, { t ->  // OnError
-            Logger.error("Error while hashing: $t")
-        })
-    }
-
-    private fun rehashAllCommits() {
-        addedCommits = mutableListOf()
-
-        val commitsObservable = getObservableRevCommits()
-        commitsObservable.map(commitMapper).filter(emailFilter)
-                .blockingSubscribe({  // OnNext
-            Logger.info("Commit: ${it.rehash}")
-            addedCommits.add(it)
-        }, { t ->  // OnError
-            Logger.error("Error while hashing: $t")
-        })
+    private fun getContentByObjectId(objectId: ObjectId): List<String> {
+       return try {
+           gitRepo.open(objectId).bytes.toString(Charset.defaultCharset())
+                   .split('\n')
+       } catch (e: MissingObjectException) {
+           listOf<String>()
+       }
     }
 
     private fun getRepoFromServer() {
         repo = SourcererApi.getRepo(repo.rehash)
     }
 
-    private fun sendRepoToServer() {
+    private fun postRepoToServer() {
         SourcererApi.postRepo(repo)
     }
 
-    private fun sendAddedCommits() {
-        if (addedCommits.isNotEmpty()) {
-            SourcererApi.postCommits(addedCommits)
+    private fun postCommitsToServer(commits: List<Commit>) {
+        if (commits.isNotEmpty()) {
+            Logger.debug("${commits.size} hashed commits sending")
+            SourcererApi.postCommits(commits)
         }
     }
 
-    private fun sendRemovedCommits() {
-        if (removedCommits.isNotEmpty()) {
-            SourcererApi.deleteCommits(removedCommits)
+    private fun deleteCommitsOnServer(commits: List<Commit>) {
+        if (commits.isNotEmpty()) {
+            Logger.debug("${commits.size} deleted commits sending")
+            SourcererApi.deleteCommits(commits)
         }
     }
 
-    private fun getObservableRevCommits(): Observable<RevCommit> =
-            Observable.create { subscriber ->
-        if (gitRepo != null) {
-            try {
-                val revWalk = RevWalk(gitRepo)
-                val commitId = gitRepo.resolve(RepoHelper.MASTER_BRANCH)
-                revWalk.markStart(revWalk.parseCommit(commitId))
-                for (commit in revWalk) {
-                    Logger.debug("Commit produced: ${commit.name}")
-                    subscriber.onNext(commit)
-                }
-            } catch (e: Exception) {
-                Logger.error("Commit producing error", e)
-                subscriber.onError(e)
+    private fun getObservableCommits(): Observable<Commit> =
+        Observable.create { subscriber ->
+        try {
+            val revWalk = RevWalk(gitRepo)
+            val commitId = gitRepo.resolve(RepoHelper.MASTER_BRANCH)
+            revWalk.markStart(revWalk.parseCommit(commitId))
+            for (revCommit in revWalk) {
+                Logger.debug("Commit produced: ${revCommit.name}")
+                subscriber.onNext(Commit(revCommit))
             }
-        } else {
-            Logger.error("Repository not loaded")
+        } catch (e: Exception) {
+            Logger.error("Commit producing error", e)
+            subscriber.onError(e)
         }
+
         Logger.debug("Commit producing completed")
         subscriber.onComplete()
+    }
+
+    private val emailFilter: (Commit) -> Boolean = {
+        val email = it.author.email
+        localRepo.hashAllContributors || (email == localRepo.author.email ||
+            repo.emails.contains(email))
+    }
+
+    private fun inRange(indexFrom: Int, indexTo: Int) = { index: Int, _: Any ->
+        index >= indexFrom && index <= indexTo
+    }
+
+    fun <T> Observable<T>.pairWithNext(): Observable<Pair<T, T>> {
+        return this.map { emit -> Pair(emit, emit) }
+            // Accumulate emits by prev-next pair.
+            .scan { pairAccumulated, pairNext ->
+                Pair(pairAccumulated.second, pairNext.second)
+            }
+            .skip(1)  // Skip initial not paired emit.
     }
 
     fun update() {
@@ -187,19 +249,18 @@ class RepoHasher(val localRepo: LocalRepo) {
 
         if (isKnownRepo()) {
             getRepoFromServer()
-            rehashNewCommits()
-            sendRemovedCommits()
 
-            // Rehash all if all commits from server history removed.
-            if (removedCommits.size == repo.commits.size) {
-                rehashAllCommits()
-            }
-        } else {
-            rehashAllCommits()
+            // Delete missing commits. If found at least one common commit
+            // then next commits are not deleted because hash of a commit
+            // calculated including hashes of its parents.
+            val firstOverlapCommit = findFirstOverlappingCommit()
+            val deletedCommits = repo.commits
+                .takeWhile { it.rehash != firstOverlapCommit?.rehash }
+            deleteCommitsOnServer(deletedCommits)
         }
 
-        sendAddedCommits()
-        sendRepoToServer()
+        hashAndSendCommits()
+        postRepoToServer()
 
         println("Hashing $localRepo successfully finished.")
         closeGit()
