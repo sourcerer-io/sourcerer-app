@@ -71,11 +71,14 @@ object RepoHelper {
     stored separately too. */
     fun calculateRepoRehash(initialCommitRehash: String,
                             localRepo: LocalRepo): String {
+        val username = try { System.getProperty("user.name") }
+                       catch (e: Exception) { "" }
+
         var repoRehash = initialCommitRehash
         if (localRepo.remoteOrigin.isNotBlank()) {
             repoRehash += localRepo.remoteOrigin
         } else {
-            repoRehash += localRepo.path + localRepo.userName
+            repoRehash += localRepo.path + username
         }
 
         return DigestUtils.sha256Hex(repoRehash)

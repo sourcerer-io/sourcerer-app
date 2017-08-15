@@ -3,16 +3,14 @@
 
 package app.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.eclipse.jgit.lib.Config
 
 data class LocalRepo(var path: String = "") {
     var hashAllContributors: Boolean = false
-    var author: Author = Author()
-    var remoteOrigin: String = ""
 
-    val userName: String by lazy {
-        try { System.getProperty("user.name") } catch (e: Exception) { "" }
-    }
+    @JsonIgnore var author: Author = Author()
+    @JsonIgnore var remoteOrigin: String = ""
 
     fun parseGitConfig(config: Config) {
         author = Author(
