@@ -4,12 +4,14 @@
 package app.ui
 
 import app.api.Api
+import app.config.Configurator
 
 /**
  * Console user interface.
  */
-class ConsoleUi(private val api: Api) : Context {
-    var state: ConsoleState = OpenState(this, api)
+class ConsoleUi(private val api: Api,
+                private val configurator: Configurator) : Context {
+    var state: ConsoleState = OpenState(this, api, configurator)
 
     init {
         changeState(state)

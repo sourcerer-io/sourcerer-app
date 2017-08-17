@@ -4,8 +4,8 @@
 package app.ui
 
 import app.BuildConfig
-import app.Configurator
 import app.api.Api
+import app.config.Configurator
 import app.utils.PasswordHelper
 import app.utils.RequestException
 
@@ -13,13 +13,15 @@ import app.utils.RequestException
  * Authorization console UI state.
  */
 class AuthState constructor(private val context: Context,
-                            private val api: Api) : ConsoleState {
+                            private val api: Api,
+                            private val configurator: Configurator)
+    : ConsoleState {
     var username = ""
     var password = ""
     var connectionError = false
 
     override fun doAction() {
-        if (!Configurator.isValidCredentials()) {
+        if (!configurator.isValidCredentials()) {
             getUsername()
             getPassword()
         }
@@ -31,33 +33,33 @@ class AuthState constructor(private val context: Context,
 
     override fun next() {
         if (!connectionError) {
-            context.changeState(ListRepoState(context, api))
+            context.changeState(ListRepoState(context, api, configurator))
         } else {
-            context.changeState(CloseState(context, api))
+            context.changeState(CloseState(context, api, configurator))
         }
     }
 
     fun getUsername() {
         println("Enter username:")
         username = readLine() ?: ""
-        Configurator.setUsernameCurrent(username)
+        configurator.setUsernameCurrent(username)
     }
 
     fun getPassword() {
         println("Enter password:")
         password = PasswordHelper.readPassword()
-        Configurator.setPasswordCurrent(password)
+        configurator.setPasswordCurrent(password)
     }
 
     fun saveCredentialsIfChanged() {
         if (username.isNotEmpty()) {
-            Configurator.setUsernamePersistent(username)
+            configurator.setUsernamePersistent(username)
         }
         if (password.isNotEmpty()) {
-            Configurator.setPasswordPersistent(password)
+            configurator.setPasswordPersistent(password)
         }
         if (username.isNotEmpty() || password.isNotEmpty()) {
-            Configurator.saveToFile()
+            configurator.saveToFile()
         }
     }
 
@@ -67,10 +69,10 @@ class AuthState constructor(private val context: Context,
             api.authorize()
 
             val user = api.getUser()
-            Configurator.setRepos(user.repos)
+            configurator.setRepos(user.repos)
 
             println("You are successfully authenticated. Your profile page is "
-                    + BuildConfig.PROFILE_URL + Configurator.getUsername())
+                    + BuildConfig.PROFILE_URL + configurator.getUsername())
             saveCredentialsIfChanged()
             return true
         } catch (e: RequestException) {

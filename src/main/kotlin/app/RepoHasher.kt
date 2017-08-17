@@ -4,6 +4,7 @@
 package app
 
 import app.api.Api
+import app.config.Configurator
 import app.extractors.Extractor
 import app.model.Commit
 import app.model.DiffContent
@@ -29,7 +30,8 @@ import java.util.concurrent.TimeUnit
 /**
  * RepoHasher hashes repository and uploads stats to server.
  */
-class RepoHasher(private val localRepo: LocalRepo, private val api: Api) {
+class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
+                 private  val configurator: Configurator) {
     private var repo: Repo = Repo()
     private val git: Git = loadGit() ?:
             throw IllegalStateException("Git failed to load")
@@ -58,7 +60,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api) {
     }
 
     private fun isKnownRepo(): Boolean {
-        return Configurator.getRepos()
+        return configurator.getRepos()
             .find { it.rehash == repo.rehash } != null
     }
 
@@ -84,7 +86,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api) {
                 Logger.debug("Commit: ${new.raw?.name ?: ""}: "
                     + new.raw?.shortMessage)
                 Logger.debug("Diff: ${diffContents.size} entries")
-                new.stats = Extractor.extract(diffContents)
+                new.stats = Extractor().extract(diffContents)
                 Logger.debug("Stats: ${new.stats.size} entries")
                 new
             }

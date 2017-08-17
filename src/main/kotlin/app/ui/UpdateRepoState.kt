@@ -3,22 +3,24 @@
 
 package app.ui
 
-import app.Configurator
 import app.Logger
 import app.RepoHasher
 import app.api.Api
+import app.config.Configurator
 import app.utils.RequestException
 
 /**
  * Update repositories console UI state.
  */
 class UpdateRepoState constructor(private val context: Context,
-                                  private val api: Api) : ConsoleState {
+                                  private val api: Api,
+                                  private val configurator: Configurator)
+    : ConsoleState {
     override fun doAction() {
         println("Hashing your git repositories.")
-        for (repo in Configurator.getLocalRepos()) {
+        for (repo in configurator.getLocalRepos()) {
             try {
-                RepoHasher(repo, api).update()
+                RepoHasher(repo, api, configurator).update()
             } catch (e: RequestException) {
                 Logger.error("Network error while hashing $repo, "
                         + "skipping...", e)
@@ -29,6 +31,6 @@ class UpdateRepoState constructor(private val context: Context,
     }
 
     override fun next() {
-        context.changeState(CloseState(context, api))
+        context.changeState(CloseState(context, api, configurator))
     }
 }

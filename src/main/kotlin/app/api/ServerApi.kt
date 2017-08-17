@@ -4,8 +4,8 @@
 package app.api
 
 import app.BuildConfig
-import app.Configurator
 import app.Logger
+import app.config.Configurator
 import app.model.Commit
 import app.model.Commits
 import app.model.Repo
@@ -19,7 +19,7 @@ import com.github.kittinunf.fuel.core.Response
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
-class ServerApi : Api {
+class ServerApi (private val configurator: Configurator) : Api {
     private val HEADER_VERSION_CODE = "app-version-code"
     private val HEADER_CONTENT_TYPE = "Content-Type"
     private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
@@ -56,10 +56,10 @@ class ServerApi : Api {
     }
 
     private val username
-        get() = Configurator.getUsername()
+        get() = configurator.getUsername()
 
     private val password
-        get() = Configurator.getPassword()
+        get() = configurator.getPassword()
 
     private fun createRequestGetToken(): Request {
         return Fuel.get("/token").authenticate(username, password)

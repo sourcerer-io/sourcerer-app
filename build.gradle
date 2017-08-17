@@ -30,7 +30,7 @@ buildConfig {
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 }
 
-mainClassName = "app.MainKt"
+mainClassName = "app.Main"
 
 repositories {
     mavenCentral()

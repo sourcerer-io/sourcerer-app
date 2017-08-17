@@ -3,8 +3,8 @@
 
 package app.ui
 
-import app.Configurator
 import app.api.Api
+import app.config.Configurator
 import app.model.LocalRepo
 import app.utils.RepoHelper
 import app.utils.UiHelper
@@ -13,9 +13,11 @@ import app.utils.UiHelper
  * Add repository dialog console UI state.
  */
 class AddRepoState constructor(private val context: Context,
-                               private val api: Api) : ConsoleState {
+                               private val api: Api,
+                               private val configurator: Configurator)
+    : ConsoleState {
     override fun doAction() {
-        if (Configurator.getLocalRepos().isNotEmpty()) return
+        if (configurator.getLocalRepos().isNotEmpty()) return
 
         while (true) {
             println("Type a path to repository, or hit Enter to start "
@@ -23,7 +25,7 @@ class AddRepoState constructor(private val context: Context,
             val pathString = readLine() ?: ""
 
             if (pathString.isEmpty()) {
-                if (Configurator.getLocalRepos().isEmpty()) {
+                if (configurator.getLocalRepos().isEmpty()) {
                     println("Add at least one valid repository.")
                 } else {
                     break // User finished to add repos.
@@ -35,8 +37,8 @@ class AddRepoState constructor(private val context: Context,
                     localRepo.hashAllContributors = UiHelper.confirm("Do you "
                         + "want to hash commits of all contributors?",
                         defaultIsYes = true)
-                    Configurator.addLocalRepoPersistent(localRepo)
-                    Configurator.saveToFile()
+                    configurator.addLocalRepoPersistent(localRepo)
+                    configurator.saveToFile()
                 } else {
                     println("No valid git repository found at $pathString.")
                 }
@@ -45,6 +47,6 @@ class AddRepoState constructor(private val context: Context,
     }
 
     override fun next() {
-        context.changeState(UpdateRepoState(context, api))
+        context.changeState(UpdateRepoState(context, api, configurator))
     }
 }
