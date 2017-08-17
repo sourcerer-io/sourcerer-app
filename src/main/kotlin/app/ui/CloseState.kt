@@ -3,10 +3,13 @@
 
 package app.ui
 
+import app.api.Api
+
 /**
  * On application close console UI state.
  */
-class CloseState constructor(val context: Context) : ConsoleState {
+class CloseState constructor(private val context: Context,
+                             private val api: Api) : ConsoleState {
     override fun doAction() {
         println("You could use console commands to control repositories. To "
                 + "setup again run application with flag --setup. For more "

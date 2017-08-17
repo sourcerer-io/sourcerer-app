@@ -1,8 +1,11 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
 
-package app
+package app.api
 
+import app.BuildConfig
+import app.Configurator
+import app.Logger
 import app.model.Commit
 import app.model.Commits
 import app.model.Repo
@@ -16,20 +19,17 @@ import com.github.kittinunf.fuel.core.Response
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
-/**
- * Sourcerer API.
- */
-object SourcererApi {
-    val HEADER_VERSION_CODE = "app-version-code"
-    val HEADER_CONTENT_TYPE = "Content-Type"
-    val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
-    val HEADER_COOKIE = "Cookie"
-    val HEADER_SET_COOKIE = "Set-Cookie"
-    val KEY_TOKEN = "token="
+class ServerApi : Api {
+    private val HEADER_VERSION_CODE = "app-version-code"
+    private val HEADER_CONTENT_TYPE = "Content-Type"
+    private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
+    private val HEADER_COOKIE = "Cookie"
+    private val HEADER_SET_COOKIE = "Set-Cookie"
+    private val KEY_TOKEN = "token="
 
-    var token = ""
+    private var token = ""
 
-    fun cookieRequestInterceptor(): (Request) -> Request =
+    private fun cookieRequestInterceptor(): (Request) -> Request =
         { request: Request ->
             if (token.isNotEmpty()) {
                 request.header(Pair(HEADER_COOKIE, KEY_TOKEN + token))
@@ -37,13 +37,13 @@ object SourcererApi {
             request
         }
 
-    fun cookieResponseInterceptor(): (Request, Response) -> Response =
+    private fun cookieResponseInterceptor(): (Request, Response) -> Response =
         { request: Request, response: Response ->
             val newToken = response.httpResponseHeaders[HEADER_SET_COOKIE]
                 ?.find { it.startsWith(KEY_TOKEN) }
             if (newToken != null && newToken.isNotBlank()) {
                 token = newToken.substringAfter(KEY_TOKEN)
-                                    .substringBefore(';')
+                    .substringBefore(';')
             }
             response
         }
@@ -84,7 +84,7 @@ object SourcererApi {
                    .body(commits.serialize())
     }
 
-    private fun createRequestDeleteCommits(commits:Commits): Request {
+    private fun createRequestDeleteCommits(commits: Commits): Request {
         return Fuel.delete("/commits").header(getContentTypeHeader())
                    .body(commits.serialize())
     }
@@ -118,16 +118,16 @@ object SourcererApi {
         return Pair(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_PROTO)
     }
 
-    fun authorize() {
+    override fun authorize() {
         return makeRequest(createRequestGetToken(), "getToken", {})
     }
 
-    fun getUser(): User {
+    override fun getUser(): User {
         return makeRequest(createRequestGetUser(), "getUser",
                            { body -> User(body) })
     }
 
-    fun getRepo(repoRehash: String): Repo {
+    override fun getRepo(repoRehash: String): Repo {
         if (repoRehash.isBlank()) {
             throw IllegalArgumentException()
         }
@@ -136,18 +136,18 @@ object SourcererApi {
                            { body -> Repo(body) })
     }
 
-    fun postRepo(repo: Repo) {
+    override fun postRepo(repo: Repo) {
         makeRequest(createRequestPostRepo(repo),
                     "postRepo", {})
     }
 
-    fun postCommits(commitsList: List<Commit>) {
+    override fun postCommits(commitsList: List<Commit>) {
         val commits = Commits(commitsList)
         makeRequest(createRequestPostCommits(commits),
                     "postCommits", {})
     }
 
-    fun deleteCommits(commitsList: List<Commit>) {
+    override fun deleteCommits(commitsList: List<Commit>) {
         val commits = Commits(commitsList)
         makeRequest(createRequestDeleteCommits(commits),
                     "deleteCommits", {})

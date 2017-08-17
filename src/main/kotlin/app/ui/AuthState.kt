@@ -5,14 +5,15 @@ package app.ui
 
 import app.BuildConfig
 import app.Configurator
-import app.SourcererApi
+import app.api.Api
 import app.utils.PasswordHelper
 import app.utils.RequestException
 
 /**
  * Authorization console UI state.
  */
-class AuthState constructor(val context: Context) : ConsoleState {
+class AuthState constructor(private val context: Context,
+                            private val api: Api) : ConsoleState {
     var username = ""
     var password = ""
     var connectionError = false
@@ -30,9 +31,9 @@ class AuthState constructor(val context: Context) : ConsoleState {
 
     override fun next() {
         if (!connectionError) {
-            context.changeState(ListRepoState(context))
+            context.changeState(ListRepoState(context, api))
         } else {
-            context.changeState(CloseState(context))
+            context.changeState(CloseState(context, api))
         }
     }
 
@@ -63,9 +64,9 @@ class AuthState constructor(val context: Context) : ConsoleState {
     fun tryAuth(): Boolean {
         try {
             println("Authenticating...")
-            SourcererApi.authorize()
+            api.authorize()
 
-            val user = SourcererApi.getUser()
+            val user = api.getUser()
             Configurator.setRepos(user.repos)
 
             println("You are successfully authenticated. Your profile page is "

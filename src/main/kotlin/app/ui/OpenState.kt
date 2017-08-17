@@ -4,11 +4,13 @@
 package app.ui
 
 import app.Configurator
+import app.api.Api
 
 /**
  * On application open console UI state.
  */
-class OpenState constructor(val context: Context) : ConsoleState {
+class OpenState constructor(private val context: Context,
+                            private val api: Api) : ConsoleState {
     override fun doAction() {
         if (!Configurator.isValidCredentials()) {
             println("Sourcerer hashes your git repositories into intelligent "
@@ -20,6 +22,6 @@ class OpenState constructor(val context: Context) : ConsoleState {
     }
 
     override fun next() {
-        context.changeState(AuthState(context))
+        context.changeState(AuthState(context, api))
     }
 }

@@ -3,6 +3,7 @@
 
 package app
 
+import app.api.ServerApi
 import app.model.LocalRepo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
@@ -55,7 +56,7 @@ fun main(argv: Array<String>) {
 }
 
 fun startUi() {
-    val consoleUi = ConsoleUi()
+    val consoleUi = ConsoleUi(ServerApi())
 }
 
 fun doAdd(commandAdd: CommandAdd) {

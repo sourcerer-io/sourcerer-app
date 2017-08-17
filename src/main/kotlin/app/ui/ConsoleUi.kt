@@ -3,11 +3,13 @@
 
 package app.ui
 
+import app.api.Api
+
 /**
  * Console user interface.
  */
-class ConsoleUi : Context {
-    var state: ConsoleState = OpenState(this)
+class ConsoleUi(private val api: Api) : Context {
+    var state: ConsoleState = OpenState(this, api)
 
     init {
         changeState(state)

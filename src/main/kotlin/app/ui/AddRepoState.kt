@@ -4,6 +4,7 @@
 package app.ui
 
 import app.Configurator
+import app.api.Api
 import app.model.LocalRepo
 import app.utils.RepoHelper
 import app.utils.UiHelper
@@ -11,7 +12,8 @@ import app.utils.UiHelper
 /**
  * Add repository dialog console UI state.
  */
-class AddRepoState constructor(val context: Context) : ConsoleState {
+class AddRepoState constructor(private val context: Context,
+                               private val api: Api) : ConsoleState {
     override fun doAction() {
         if (Configurator.getLocalRepos().isNotEmpty()) return
 
@@ -43,6 +45,6 @@ class AddRepoState constructor(val context: Context) : ConsoleState {
     }
 
     override fun next() {
-        context.changeState(UpdateRepoState(context))
+        context.changeState(UpdateRepoState(context, api))
     }
 }

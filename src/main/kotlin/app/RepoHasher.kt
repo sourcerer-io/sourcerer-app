@@ -3,6 +3,7 @@
 
 package app
 
+import app.api.Api
 import app.extractors.Extractor
 import app.model.Commit
 import app.model.DiffContent
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit
 /**
  * RepoHasher hashes repository and uploads stats to server.
  */
-class RepoHasher(val localRepo: LocalRepo) {
+class RepoHasher(private val localRepo: LocalRepo, private val api: Api) {
     private var repo: Repo = Repo()
     private val git: Git = loadGit() ?:
             throw IllegalStateException("Git failed to load")
@@ -150,24 +151,24 @@ class RepoHasher(val localRepo: LocalRepo) {
     }
 
     private fun getRepoFromServer() {
-        repo = SourcererApi.getRepo(repo.rehash)
+        repo = api.getRepo(repo.rehash)
     }
 
     private fun postRepoToServer() {
-        SourcererApi.postRepo(repo)
+        api.postRepo(repo)
     }
 
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             Logger.debug("${commits.size} hashed commits sending")
-            SourcererApi.postCommits(commits)
+            api.postCommits(commits)
         }
     }
 
     private fun deleteCommitsOnServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             Logger.debug("${commits.size} deleted commits sending")
-            SourcererApi.deleteCommits(commits)
+            api.deleteCommits(commits)
         }
     }
 
