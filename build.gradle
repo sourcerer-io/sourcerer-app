@@ -27,7 +27,8 @@ buildConfig {
     packageName = 'app'
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
-    buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
+    buildConfigField "String", "PROFILE_URL", "https://sourcerer.io/"
+    buildConfigField "String", "API_BASE_URL", "http://localhost:3181"
 }
 
 mainClassName = "app.Main"

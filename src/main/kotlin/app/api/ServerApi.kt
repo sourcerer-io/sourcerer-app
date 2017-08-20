@@ -25,7 +25,7 @@ class ServerApi (private val configurator: Configurator) : Api {
     private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
     private val HEADER_COOKIE = "Cookie"
     private val HEADER_SET_COOKIE = "Set-Cookie"
-    private val KEY_TOKEN = "token="
+    private val KEY_TOKEN = "Token="
 
     private var token = ""
 
@@ -50,7 +50,7 @@ class ServerApi (private val configurator: Configurator) : Api {
 
     init {
         val fuelManager = FuelManager.instance
-        fuelManager.basePath = "http://localhost:8080"
+        fuelManager.basePath = BuildConfig.API_BASE_URL
         fuelManager.addRequestInterceptor { cookieRequestInterceptor() }
         fuelManager.addResponseInterceptor { cookieResponseInterceptor() }
     }
@@ -62,7 +62,7 @@ class ServerApi (private val configurator: Configurator) : Api {
         get() = configurator.getPassword()
 
     private fun createRequestGetToken(): Request {
-        return Fuel.get("/token").authenticate(username, password)
+        return Fuel.post("/auth").authenticate(username, password)
                    .header(getVersionCodeHeader())
     }
 

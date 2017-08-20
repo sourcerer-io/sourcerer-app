@@ -77,7 +77,11 @@ class AuthState constructor(private val context: Context,
             return true
         } catch (e: RequestException) {
             if (e.isAuthError) {
-                println("Incorrect username or password. Try again.")
+                if(e.httpBodyMessage.isNotBlank()) {
+                    println(e.httpBodyMessage)
+                } else {
+                    println("Authentication error. Try again.")
+                }
             } else {
                 connectionError = true
                 println("Connection problems. Try again later.")
