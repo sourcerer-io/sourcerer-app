@@ -15,6 +15,8 @@ data class Repo(
         var rehash: String = "",
         var initialCommitRehash: String = "",
 
+        var userEmail: String = "",
+
         // Authors' email filter for hashed commits. If empty list then hash
         // only commits that created by current user.
         var emails: List<String> = listOf(),
@@ -26,6 +28,7 @@ data class Repo(
     constructor(proto: Protos.Repo) : this() {
         rehash = proto.rehash
         initialCommitRehash = proto.initialCommitRehash
+        userEmail = proto.userEmail
         emails = proto.emailsList
         commits = proto.commitsList.map { Commit(it) }
     }
@@ -39,6 +42,7 @@ data class Repo(
         return Protos.Repo.newBuilder()
                 .setRehash(rehash)
                 .setInitialCommitRehash(rehash)
+                .setUserEmail(userEmail)
                 .addAllEmails(emails)
                 .addAllCommits(commits.map { it.getProto() })
                 .build()

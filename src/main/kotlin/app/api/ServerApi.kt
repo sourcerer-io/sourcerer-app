@@ -12,7 +12,6 @@ import app.model.Repo
 import app.model.User
 import app.utils.RequestException
 import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
@@ -91,16 +90,18 @@ class ServerApi (private val configurator: Configurator) : Api {
 
     private fun <T> makeRequest(request: Request,
                                 requestName: String,
-                                parser: (String) -> T): T {
+                                parser: (ByteArray) -> T): T {
         try {
             Logger.debug("Request $requestName initialized")
-            val (_, _, result) = request.responseString()
-            val body = result.get()
-            Logger.debug("Request $requestName success")
-            return parser(body)
-        } catch (e: FuelError) {
-            Logger.error("Request $requestName error", e)
-            throw RequestException(e)
+            val (_, res, result) = request.responseString()
+            val (_, error) = result
+            if (error == null) {
+                Logger.debug("Request $requestName success")
+                return parser(res.data)
+            } else {
+                Logger.error("Request $requestName error", error)
+                throw RequestException(error)
+            }
         } catch (e: InvalidProtocolBufferException) {
             Logger.error("Request $requestName error while parsing", e)
             throw RequestException(e)

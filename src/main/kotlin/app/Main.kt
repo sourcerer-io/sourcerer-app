@@ -17,12 +17,15 @@ import app.utils.RepoHelper
 import app.utils.UiHelper
 import com.beust.jcommander.JCommander
 
-object Main {
+fun main(argv : Array<String>) {
+    Main(argv)
+}
+
+class Main {
     private val configurator = FileConfigurator()
     private val api = ServerApi(configurator)
 
-    @JvmStatic
-    fun main(argv: Array<String>) {
+    constructor(argv: Array<String>) {
         val options = Options()
         val commandAdd = CommandAdd()
         val commandConfig = CommandConfig()

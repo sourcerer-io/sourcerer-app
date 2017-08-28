@@ -82,6 +82,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 || !knownCommits.contains(new) }
             .filter { (new, _) -> emailFilter(new) }  // Email filtering.
             .map { (new, old) ->  // Mapping and stats extraction.
+                new.repo = repo
                 val diffContents = getDiffContents(new, old)
                 Logger.debug("Commit: ${new.raw?.name ?: ""}: "
                     + new.raw?.shortMessage)
@@ -154,6 +155,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     private fun getRepoFromServer() {
         repo = api.getRepo(repo.rehash)
+        Logger.debug("Received repo from server with ${repo.commits.size} " +
+            "commits")
     }
 
     private fun postRepoToServer() {
@@ -162,15 +165,15 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
-            Logger.debug("${commits.size} hashed commits sending")
             api.postCommits(commits)
+            Logger.debug("Sent ${commits.size} added commits to server")
         }
     }
 
     private fun deleteCommitsOnServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
-            Logger.debug("${commits.size} deleted commits sending")
             api.deleteCommits(commits)
+            Logger.debug("Sent ${commits.size} deleted commits to server")
         }
     }
 
@@ -181,15 +184,12 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val commitId = gitRepo.resolve(RepoHelper.MASTER_BRANCH)
             revWalk.markStart(revWalk.parseCommit(commitId))
             for (revCommit in revWalk) {
-                Logger.debug("Commit produced: ${revCommit.name}")
                 subscriber.onNext(Commit(revCommit))
             }
         } catch (e: Exception) {
             Logger.error("Commit producing error", e)
             subscriber.onError(e)
         }
-
-        Logger.debug("Commit producing completed")
         subscriber.onComplete()
     }
 
@@ -220,6 +220,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
         println("Hashing $localRepo...")
         localRepo.parseGitConfig(gitRepo.config)
+        repo.userEmail = localRepo.author.email
         calculateRepoRehashes()
 
         if (isKnownRepo()) {
