@@ -1,8 +1,9 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
 
-package app
+package app.hashers
 
+import app.Logger
 import app.api.Api
 import app.config.Configurator
 import app.extractors.Extractor
@@ -17,8 +18,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
-import java.io.File
-import java.io.IOException
 import java.nio.charset.Charset
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.ObjectId
@@ -28,41 +27,14 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 /**
- * RepoHasher hashes repository and uploads stats to server.
+ * CommitHasher hashes repository and uploads stats to server.
  */
-class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
-                 private  val configurator: Configurator) {
-    private var repo: Repo = Repo()
-    private val git: Git = loadGit() ?:
-            throw IllegalStateException("Git failed to load")
+class CommitHasher(private val localRepo: LocalRepo,
+                   private val repo: Repo = Repo(),
+                   private val api: Api,
+                   private val configurator: Configurator,
+                   private val git: Git) {
     private val gitRepo: Repository = git.repository
-
-    private fun loadGit(): Git? {
-        return try {
-            Git.open(File(localRepo.path))
-        } catch (e: IOException) {
-            Logger.error("Cannot access repository at path "
-                    + "$localRepo.path", e)
-            null
-        }
-    }
-
-    private fun closeGit() {
-        gitRepo.close()
-        git.close()
-    }
-
-    private fun calculateRepoRehashes() {
-        val initialCommit = getObservableCommits().blockingLast()
-        repo.initialCommitRehash  = initialCommit.rehash
-        repo.rehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
-                                                     localRepo)
-    }
-
-    private fun isKnownRepo(): Boolean {
-        return configurator.getRepos()
-            .find { it.rehash == repo.rehash } != null
-    }
 
     private fun findFirstOverlappingCommit(): Commit? {
         val serverHistoryCommits = repo.commits.toHashSet()
@@ -153,16 +125,6 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
        }
     }
 
-    private fun getRepoFromServer() {
-        repo = api.getRepo(repo.rehash)
-        Logger.debug("Received repo from server with ${repo.commits.size} " +
-            "commits")
-    }
-
-    private fun postRepoToServer() {
-        api.postRepo(repo)
-    }
-
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             api.postCommits(commits)
@@ -213,32 +175,15 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     fun update() {
-        if (!RepoHelper.isValidRepo(localRepo.path)) {
-            Logger.error("Invalid repo $localRepo")
-            return
-        }
+        // Delete locally missing commits from server. If found at least one
+        // common commit then next commits are not deleted because hash of a
+        // commit calculated including hashes of its parents.
+        val firstOverlapCommit = findFirstOverlappingCommit()
+        val deletedCommits = repo.commits
+            .takeWhile { it.rehash != firstOverlapCommit?.rehash }
+        deleteCommitsOnServer(deletedCommits)
 
-        println("Hashing $localRepo...")
-        localRepo.parseGitConfig(gitRepo.config)
-        repo.userEmail = localRepo.author.email
-        calculateRepoRehashes()
-
-        if (isKnownRepo()) {
-            getRepoFromServer()
-
-            // Delete missing commits. If found at least one common commit
-            // then next commits are not deleted because hash of a commit
-            // calculated including hashes of its parents.
-            val firstOverlapCommit = findFirstOverlappingCommit()
-            val deletedCommits = repo.commits
-                .takeWhile { it.rehash != firstOverlapCommit?.rehash }
-            deleteCommitsOnServer(deletedCommits)
-        }
-
+        // Hash added and missing server commits and send them to server.
         hashAndSendCommits()
-        postRepoToServer()
-
-        println("Hashing $localRepo successfully finished.")
-        closeGit()
     }
 }

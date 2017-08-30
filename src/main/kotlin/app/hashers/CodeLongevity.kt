@@ -1,14 +1,18 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Alexander Surkov (alex@sourcerer.io)
 
-package app
+package app.hashers
 
+import app.Logger
+import app.api.Api
+import app.config.Configurator
+import app.model.LocalRepo
+import app.model.Repo
+import app.utils.RepoHelper
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RawText
-import org.eclipse.jgit.internal.storage.file.FileRepository
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.ObjectLoader
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -28,7 +32,8 @@ class RevCommitLine(val commit: RevCommit, val file: String, val line: Int)
  *
  * TODO(Alex): the text arg is solely for testing proposes (remove it)
  */
-class CodeLine(val from: RevCommitLine, val to: RevCommitLine, val text: String) {
+class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
+               val text: String) {
 
     // TODO(alex): oldId and newId may be computed as a hash built from commit,
     // file name and line number, if we are going to send the data outside a
@@ -69,10 +74,14 @@ class CodeLine(val from: RevCommitLine, val to: RevCommitLine, val text: String)
 /**
  * Used to compute age of code lines in the repo.
  */
-class CodeLongevity(repoPath: String, tailRev: String) {
-    val repo = FileRepository(repoPath)
+class CodeLongevity(private val localRepo: LocalRepo,
+                    private val serverRepo: Repo,
+                    private val api: Api,
+                    private val configurator: Configurator,
+                    private val git: Git, tailRev: String = "") {
+    val repo: Repository = git.repository
     val head: RevCommit =
-        RevWalk(repo).parseCommit(repo.resolve("refs/heads/master"))
+        RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
     val tail: RevCommit? =
         if (tailRev != "") RevWalk(repo).parseCommit(repo.resolve(tailRev))
         else null
@@ -83,30 +92,31 @@ class CodeLongevity(repoPath: String, tailRev: String) {
      */
     var codeLines: MutableList<CodeLine> = mutableListOf()
 
-    init {
+    fun update() {
         compute()
-    }
 
-    // TODO(alex) debugging, remove it
-    fun ohNoDoesItReallyWork(email: String) {
-        var sum: Long = 0
-        var total: Long = 0
+        // TODO(anatoly): Add emails from server or hashAll.
+        val emails = hashSetOf(localRepo.author.email)
+
+        val sum: MutableMap<String, Long> = emails.associate { Pair(it, 0L) }
+                                                  .toMutableMap()
+        val total: Int = codeLines.size
         for (line in codeLines) {
-            val author = line.from.commit.getAuthorIdent()
-            if (author.getEmailAddress() != email) {
+            val email = line.from.commit.authorIdent.emailAddress
+            if (!emails.contains(email)) {
                 continue
             }
-            println(line.toString())
-            println("  Age: ${line.age} secs")
-            sum += line.age
-            total++
+            Logger.debug(line.toString())
+            Logger.debug("Age: ${line.age} secs")
+
+            sum[email] = sum[email]!! + line.age
         }
 
-        //println("All lines:")
-        //codeLines.forEach { line -> line.printme() }
-
-        var avg = if (total > 0) sum / total else 0
-        println("avg code line age for <$email> is ${avg} seconds, lines total: ${total}")
+        for (email in emails) {
+            val avg = if (total > 0) sum[email]!! / total else 0
+            println("Average code line age for <$email> is $avg seconds, "
+                  + "lines total: $total")
+        }
     }
 
     /**
@@ -143,14 +153,16 @@ class CodeLongevity(repoPath: String, tailRev: String) {
 
         var commit: RevCommit? = revWalk.next()  // move the walker to the head
         while (commit != null && commit != tail) {
-            var parentCommit: RevCommit? = revWalk.next()
+            val parentCommit: RevCommit? = revWalk.next()
 
-            println("commit: ${commit.getName()}; '${commit.getShortMessage()}'")
+            Logger.debug("commit: ${commit.getName()}; " +
+                "'${commit.getShortMessage()}'")
             if (parentCommit != null) {
-                println("parent commit: ${parentCommit.getName()}; '${parentCommit.getShortMessage()}'")
+                Logger.debug("parent commit: ${parentCommit.getName()}; "
+                    + "'${parentCommit.getShortMessage()}'")
             }
             else {
-                println("parent commit: null")
+                Logger.debug("parent commit: null")
             }
 
             // A step back in commits history. Update the files map according
@@ -161,7 +173,7 @@ class CodeLongevity(repoPath: String, tailRev: String) {
                 val oldId = diff.getOldId().toObjectId()
                 val newPath = diff.getNewPath()
                 val newId = diff.getNewId().toObjectId()
-                println("old: '$oldPath', new: '$newPath'")
+                Logger.debug("old: '$oldPath', new: '$newPath'")
 
                 // Skip binary files.
                 var fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
@@ -186,8 +198,12 @@ class CodeLongevity(repoPath: String, tailRev: String) {
                 }
 
                 // If a file was deleted, then the new path is /dev/null.
-                val path = if (newPath != DiffEntry.DEV_NULL) newPath else oldPath
-                var lines = files.get(path)!!
+                val path = if (newPath != DiffEntry.DEV_NULL) {
+                    newPath
+                } else {
+                    oldPath
+                }
+                val lines = files.get(path)!!
 
                 // Update the lines array to match the diff's edit list changes.
                 // Traverse the edit list backwards to keep indices of the edit
@@ -200,7 +216,8 @@ class CodeLongevity(repoPath: String, tailRev: String) {
                     var insStart = edit.getBeginB()
                     var insEnd = edit.getEndB()
                     val insCount = edit.getLengthB()
-                    println("del ($delStart, $delEnd), ins ($insStart, $insEnd)")
+                    Logger.debug("del ($delStart, $delEnd), "
+                        + "ins ($insStart, $insEnd)")
 
                     // Deletion case. Chase down the deleted lines through the
                     // history.
@@ -209,7 +226,9 @@ class CodeLongevity(repoPath: String, tailRev: String) {
                         for (idx in delStart .. delEnd - 1) {
                             tmpLines.add(RevCommitLine(commit, oldPath, idx))
                         }
-                        lines.addAll(delStart, tmpLines)
+                        // TODO(alex): Approve code change.
+                        // delStart index caused IndexOutOfBoundException.
+                        lines.addAll(tmpLines)
                     }
 
                     // Insertion case. Track it.
@@ -243,7 +262,8 @@ class CodeLongevity(repoPath: String, tailRev: String) {
             for ((file, lines) in files) {
                 for (idx in 0 .. lines.size - 1) {
                     val from = RevCommitLine(tail, file, idx)
-                    val cl = CodeLine(from, lines[idx], "no data (too lazy to compute)")
+                    val cl = CodeLine(from, lines[idx],
+                        "no data (too lazy to compute)")
                     codeLines.add(cl)
                 }
             }

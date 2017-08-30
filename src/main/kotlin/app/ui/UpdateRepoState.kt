@@ -3,8 +3,8 @@
 
 package app.ui
 
+import app.hashers.RepoHasher
 import app.Logger
-import app.RepoHasher
 import app.api.Api
 import app.config.Configurator
 import app.utils.RequestException
@@ -20,10 +20,11 @@ class UpdateRepoState constructor(private val context: Context,
         println("Hashing your git repositories.")
         for (repo in configurator.getLocalRepos()) {
             try {
-                RepoHasher(repo, api, configurator).update()
+                RepoHasher(repo, api, configurator)
             } catch (e: RequestException) {
-                Logger.error("Network error while hashing $repo, "
-                        + "skipping...", e)
+                Logger.error("Network error while hashing $repo", e)
+            } catch (e: Exception) {
+                Logger.error("Error while hashing $repo", e)
             }
         }
         println("The repositories have been hashed. See result online on your "

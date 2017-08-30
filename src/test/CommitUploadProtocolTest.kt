@@ -3,7 +3,7 @@
 
 package test
 
-import app.RepoHasher
+import app.hashers.CommitHasher
 import app.api.MockApi
 import app.config.MockConfigurator
 import app.model.*
@@ -20,6 +20,7 @@ import kotlin.test.assertNotEquals
 class CommitUploadProtocolTest : Spek({
     val repoPath = "./tmp_repo/.git"
     val git = Git.init().setGitDir(File(repoPath)).call()
+    val gitHasher = Git.open(File(repoPath))
     val localRepo: LocalRepo = LocalRepo(repoPath)
     val initialCommit = Commit(git.commit().setMessage("Initial commit.").call())
     val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash, localRepo)
@@ -47,7 +48,7 @@ class CommitUploadProtocolTest : Spek({
 
         val mockApi = MockApi(mockRepo = repo)
         val mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
-        RepoHasher(localRepo, mockApi, mockConfigurator).update()
+        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         it("doesn't send added commits") {
             assertEquals(0, mockApi.receivedAddedCommits.size)
@@ -65,7 +66,7 @@ class CommitUploadProtocolTest : Spek({
 
         val revCommit = git.commit().setMessage("Second commit.").call()
         val addedCommit = Commit(revCommit)
-        RepoHasher(localRepo, mockApi, mockConfigurator).update()
+        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         it("doesn't send deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
@@ -96,7 +97,7 @@ class CommitUploadProtocolTest : Spek({
             val revCommit = git.commit().setMessage(message).call()
             authorCommits.add(Commit(revCommit))
         }
-        RepoHasher(localRepo, mockApi, mockConfigurator).update()
+        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         it("posts five commits as added") {
             assertEquals(5, mockApi.receivedAddedCommits.size)
@@ -152,14 +153,14 @@ class CommitUploadProtocolTest : Spek({
             val revCommit = git.commit().setMessage(message).call()
             addedCommits.add(Commit(revCommit))
         }
-        RepoHasher(localRepo, mockApi, mockConfigurator).update()
+        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         // Remove one commit from server history.
         val removedCommit = addedCommits.removeAt(1)
         repo.commits = addedCommits.toList().asReversed()
         mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
         mockApi = MockApi(mockRepo = repo)
-        RepoHasher(localRepo, mockApi, mockConfigurator).update()
+        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         it("adds posts one commit as added and received commit is lost one") {
             assertEquals(1, mockApi.receivedAddedCommits.size)
