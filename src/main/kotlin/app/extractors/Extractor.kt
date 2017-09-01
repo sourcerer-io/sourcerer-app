@@ -4,7 +4,7 @@
 package app.extractors
 
 import app.model.DiffContent
-import app.model.Stats
+import app.model.CommitStats
 import app.utils.FileHelper
 
 class Extractor : ExtractorInterface {
@@ -26,10 +26,10 @@ class Extractor : ExtractorInterface {
         }
     }
 
-    override fun extract(diffs: List<DiffContent>): List<Stats> {
+    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
         return diffs.groupBy { diff -> FileHelper.getFileExtension(diff.path) }
                 .map { (extension, diffs) -> create(extension).extract(diffs) }
-                .fold(mutableListOf<Stats>()) { accStats, stats ->
+                .fold(mutableListOf<CommitStats>()) { accStats, stats ->
                     accStats.addAll(stats)
                     accStats
                 }

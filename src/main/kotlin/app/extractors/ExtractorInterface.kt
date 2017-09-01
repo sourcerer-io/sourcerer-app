@@ -4,8 +4,8 @@
 package app.extractors
 
 import app.model.DiffContent
-import app.model.Stats
+import app.model.CommitStats
 
 interface ExtractorInterface {
-    fun extract(diffs: List<DiffContent>): List<Stats>
+    fun extract(diffs: List<DiffContent>): List<CommitStats>
 }

@@ -34,11 +34,11 @@ message Commit {
     int32 num_lines_deleted = 9;
 
     // Tech stats on a commit.
-    repeated Stats stats = 10;
+    repeated CommitStats stats = 10;
 }
 
 // Tech stats on a commit.
-message Stats {
+message CommitStats {
     // Number of lines for a specific technology.
     int32 num_lines_added = 1;
     int32 num_lines_deleted = 2;
@@ -48,6 +48,24 @@ message Stats {
 
     // Technology name.
     string tech = 4;
+}
+
+// Used to send multiple commits in one request.
+message CommitGroup {
+    repeated Commit commits = 1;
+}
+
+// Key-value statistics for fun facts.
+message Fact {
+    string key = 1;
+    double value = 2;
+    string email = 3;
+    string repo_rehash = 4;
+}
+
+// Used to send multiple stats in one request.
+message FactGroup {
+    repeated Fact facts = 1;
 }
 
 // User properties and indentity information about repos.
@@ -75,9 +93,4 @@ message Repo {
     // Raw commits server history. Used to find overlap of commits. Hashing
     // starts after last commit from the overlap.
     repeated Commit commits = 5;
-}
-
-// Used to send multiple commits in one request.
-message Commits {
-    repeated Commit commits = 1;
 }

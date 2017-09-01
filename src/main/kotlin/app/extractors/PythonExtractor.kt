@@ -4,16 +4,16 @@
 package app.extractors
 
 import app.model.DiffContent
-import app.model.Stats
+import app.model.CommitStats
 
 class PythonExtractor : ExtractorInterface {
     val NAME = "Python"
 
-    override fun extract(diffs: List<DiffContent>): List<Stats> {
-        val stats = mutableListOf<Stats>()
+    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
+        val stats = mutableListOf<CommitStats>()
 
         // Language stats.
-        stats.add(Stats(
+        stats.add(CommitStats(
                 numLinesAdded = diffs.fold(0) { total, diffContent ->
                     total + diffContent.added.size },
                 numLinesDeleted = diffs.fold(0) { total, diffContent ->

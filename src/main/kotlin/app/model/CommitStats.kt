@@ -10,14 +10,14 @@ import java.security.InvalidParameterException
 /**
  * Tech stats on a commit.
  */
-data class Stats(
+data class CommitStats(
         var numLinesAdded: Int = 0,
         var numLinesDeleted: Int = 0,
         var type: Int = 0,
         var tech: String = ""
 ) {
     @Throws(InvalidParameterException::class)
-    constructor(proto: Protos.Stats) : this() {
+    constructor(proto: Protos.CommitStats) : this() {
         numLinesAdded = proto.numLinesAdded
         numLinesDeleted = proto.numLinesDeleted
         type = proto.type
@@ -25,12 +25,12 @@ data class Stats(
     }
 
     @Throws(InvalidProtocolBufferException::class)
-    constructor(bytes: ByteArray) : this(Protos.Stats.parseFrom(bytes))
+    constructor(bytes: ByteArray) : this(Protos.CommitStats.parseFrom(bytes))
 
     constructor(serialized: String) : this(serialized.toByteArray())
 
-    fun getProto(): Protos.Stats {
-        return Protos.Stats.newBuilder()
+    fun getProto(): Protos.CommitStats {
+        return Protos.CommitStats.newBuilder()
                 .setNumLinesAdded(numLinesAdded)
                 .setNumLinesDeleted(numLinesDeleted)
                 .setType(type)

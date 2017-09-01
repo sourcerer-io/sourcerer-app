@@ -4,10 +4,10 @@
 package app.extractors
 
 import app.model.DiffContent
-import app.model.Stats
+import app.model.CommitStats
 
 class EmptyExtractor : ExtractorInterface {
-    override fun extract(diffs: List<DiffContent>): List<Stats> {
+    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
         return listOf()
     }
 }

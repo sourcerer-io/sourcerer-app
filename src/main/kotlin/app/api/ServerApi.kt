@@ -7,7 +7,9 @@ import app.BuildConfig
 import app.Logger
 import app.config.Configurator
 import app.model.Commit
-import app.model.Commits
+import app.model.CommitGroup
+import app.model.Fact
+import app.model.FactGroup
 import app.model.Repo
 import app.model.User
 import app.utils.RequestException
@@ -78,14 +80,20 @@ class ServerApi (private val configurator: Configurator) : Api {
                    .body(repo.serialize())
     }
 
-    private fun createRequestPostCommits(commits: Commits): Request {
+    private fun createRequestPostCommits(commits: CommitGroup): Request {
         return Fuel.post("/commits").header(getContentTypeHeader())
                    .body(commits.serialize())
     }
 
-    private fun createRequestDeleteCommits(commits: Commits): Request {
+    private fun createRequestDeleteCommits(commits: CommitGroup): Request {
         return Fuel.delete("/commits").header(getContentTypeHeader())
                    .body(commits.serialize())
+    }
+
+    private fun createRequestPostFacts(facts: FactGroup):
+        Request {
+        return Fuel.post("/facts").header(getContentTypeHeader())
+                   .body(facts.serialize())
     }
 
     private fun <T> makeRequest(request: Request,
@@ -143,14 +151,19 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     override fun postCommits(commitsList: List<Commit>) {
-        val commits = Commits(commitsList)
+        val commits = CommitGroup(commitsList)
         makeRequest(createRequestPostCommits(commits),
                     "postCommits", {})
     }
 
     override fun deleteCommits(commitsList: List<Commit>) {
-        val commits = Commits(commitsList)
+        val commits = CommitGroup(commitsList)
         makeRequest(createRequestDeleteCommits(commits),
                     "deleteCommits", {})
+    }
+
+    override fun postFacts(factsList: List<Fact>) {
+        val facts = FactGroup(factsList)
+        makeRequest(createRequestPostFacts(facts), "postFacts", {})
     }
 }

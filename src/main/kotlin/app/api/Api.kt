@@ -4,6 +4,7 @@
 package app.api
 
 import app.model.Commit
+import app.model.Fact
 import app.model.Repo
 import app.model.User
 
@@ -14,4 +15,5 @@ interface Api {
     fun postRepo(repo: Repo)
     fun postCommits(commitsList: List<Commit>)
     fun deleteCommits(commitsList: List<Commit>)
+    fun postFacts(factsList: List<Fact>)
 }

@@ -6,8 +6,10 @@ package app.hashers
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
+import app.model.Fact
 import app.utils.RepoHelper
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
@@ -79,6 +81,9 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     private val api: Api,
                     private val configurator: Configurator,
                     private val git: Git, tailRev: String = "") {
+    val CODE_LONGEVITY_KEY = "line-longevity-avg"
+    val CODE_LONGEVITY_REPO_KEY = "line-longevity-repo-avg"
+
     val repo: Repository = git.repository
     val head: RevCommit =
         RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
@@ -98,10 +103,16 @@ class CodeLongevity(private val localRepo: LocalRepo,
         // TODO(anatoly): Add emails from server or hashAll.
         val emails = hashSetOf(localRepo.author.email)
 
-        val sum: MutableMap<String, Long> = emails.associate { Pair(it, 0L) }
-                                                  .toMutableMap()
-        val total: Int = codeLines.size
+        val sums: MutableMap<String, Long> = emails.associate { Pair(it, 0L) }
+                                                   .toMutableMap()
+        val totals: MutableMap<String, Int> = emails.associate { Pair(it, 0) }
+                                                    .toMutableMap()
+
+        val repoTotal: Int = codeLines.size
+        var repoSum: Long = 0
         for (line in codeLines) {
+            repoSum += line.age
+
             val email = line.from.commit.authorIdent.emailAddress
             if (!emails.contains(email)) {
                 continue
@@ -109,13 +120,37 @@ class CodeLongevity(private val localRepo: LocalRepo,
             Logger.debug(line.toString())
             Logger.debug("Age: ${line.age} secs")
 
-            sum[email] = sum[email]!! + line.age
+            sums[email] = sums[email]!! + line.age
+            totals[email] = totals[email]!! + 1
         }
 
+        val secondsInDay = 86400
+        val repoAvg = if (repoTotal > 0) { repoSum / repoTotal } else 0
+        val stats = mutableListOf<Fact>()
+        stats.add(Fact(repo = serverRepo,
+                       key = CODE_LONGEVITY_REPO_KEY,
+                       value = repoAvg.toDouble()))
+        val repoAvgDays = repoAvg / secondsInDay
+        Logger.info("Repo average code line age is $repoAvgDays days, "
+              + "lines total: $repoTotal")
+
         for (email in emails) {
-            val avg = if (total > 0) sum[email]!! / total else 0
-            println("Average code line age for <$email> is $avg seconds, "
-                  + "lines total: $total")
+            val total = totals[email] ?: 0
+            val avg = if (total > 0) { sums[email]!! / total } else 0
+            stats.add(Fact(repo = serverRepo,
+                           key = CODE_LONGEVITY_KEY,
+                           value = avg.toDouble(),
+                           author = Author(email = email)))
+            if (email == localRepo.author.email) {
+                val avgDays = avg / secondsInDay
+                Logger.info("Your average code line age is $avgDays days, "
+                      + "lines total: $total")
+            }
+        }
+
+        if (stats.size > 0) {
+            api.postFacts(stats)
+            Logger.debug("Sent ${stats.size} stats to server")
         }
     }
 

@@ -4,7 +4,7 @@
 package app.extractors
 
 import app.model.DiffContent
-import app.model.Stats
+import app.model.CommitStats
 
 class JavaExtractor : ExtractorInterface {
     val NAME = "Java"
@@ -18,8 +18,8 @@ class JavaExtractor : ExtractorInterface {
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
 
-    override fun extract(diffs: List<DiffContent>): List<Stats> {
-        val stats = mutableListOf<Stats>()
+    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
+        val stats = mutableListOf<CommitStats>()
 
         val added = diffs.fold(mutableListOf<String>()) { total, diff ->
             total.addAll(diff.added)
@@ -32,7 +32,7 @@ class JavaExtractor : ExtractorInterface {
         }
 
         // Language stats.
-        stats.add(Stats(
+        stats.add(CommitStats(
                 numLinesAdded = added.size,
                 numLinesDeleted = deleted.size,
                 type = Extractor.TYPE_LANGUAGE,
@@ -44,7 +44,7 @@ class JavaExtractor : ExtractorInterface {
             val totalAdded = added.count { line -> line.contains(keyword)}
             val totalDeleted = deleted.count { line -> line.contains(keyword)}
             if (totalAdded > 0 || totalDeleted > 0) {
-                stats.add(Stats(
+                stats.add(CommitStats(
                         numLinesAdded = totalAdded,
                         numLinesDeleted = totalDeleted,
                         type = Extractor.TYPE_KEYWORD,

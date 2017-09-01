@@ -10,21 +10,21 @@ import java.security.InvalidParameterException
 /**
  * Tech stats on a commit.
  */
-data class Commits(
+data class CommitGroup(
         var commits: List<Commit> = listOf()
 ) {
     @Throws(InvalidParameterException::class)
-    constructor(proto: Protos.Commits) : this() {
+    constructor(proto: Protos.CommitGroup) : this() {
         commits = proto.commitsList.map { it -> Commit(it) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
-    constructor(bytes: ByteArray) : this(Protos.Commits.parseFrom(bytes))
+    constructor(bytes: ByteArray) : this(Protos.CommitGroup.parseFrom(bytes))
 
     constructor(serialized: String) : this(serialized.toByteArray())
 
-    fun getProto(): Protos.Commits {
-        return Protos.Commits.newBuilder()
+    fun getProto(): Protos.CommitGroup {
+        return Protos.CommitGroup.newBuilder()
                 .addAllCommits(commits.map { it -> it.getProto() })
                 .build()
     }

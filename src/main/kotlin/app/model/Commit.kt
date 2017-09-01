@@ -22,7 +22,7 @@ data class Commit(
         var isQommit: Boolean = false,
         var numLinesAdded: Int = 0,
         var numLinesDeleted: Int = 0,
-        var stats: List<Stats> = mutableListOf()
+        var stats: List<CommitStats> = mutableListOf()
 ) {
     // Wrapping JGit's RevCommit.
     var raw: RevCommit? = null  // Not sent to sever.
@@ -47,7 +47,7 @@ data class Commit(
         isQommit = proto.isQommit
         numLinesAdded = proto.numLinesAdded
         numLinesDeleted = proto.numLinesDeleted
-        stats = proto.statsList.map { Stats(it) }
+        stats = proto.statsList.map { CommitStats(it) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
