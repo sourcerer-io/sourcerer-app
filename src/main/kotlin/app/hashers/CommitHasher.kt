@@ -8,7 +8,8 @@ import app.api.Api
 import app.config.Configurator
 import app.extractors.Extractor
 import app.model.Commit
-import app.model.DiffContent
+import app.model.DiffEdit
+import app.model.DiffFile
 import app.model.LocalRepo
 import app.model.Repo
 import app.utils.RepoHelper
@@ -23,7 +24,6 @@ import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.util.io.DisabledOutputStream
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 /**
@@ -55,11 +55,11 @@ class CommitHasher(private val localRepo: LocalRepo,
             .filter { (new, _) -> emailFilter(new) }  // Email filtering.
             .map { (new, old) ->  // Mapping and stats extraction.
                 new.repo = repo
-                val diffContents = getDiffContents(new, old)
+                val diffFiles = getDiffFiles(new, old)
                 Logger.debug("Commit: ${new.raw?.name ?: ""}: "
                     + new.raw?.shortMessage)
-                Logger.debug("Diff: ${diffContents.size} entries")
-                new.stats = Extractor().extract(diffContents)
+                Logger.debug("Diff: ${diffFiles.size} entries")
+                new.stats = Extractor().extract(diffFiles)
                 Logger.debug("Stats: ${new.stats.size} entries")
                 new
             }
@@ -74,8 +74,8 @@ class CommitHasher(private val localRepo: LocalRepo,
             })
     }
 
-    fun getDiffContents(commitNew: Commit,
-                        commitOld: Commit): List<DiffContent> {
+    private fun getDiffFiles(commitNew: Commit,
+                             commitOld: Commit): List<DiffFile> {
         // TODO(anatoly): Binary files.
         val revCommitNew = commitNew.raw
         val revCommitOld = commitOld.raw
@@ -89,29 +89,20 @@ class CommitHasher(private val localRepo: LocalRepo,
                 // RENAME change type doesn't change file content.
                 .filter { it.changeType != DiffEntry.ChangeType.RENAME }
                 .map { diff ->
-                    val added = mutableListOf<String>()
-                    val deleted = mutableListOf<String>()
-
                     val new = getContentByObjectId(diff.newId.toObjectId())
                     val old = getContentByObjectId(diff.oldId.toObjectId())
 
-                    formatter.toFileHeader(diff).toEditList().forEach { edit ->
-                        val addBegin = edit.beginB
-                        val addEnd = edit.endB - 1
-                        val delBegin = edit.beginA
-                        val delEnd = edit.endA - 1
-                        added.addAll(new.filterIndexed(
-                            inRange(addBegin, addEnd)))
-                        deleted.addAll(old.filterIndexed(
-                            inRange(delBegin, delEnd)))
-                    }
+                    val edits = formatter.toFileHeader(diff).toEditList()
 
                     val path = when (diff.changeType) {
                         DiffEntry.ChangeType.DELETE -> diff.oldPath
                         else -> diff.newPath
                     }
 
-                    DiffContent(Paths.get(path), added, deleted)
+                    DiffFile(path = path,
+                             contentOld = old,
+                             contentNew = new,
+                             edits = edits.map { DiffEdit(it) })
                 }
         }
     }
@@ -159,10 +150,6 @@ class CommitHasher(private val localRepo: LocalRepo,
         val email = it.author.email
         localRepo.hashAllContributors || (email == localRepo.author.email ||
             repo.emails.contains(email))
-    }
-
-    private fun inRange(indexFrom: Int, indexTo: Int) = { index: Int, _: Any ->
-        index >= indexFrom && index <= indexTo
     }
 
     fun <T> Observable<T>.pairWithNext(): Observable<Pair<T, T>> {

@@ -3,8 +3,8 @@
 
 package app.extractors
 
-import app.model.DiffContent
 import app.model.CommitStats
+import app.model.DiffFile
 
 class JavaExtractor : ExtractorInterface {
     val NAME = "Java"
@@ -18,25 +18,25 @@ class JavaExtractor : ExtractorInterface {
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
 
-    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
+    override fun extract(files: List<DiffFile>): List<CommitStats> {
         val stats = mutableListOf<CommitStats>()
 
-        val added = diffs.fold(mutableListOf<String>()) { total, diff ->
-            total.addAll(diff.added)
+        val added = files.fold(mutableListOf<String>(), { total, file ->
+            total.addAll(file.getAllAdded())
             total
-        }
+        })
 
-        val deleted = diffs.fold(mutableListOf<String>()) { total, diff ->
-            total.addAll(diff.deleted)
+        val deleted = files.fold(mutableListOf<String>(), { total, file ->
+            total.addAll(file.getAllDeleted())
             total
-        }
+        })
 
         // Language stats.
         stats.add(CommitStats(
-                numLinesAdded = added.size,
-                numLinesDeleted = deleted.size,
-                type = Extractor.TYPE_LANGUAGE,
-                tech = NAME))
+            numLinesAdded = added.size,
+            numLinesDeleted = deleted.size,
+            type = Extractor.TYPE_LANGUAGE,
+            tech = NAME))
 
         // Keywords stats.
         // TODO(anatoly): ANTLR parsing.
@@ -45,10 +45,10 @@ class JavaExtractor : ExtractorInterface {
             val totalDeleted = deleted.count { line -> line.contains(keyword)}
             if (totalAdded > 0 || totalDeleted > 0) {
                 stats.add(CommitStats(
-                        numLinesAdded = totalAdded,
-                        numLinesDeleted = totalDeleted,
-                        type = Extractor.TYPE_KEYWORD,
-                        tech = NAME + Extractor.SEPARATOR + keyword))
+                    numLinesAdded = totalAdded,
+                    numLinesDeleted = totalDeleted,
+                    type = Extractor.TYPE_KEYWORD,
+                    tech = NAME + Extractor.SEPARATOR + keyword))
             }
         }
 

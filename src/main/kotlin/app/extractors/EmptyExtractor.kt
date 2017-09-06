@@ -3,11 +3,11 @@
 
 package app.extractors
 
-import app.model.DiffContent
 import app.model.CommitStats
+import app.model.DiffFile
 
 class EmptyExtractor : ExtractorInterface {
-    override fun extract(diffs: List<DiffContent>): List<CommitStats> {
+    override fun extract(files: List<DiffFile>): List<CommitStats> {
         return listOf()
     }
 }
