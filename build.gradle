@@ -63,6 +63,7 @@ dependencies {
     compile 'com.github.kittinunf.fuel:fuel-rxjava:1.9.0'
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit',
             version: '4.8.0.201706111038-r'
+
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.spek:spek-api:1.1.2'
     testCompile 'org.junit.platform:junit-platform-runner:1.0.0-M4'
@@ -76,7 +77,7 @@ protobuf {
 }
 
 sourceSets.main.java.srcDirs += 'build/generated/source/proto/main/java'
-sourceSets.test.java.srcDirs += 'src/test'
+sourceSets.test.java.srcDirs += 'src/test/kotlin'
 compileKotlin.dependsOn ':generateProto'
 
 // Include dependent libraries in archive.

@@ -79,7 +79,6 @@ class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
 class CodeLongevity(private val localRepo: LocalRepo,
                     private val serverRepo: Repo,
                     private val api: Api,
-                    private val configurator: Configurator,
                     private val git: Git, tailRev: String = "") {
     val CODE_LONGEVITY_KEY = "line-longevity-avg"
     val CODE_LONGEVITY_REPO_KEY = "line-longevity-repo-avg"

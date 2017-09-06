@@ -1,31 +1,44 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
-package test
+package app
 
-import app.hashers.CommitHasher
 import app.api.MockApi
-import app.config.MockConfigurator
+import app.hashers.CommitHasher
 import app.model.*
 import app.utils.RepoHelper
 import org.eclipse.jgit.api.Git
 import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.*
+import org.jetbrains.spek.api.dsl.given
+import org.jetbrains.spek.api.dsl.it
 import java.io.File
 import java.util.stream.StreamSupport.stream
 import kotlin.streams.toList
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class CommitUploadProtocolTest : Spek({
+class CommitHasherTest : Spek({
+    val userName = "Contributor"
+    val userEmail = "test@domain.com"
+
+    // Creation of test repo.
     val repoPath = "./tmp_repo/.git"
     val git = Git.init().setGitDir(File(repoPath)).call()
+    val config = git.repository.config
+    config.setString("user", null, "name", userName)
+    config.setString("user", null, "email", userEmail)
+    config.save()
+
+    // Common parameters for CommitHasher.
     val gitHasher = Git.open(File(repoPath))
-    val localRepo: LocalRepo = LocalRepo(repoPath)
-    val initialCommit = Commit(git.commit().setMessage("Initial commit.").call())
-    val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash, localRepo)
-    var repo = Repo(rehash = repoRehash, initialCommitRehash = initialCommit.rehash)
-    repo.commits = listOf(initialCommit)
+    val localRepo = LocalRepo(repoPath)
+    localRepo.author = Author(userName, userEmail)
+    val initialCommit = Commit(git.commit().setMessage("Initial commit").call())
+    val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
+                                                    localRepo)
+    val repo = Repo(rehash = repoRehash,
+                    initialCommitRehash = initialCommit.rehash)
 
     fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
 
@@ -33,7 +46,7 @@ class CommitUploadProtocolTest : Spek({
                                .toList().first()
         val initialCommit = Commit(initialRevCommit)
         val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
-                localRepo)
+                                                        localRepo)
         return repoRehash
     }
 
@@ -43,12 +56,26 @@ class CommitUploadProtocolTest : Spek({
         return lastCommit
     }
 
-    given("empty repo") {
+    given("repo with initial commit and no history") {
+        repo.commits = listOf()
+
+        val mockApi = MockApi(mockRepo = repo)
+        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+
+        it("send added commits") {
+            assertEquals(1, mockApi.receivedAddedCommits.size)
+        }
+
+        it("doesn't send deleted commits") {
+            assertEquals(0, mockApi.receivedDeletedCommits.size)
+        }
+    }
+
+    given("repo with initial commit") {
         repo.commits = listOf(getLastCommit(git))
 
         val mockApi = MockApi(mockRepo = repo)
-        val mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
-        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
+        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
 
         it("doesn't send added commits") {
             assertEquals(0, mockApi.receivedAddedCommits.size)
@@ -61,12 +88,12 @@ class CommitUploadProtocolTest : Spek({
 
     given("happy path: added one commit") {
         repo.commits = listOf(getLastCommit(git))
+
         val mockApi = MockApi(mockRepo = repo)
-        val mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
 
         val revCommit = git.commit().setMessage("Second commit.").call()
         val addedCommit = Commit(revCommit)
-        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
+        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
 
         it("doesn't send deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
@@ -83,13 +110,16 @@ class CommitUploadProtocolTest : Spek({
 
     given("happy path: added a few new commits") {
         repo.commits = listOf(getLastCommit(git))
+
         val mockApi = MockApi(mockRepo = repo)
-        val mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
 
         val otherAuthorsNames = listOf("a", "b", "a")
         val otherAuthorsEmails = listOf("a@a", "b@b", "a@a")
         for (i in 0..2) {
-            git.commit().setMessage("Create $i.").setAuthor(otherAuthorsNames.get(i), otherAuthorsEmails.get(i)).call()
+            git.commit().setMessage("Create $i.")
+                        .setAuthor(otherAuthorsNames.get(i),
+                                   otherAuthorsEmails.get(i))
+                        .call()
         }
         val authorCommits = mutableListOf<Commit>()
         for (i in 0..4) {
@@ -97,7 +127,7 @@ class CommitUploadProtocolTest : Spek({
             val revCommit = git.commit().setMessage(message).call()
             authorCommits.add(Commit(revCommit))
         }
-        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
+        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
 
         it("posts five commits as added") {
             assertEquals(5, mockApi.receivedAddedCommits.size)
@@ -108,12 +138,12 @@ class CommitUploadProtocolTest : Spek({
         }
 
         it("processes author's commits") {
-            assertEquals(authorCommits.asReversed(), mockApi.receivedAddedCommits)
+            assertEquals(authorCommits.asReversed(),
+                         mockApi.receivedAddedCommits)
         }
     }
 
     given("fork event") {
-
         val forkedRepoPath = "./forked_repo/"
         val originalRepoPath = "./original_repo/"
         val forked = Git.cloneRepository()
@@ -138,13 +168,12 @@ class CommitUploadProtocolTest : Spek({
         forked.close()
         original.repository.close()
         original.close()
-
     }
 
     given("lost server") {
         repo.commits = listOf(getLastCommit(git))
-        var mockApi = MockApi(mockRepo = repo)
-        var mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
+
+        val mockApi = MockApi(mockRepo = repo)
 
         // Add some commits.
         val addedCommits = mutableListOf<Commit>()
@@ -153,14 +182,12 @@ class CommitUploadProtocolTest : Spek({
             val revCommit = git.commit().setMessage(message).call()
             addedCommits.add(Commit(revCommit))
         }
-        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
 
         // Remove one commit from server history.
         val removedCommit = addedCommits.removeAt(1)
         repo.commits = addedCommits.toList().asReversed()
-        mockConfigurator = MockConfigurator(mockRepos = mutableListOf(repo))
-        mockApi = MockApi(mockRepo = repo)
-        CommitHasher(localRepo, repo, mockApi, mockConfigurator, gitHasher).update()
+
+        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
 
         it("adds posts one commit as added and received commit is lost one") {
             assertEquals(1, mockApi.receivedAddedCommits.size)
@@ -170,7 +197,6 @@ class CommitUploadProtocolTest : Spek({
         it("doesn't posts deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
         }
-
     }
 
     Runtime.getRuntime().exec("src/test/delete_repo.sh").waitFor()

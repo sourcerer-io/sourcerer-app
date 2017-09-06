@@ -23,6 +23,7 @@ import java.nio.charset.Charset
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.errors.MissingObjectException
+import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.util.concurrent.TimeUnit
 
@@ -32,7 +33,6 @@ import java.util.concurrent.TimeUnit
 class CommitHasher(private val localRepo: LocalRepo,
                    private val repo: Repo = Repo(),
                    private val api: Api,
-                   private val configurator: Configurator,
                    private val git: Git) {
     private val gitRepo: Repository = git.repository
 
@@ -46,7 +46,9 @@ class CommitHasher(private val localRepo: LocalRepo,
     private fun hashAndSendCommits() {
         val lastKnownCommit = repo.commits.lastOrNull()
         val knownCommits = repo.commits.toHashSet()
-        getObservableCommits()
+        // Commits are combined in pairs, an empty commit concatenated to
+        // calculate the diff of the initial commit.
+        Observable.concat(getObservableCommits(), Observable.just(Commit()))
             .pairWithNext()  // Pair commits to get diff.
             .takeWhile { (new, _) ->  // Hash until last known commit.
                 new.rehash != lastKnownCommit?.rehash }
@@ -77,15 +79,12 @@ class CommitHasher(private val localRepo: LocalRepo,
     private fun getDiffFiles(commitNew: Commit,
                              commitOld: Commit): List<DiffFile> {
         // TODO(anatoly): Binary files.
-        val revCommitNew = commitNew.raw
-        val revCommitOld = commitOld.raw
-        if (revCommitNew == null || revCommitOld == null) {
-            return listOf()
-        }
+        val revCommitNew:RevCommit? = commitNew.raw
+        val revCommitOld:RevCommit? = commitOld.raw
 
         return DiffFormatter(DisabledOutputStream.INSTANCE).use { formatter ->
             formatter.setRepository(gitRepo)
-            formatter.scan(revCommitOld.tree, revCommitNew.tree)
+            formatter.scan(revCommitOld?.tree, revCommitNew?.tree)
                 // RENAME change type doesn't change file content.
                 .filter { it.changeType != DiffEntry.ChangeType.RENAME }
                 .map { diff ->
@@ -112,7 +111,7 @@ class CommitHasher(private val localRepo: LocalRepo,
            gitRepo.open(objectId).bytes.toString(Charset.defaultCharset())
                    .split('\n')
        } catch (e: MissingObjectException) {
-           listOf<String>()
+           listOf()
        }
     }
 
@@ -154,11 +153,11 @@ class CommitHasher(private val localRepo: LocalRepo,
 
     fun <T> Observable<T>.pairWithNext(): Observable<Pair<T, T>> {
         return this.map { emit -> Pair(emit, emit) }
-            // Accumulate emits by prev-next pair.
-            .scan { pairAccumulated, pairNext ->
-                Pair(pairAccumulated.second, pairNext.second)
-            }
-            .skip(1)  // Skip initial not paired emit.
+                    // Accumulate emits by prev-next pair.
+                    .scan { pairAccumulated, pairNext ->
+                        Pair(pairAccumulated.second, pairNext.second)
+                    }
+                    .skip(1)  // Skip initial not paired emit.
     }
 
     fun update() {

@@ -38,8 +38,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             getRepoFromServer()
 
             // Hash by all plugins.
-            CommitHasher(localRepo, repo, api, configurator, git).update()
-            CodeLongevity(localRepo, repo, api, configurator, git).update()
+            CommitHasher(localRepo, repo, api, git).update()
+            CodeLongevity(localRepo, repo, api, git).update()
 
             // Confirm hashing completion.
             postRepoToServer()
