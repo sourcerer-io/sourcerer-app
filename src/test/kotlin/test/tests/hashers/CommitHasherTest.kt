@@ -2,7 +2,7 @@
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
 
-package app
+package test.tests.hashers
 
 import app.api.MockApi
 import app.hashers.CommitHasher

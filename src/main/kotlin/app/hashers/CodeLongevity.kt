@@ -90,14 +90,8 @@ class CodeLongevity(private val localRepo: LocalRepo,
         if (tailRev != "") RevWalk(repo).parseCommit(repo.resolve(tailRev))
         else null
 
-    /**
-     * A list of all code lines, both alive and deleted, between the given
-     * revisions.
-     */
-    var codeLines: MutableList<CodeLine> = mutableListOf()
-
     fun update() {
-        compute()
+        val codeLines = compute()
 
         // TODO(anatoly): Add emails from server or hashAll.
         val emails = hashSetOf(localRepo.author.email)
@@ -154,10 +148,13 @@ class CodeLongevity(private val localRepo: LocalRepo,
     }
 
     /**
-     * Scans through the repo for alive and deleted code lines, and stores them
-     * in the [codeLines] list.
+     * Scans through the repo for alive and deleted code lines and returns
+     * a list of all code lines, both alive and deleted, between the given
+     * revisions.
      */
-    private fun compute() {
+    fun compute() : List<CodeLine> {
+        val codeLines: MutableList<CodeLine> = mutableListOf()
+
         val treeWalk = TreeWalk(repo)
         treeWalk.setRecursive(true)
         treeWalk.addTree(head.getTree())
@@ -260,6 +257,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                         for (idx in delStart .. delEnd - 1) {
                             tmpLines.add(RevCommitLine(commit, oldPath, idx))
                         }
+                        
                         // TODO(alex): Approve code change.
                         // delStart index caused IndexOutOfBoundException.
                         lines.addAll(tmpLines)
@@ -275,6 +273,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                             var to = lines.get(idx)
                             val cl = CodeLine(from, to, fileText.getString(idx))
                             codeLines.add(cl)
+                            Logger.debug("Collected: ${cl.toString()}")
                         }
                         lines.subList(insStart, insEnd).clear()
                     }
@@ -302,5 +301,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                 }
             }
         }
+
+        return codeLines
     }
 }
