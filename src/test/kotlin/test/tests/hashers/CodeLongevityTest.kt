@@ -138,12 +138,10 @@ class CodeLongevityTest : Spek({
                            rev4, fileName, 0,
                            lines4[1])
 
-            /* TODO(alex): the test fails
             assertCodeLine("line2",
                            rev1, fileName, 1,
                            rev3, fileName, 2,
                            lines4[2])
-            */
         }
 
         afterGroup {

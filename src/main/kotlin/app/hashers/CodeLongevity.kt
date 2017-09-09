@@ -221,10 +221,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                 if (diff.changeType == DiffEntry.ChangeType.DELETE) {
                     val fileLoader = repo.open(oldId)
                     val fileText = RawText(fileLoader.getBytes())
-                    var lines = ArrayList<RevCommitLine>(fileText.size())
-                    for (idx in 0 .. fileText.size() - 1) {
-                        lines.add(RevCommitLine(commit, oldPath, idx))
-                    }
+                    val lines = ArrayList<RevCommitLine>(fileText.size())
                     files.put(oldPath, lines)
                 }
 
