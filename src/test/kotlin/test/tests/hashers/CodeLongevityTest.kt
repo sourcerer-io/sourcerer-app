@@ -148,4 +148,86 @@ class CodeLongevityTest : Spek({
             testRepo.destroy()
         }
     }
+
+    given("'test group #2'") {
+
+        val testRepoPath = "../testrepo2"
+        val testRepo = TestRepo(testRepoPath)
+        val fileName = "test1.txt"
+
+        // t2.1: initial insertion
+        val fileContent = listOf(
+          "line1",
+          "line2",
+          "line3",
+          "line4",
+          "line4",
+          "line5",
+          "line6",
+          "line7",
+          "line8",
+          "line9",
+          "line10",
+          "line11",
+          "line12",
+          "line13",
+          "line14",
+          "line15",
+          "line16",
+          "line17",
+          "line18"
+        )
+        testRepo.newFile(fileName, fileContent)
+        val rev1 = testRepo.commit("inital commit")
+        val lines1 = CodeLongevity(
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+
+        it("'t2.1: initial insertion'") {
+            assertEquals(fileContent.size, lines1.size)
+            for (idx in 0 .. fileContent.size - 1) {
+                assertCodeLine(fileContent[idx],
+                               rev1, fileName, idx,
+                               rev1, fileName, idx,
+                               lines1[idx])
+            }
+        }
+
+        // t2.2: ins+del
+        testRepo.deleteLines(fileName, 15, 18)
+        testRepo.deleteLines(fileName, 9, 11)
+        testRepo.deleteLines(fileName, 3, 5)
+        testRepo.insertLines(fileName, 3, listOf("Proof addition 1"))
+        testRepo.insertLines(fileName, 7, listOf("Proof addition 2"))
+        testRepo.insertLines(fileName, 11, listOf("Proof addition 3"))
+        val rev2 = testRepo.commit("insert+delete")
+
+        val lines2 = CodeLongevity(
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+
+        it("'t2.2: ins+del'") {
+            assertEquals(22, lines2.size)
+            assertCodeLine("Proof addition 3", rev2, fileName, 11,
+                           rev2, fileName, 11, lines2[0])
+            assertCodeLine("Proof addition 2", rev2, fileName, 7,
+                           rev2, fileName, 7, lines2[1])
+            assertCodeLine("Proof addition 1", rev2, fileName, 3,
+                           rev2, fileName, 3, lines2[2])
+            assertCodeLine("line1", rev1, fileName, 0,
+                           rev2, fileName, 0, lines2[3])
+            assertCodeLine("line2",
+                           rev1, fileName, 1, rev2, fileName, 1, lines2[4])
+            assertCodeLine("line3",
+                           rev1, fileName, 2, rev2, fileName, 2, lines2[5])
+            assertCodeLine("line4",
+                           rev1, fileName, 3, rev2, fileName, 3, lines2[6])
+            assertCodeLine("line4",
+                           rev1, fileName, 4, rev2, fileName, 4, lines2[7])
+            assertCodeLine("line5",
+                           rev1, fileName, 5, rev2, fileName, 5, lines2[8])
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
 })

@@ -233,35 +233,18 @@ class CodeLongevity(private val localRepo: LocalRepo,
                 }
                 val lines = files.get(path)!!
 
-                // Update the lines array to match the diff's edit list changes.
-                // Traverse the edit list backwards to keep indices of the edit
-                // list and the lines array in sync.
-                val editList = df.toFileHeader(diff).toEditList().asReversed()
-                for (edit in editList) {
-                    val delStart = edit.getBeginA()
-                    val delEnd = edit.getEndA()
-                    val delCount = edit.getLengthA()
-                    var insStart = edit.getBeginB()
-                    var insEnd = edit.getEndB()
+                // Update the lines array according to diff insertions.
+                // Traverse the edit list backwards to keep indices of
+                // the edit list and the lines array in sync.
+                val editList = df.toFileHeader(diff).toEditList()
+                for (edit in editList.asReversed()) {
+                    // Insertion case: track the lines.
                     val insCount = edit.getLengthB()
-                    Logger.debug("del ($delStart, $delEnd), "
-                        + "ins ($insStart, $insEnd)")
-
-                    // Deletion case. Chase down the deleted lines through the
-                    // history.
-                    if (delCount > 0) {
-                        var tmpLines = ArrayList<RevCommitLine>(delCount)
-                        for (idx in delStart .. delEnd - 1) {
-                            tmpLines.add(RevCommitLine(commit, oldPath, idx))
-                        }
-                        
-                        // TODO(alex): Approve code change.
-                        // delStart index caused IndexOutOfBoundException.
-                        lines.addAll(tmpLines)
-                    }
-
-                    // Insertion case. Track it.
                     if (insCount > 0) {
+                        var insStart = edit.getBeginB()
+                        var insEnd = edit.getEndB()
+                        Logger.debug("ins ($insStart, $insEnd)")
+
                         val fileLoader = repo.open(newId)
                         val fileText = RawText(fileLoader.getBytes())
 
@@ -273,6 +256,24 @@ class CodeLongevity(private val localRepo: LocalRepo,
                             Logger.debug("Collected: ${cl.toString()}")
                         }
                         lines.subList(insStart, insEnd).clear()
+                    }
+                }
+
+                // Update the lines array according to diff deletions.
+                for (edit in editList) {
+                    // Deletion case. Chase down the deleted lines through the
+                    // history.
+                    val delCount = edit.getLengthA()
+                    if (delCount > 0) {
+                        val delStart = edit.getBeginA()
+                        val delEnd = edit.getEndA()
+                        Logger.debug("del ($delStart, $delEnd)")
+
+                        var tmpLines = ArrayList<RevCommitLine>(delCount)
+                        for (idx in delStart .. delEnd - 1) {
+                            tmpLines.add(RevCommitLine(commit, oldPath, idx))
+                        }
+                        lines.addAll(delStart, tmpLines)
                     }
                 }
 

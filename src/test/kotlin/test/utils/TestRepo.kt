@@ -53,6 +53,7 @@ class TestRepo(val repoPath: String) {
 
         var lineIdx = 0
         for (line in reader.lines()) {
+            // Insertion case
             if (lineIdx == insIndex) {
                 for (insLine in insLines) {
                     tmpWriter.write(insLine)
@@ -64,6 +65,15 @@ class TestRepo(val repoPath: String) {
             tmpWriter.newLine()
             lineIdx++
         }
+
+        // Append case
+        if (lineIdx == insIndex) {
+            for (insLine in insLines) {
+                tmpWriter.write(insLine)
+                tmpWriter.newLine()
+            }
+        }
+
         tmpWriter.flush()
 
         val writer = FileWriter(file)
