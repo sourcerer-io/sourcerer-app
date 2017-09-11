@@ -10,7 +10,7 @@ import app.model.DiffFile
 class ObjectiveCExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "objectivec"
-        val FILE_EXTS = listOf("h", "m", "mm")
+        val FILE_EXTS = listOf("m", "mm")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

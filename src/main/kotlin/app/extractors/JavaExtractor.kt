@@ -13,7 +13,6 @@ class JavaExtractor : ExtractorInterface {
         val LANGUAGE_NAME = "java"
         val FILE_EXTS = listOf("java")
     }
-    val NAME = "Java"
 
     val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized", "boolean",
@@ -49,7 +48,7 @@ class JavaExtractor : ExtractorInterface {
                     numLinesAdded = totalAdded,
                     numLinesDeleted = totalDeleted,
                     type = Extractor.TYPE_KEYWORD,
-                    tech = NAME + Extractor.SEPARATOR + keyword))
+                    tech = LANGUAGE_NAME + Extractor.SEPARATOR + keyword))
             }
         }
 

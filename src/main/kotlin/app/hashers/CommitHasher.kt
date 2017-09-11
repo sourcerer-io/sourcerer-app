@@ -5,11 +5,9 @@ package app.hashers
 
 import app.Logger
 import app.api.Api
-import app.config.Configurator
 import app.extractors.Extractor
 import app.model.Commit
 import app.model.DiffContent
-import app.model.DiffEdit
 import app.model.DiffFile
 import app.model.DiffRange
 import app.model.LocalRepo
@@ -23,6 +21,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
 import java.nio.charset.Charset
 import org.eclipse.jgit.diff.DiffFormatter
+import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.revwalk.RevCommit
@@ -58,13 +57,23 @@ class CommitHasher(private val localRepo: LocalRepo,
                 || !knownCommits.contains(new) }
             .filter { (new, _) -> emailFilter(new) }  // Email filtering.
             .map { (new, old) ->  // Mapping and stats extraction.
-                new.repo = repo
-                val diffFiles = getDiffFiles(new, old)
                 Logger.debug("Commit: ${new.raw?.name ?: ""}: "
                     + new.raw?.shortMessage)
+                new.repo = repo
+
+                val diffFiles = getDiffFiles(new, old)
                 Logger.debug("Diff: ${diffFiles.size} entries")
                 new.stats = Extractor().extract(diffFiles)
                 Logger.debug("Stats: ${new.stats.size} entries")
+
+                // Count lines on all non-binary files. This is additional
+                // statistics to CommitStats because not all file extensions
+                // may be supported.
+                new.numLinesAdded = diffFiles.fold(0) { total, file ->
+                    total + file.getAllAdded().size }
+                new.numLinesDeleted = diffFiles.fold(0) { total, file ->
+                    total + file.getAllDeleted().size }
+
                 new
             }
             .observeOn(Schedulers.io())  // Different thread for data sending.
@@ -81,18 +90,28 @@ class CommitHasher(private val localRepo: LocalRepo,
 
     private fun getDiffFiles(commitNew: Commit,
                              commitOld: Commit): List<DiffFile> {
-        // TODO(anatoly): Binary files.
         val revCommitNew:RevCommit? = commitNew.raw
         val revCommitOld:RevCommit? = commitOld.raw
 
         return DiffFormatter(DisabledOutputStream.INSTANCE).use { formatter ->
             formatter.setRepository(gitRepo)
+            formatter.setDetectRenames(true)
             formatter.scan(revCommitOld?.tree, revCommitNew?.tree)
                 // RENAME change type doesn't change file content.
                 .filter { it.changeType != DiffEntry.ChangeType.RENAME }
+                // Skip binary files.
+                .filter {
+                    val id = if (it.changeType == DiffEntry.ChangeType.DELETE) {
+                        it.oldId.toObjectId()
+                    } else {
+                        it.newId.toObjectId()
+                    }
+                    !RawText.isBinary(gitRepo.open(id).openStream())
+                }
                 .map { diff ->
                     val new = getContentByObjectId(diff.newId.toObjectId())
                     val old = getContentByObjectId(diff.oldId.toObjectId())
+
                     val edits = formatter.toFileHeader(diff).toEditList()
                     val path = when (diff.changeType) {
                         DiffEntry.ChangeType.DELETE -> diff.oldPath
@@ -152,7 +171,7 @@ class CommitHasher(private val localRepo: LocalRepo,
             repo.emails.contains(email))
     }
 
-    fun <T> Observable<T>.pairWithNext(): Observable<Pair<T, T>> {
+    private fun <T> Observable<T>.pairWithNext(): Observable<Pair<T, T>> {
         return this.map { emit -> Pair(emit, emit) }
                     // Accumulate emits by prev-next pair.
                     .scan { pairAccumulated, pairNext ->
