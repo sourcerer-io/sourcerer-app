@@ -1,12 +1,18 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
 package app.extractors
 
 import app.model.CommitStats
 import app.model.DiffFile
+import java.io.File
 
 class JavaExtractor : ExtractorInterface {
+    companion object {
+        val LANGUAGE_NAME = "java"
+        val FILE_EXTS = listOf("java")
+    }
     val NAME = "Java"
 
     val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
@@ -19,7 +25,9 @@ class JavaExtractor : ExtractorInterface {
             "volatile", "const", "float", "native", "super", "while")
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        val stats = mutableListOf<CommitStats>()
+        files.map { file -> file.language = GoExtractor.LANGUAGE_NAME }
+
+        val stats = super.extract(files).toMutableList()
 
         val added = files.fold(mutableListOf<String>(), { total, file ->
             total.addAll(file.getAllAdded())
@@ -30,13 +38,6 @@ class JavaExtractor : ExtractorInterface {
             total.addAll(file.getAllDeleted())
             total
         })
-
-        // Language stats.
-        stats.add(CommitStats(
-            numLinesAdded = added.size,
-            numLinesDeleted = deleted.size,
-            type = Extractor.TYPE_LANGUAGE,
-            tech = NAME))
 
         // Keywords stats.
         // TODO(anatoly): ANTLR parsing.
@@ -53,5 +54,30 @@ class JavaExtractor : ExtractorInterface {
         }
 
         return stats
+    }
+
+    override fun extractImports(fileContent: List<String>): List<String> {
+        val libraries = mutableSetOf<String>()
+
+        // TODO(anatoly): Load file statically.
+        val javaLibraries = File("data/libraries/java_libraries.txt")
+            .inputStream().bufferedReader()
+            .readLines()
+            .toSet()
+
+        val regex = Regex("""import\s+(\w+[.\w+]*)""")
+        fileContent.forEach {
+            val res = regex.find(it)
+            if (res != null) {
+                val importedName = res.groupValues[1]
+                javaLibraries.forEach { library ->
+                    if (importedName.startsWith(library)) {
+                        libraries.add(library)
+                    }
+                }
+            }
+        }
+
+        return libraries.toList()
     }
 }

@@ -8,8 +8,10 @@ import app.api.Api
 import app.config.Configurator
 import app.extractors.Extractor
 import app.model.Commit
+import app.model.DiffContent
 import app.model.DiffEdit
 import app.model.DiffFile
+import app.model.DiffRange
 import app.model.LocalRepo
 import app.model.Repo
 import app.utils.RepoHelper
@@ -73,6 +75,7 @@ class CommitHasher(private val localRepo: LocalRepo,
                 // OnNext
             }, { t ->  // OnError
                 Logger.error("Error while hashing: $t")
+                t.printStackTrace()
             })
     }
 
@@ -90,18 +93,16 @@ class CommitHasher(private val localRepo: LocalRepo,
                 .map { diff ->
                     val new = getContentByObjectId(diff.newId.toObjectId())
                     val old = getContentByObjectId(diff.oldId.toObjectId())
-
                     val edits = formatter.toFileHeader(diff).toEditList()
-
                     val path = when (diff.changeType) {
                         DiffEntry.ChangeType.DELETE -> diff.oldPath
                         else -> diff.newPath
                     }
-
                     DiffFile(path = path,
-                             contentOld = old,
-                             contentNew = new,
-                             edits = edits.map { DiffEdit(it) })
+                             old = DiffContent(old, edits.map { edit ->
+                                 DiffRange(edit.beginA, edit.endA) }),
+                             new = DiffContent(new, edits.map { edit ->
+                                 DiffRange(edit.beginB, edit.endB) }))
                 }
         }
     }
