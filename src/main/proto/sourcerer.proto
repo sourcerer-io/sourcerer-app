@@ -24,7 +24,7 @@ message Commit {
     string author_email = 5;
 
     // Timestamp of a commit creation in seconds UTC+0.
-    uint32 date = 6;
+    uint64 date = 6;
 
     // Is quality commit.
     bool is_qommit = 7;

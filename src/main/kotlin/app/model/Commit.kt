@@ -18,7 +18,8 @@ data class Commit(
         // Tree rehash used for adjustments of stats due to rebase and fraud.
         var treeRehash: String = "",
         var author: Author = Author(),
-        var dateTimestamp: Int = 0,
+        var dateTimestamp: Long = 0,
+        var dateTimeZoneOffset: Int = 0,
         var isQommit: Boolean = false,
         var numLinesAdded: Int = 0,
         var numLinesDeleted: Int = 0,
@@ -33,7 +34,8 @@ data class Commit(
         rehash = DigestUtils.sha256Hex(revCommit.id.name)
         author = Author(revCommit.authorIdent.name,
                         revCommit.authorIdent.emailAddress)
-        dateTimestamp = revCommit.commitTime
+        dateTimestamp = revCommit.authorIdent.getWhen().time / 1000
+        dateTimeZoneOffset = revCommit.authorIdent.timeZoneOffset
         treeRehash = DigestUtils.sha256Hex(revCommit.tree.name)
     }
 

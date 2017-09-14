@@ -12,7 +12,6 @@ import app.model.*
 import test.utils.TestRepo
 
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 import org.eclipse.jgit.revwalk.RevCommit
 
@@ -60,7 +59,7 @@ class CodeLongevityTest : Spek({
         val fileName = "test1.txt"
 
         // t1: initial insertion
-        testRepo.newFile(fileName, listOf("line1", "line2"))
+        testRepo.createFile(fileName, listOf("line1", "line2"))
         val rev1 = testRepo.commit("inital commit")
         val lines1 = CodeLongevity(
             LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
@@ -177,7 +176,7 @@ class CodeLongevityTest : Spek({
           "line17",
           "line18"
         )
-        testRepo.newFile(fileName, fileContent)
+        testRepo.createFile(fileName, fileContent)
         val rev1 = testRepo.commit("inital commit")
         val lines1 = CodeLongevity(
             LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()

@@ -3,6 +3,7 @@
 
 package app.hashers
 
+import app.FactKey
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -80,9 +81,6 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     private val serverRepo: Repo,
                     private val api: Api,
                     private val git: Git, tailRev: String = "") {
-    val CODE_LONGEVITY_KEY = "line-longevity-avg"
-    val CODE_LONGEVITY_REPO_KEY = "line-longevity-repo-avg"
-
     val repo: Repository = git.repository
     val head: RevCommit =
         RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
@@ -121,7 +119,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
         val repoAvg = if (repoTotal > 0) { repoSum / repoTotal } else 0
         val stats = mutableListOf<Fact>()
         stats.add(Fact(repo = serverRepo,
-                       key = CODE_LONGEVITY_REPO_KEY,
+                       key = FactKey.LINE_LONGEVITY_REPO,
                        value = repoAvg.toDouble()))
         val repoAvgDays = repoAvg / secondsInDay
         Logger.info("Repo average code line age is $repoAvgDays days, "
@@ -131,7 +129,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
             val total = totals[email] ?: 0
             val avg = if (total > 0) { sums[email]!! / total } else 0
             stats.add(Fact(repo = serverRepo,
-                           key = CODE_LONGEVITY_KEY,
+                           key = FactKey.LINE_LONGEVITY,
                            value = avg.toDouble(),
                            author = Author(email = email)))
             if (email == localRepo.author.email) {
