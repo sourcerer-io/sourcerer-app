@@ -62,7 +62,7 @@ class CodeLongevityTest : Spek({
         testRepo.createFile(fileName, listOf("line1", "line2"))
         val rev1 = testRepo.commit("inital commit")
         val lines1 = CodeLongevity(
-            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).getLinesList()
 
         it("'t1: initial insertion'") {
             assertEquals(2, lines1.size)
@@ -80,7 +80,7 @@ class CodeLongevityTest : Spek({
         testRepo.insertLines(fileName, 1, listOf("line in the middle"))
         val rev2 = testRepo.commit("insert line")
         val lines2 = CodeLongevity(
-            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).getLinesList()
 
         it("'t2: subsequent insertion'") {
             assertEquals(3, lines2.size)
@@ -102,7 +102,7 @@ class CodeLongevityTest : Spek({
         testRepo.deleteLines(fileName, 2, 2)
         val rev3 = testRepo.commit("delete line")
         val lines3 = CodeLongevity(LocalRepo(testRepoPath), Repo(),
-                                   MockApi(), testRepo.git).compute()
+                                   MockApi(), testRepo.git).getLinesList()
 
         it("'t3: subsequent deletion'") {
             assertEquals(3, lines3.size)
@@ -124,7 +124,7 @@ class CodeLongevityTest : Spek({
         testRepo.deleteFile(fileName)
         val rev4 = testRepo.commit("delete file")
         val lines4 = CodeLongevity(LocalRepo(testRepoPath), Repo(),
-                                   MockApi(), testRepo.git).compute()
+                                   MockApi(), testRepo.git).getLinesList()
 
         it("'t4: file deletion'") {
             assertEquals(3, lines4.size)
@@ -179,7 +179,7 @@ class CodeLongevityTest : Spek({
         testRepo.createFile(fileName, fileContent)
         val rev1 = testRepo.commit("inital commit")
         val lines1 = CodeLongevity(
-            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).getLinesList()
 
         it("'t2.1: initial insertion'") {
             assertEquals(fileContent.size, lines1.size)
@@ -201,7 +201,7 @@ class CodeLongevityTest : Spek({
         val rev2 = testRepo.commit("insert+delete")
 
         val lines2 = CodeLongevity(
-            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).compute()
+            LocalRepo(testRepoPath), Repo(), MockApi(), testRepo.git).getLinesList()
 
         it("'t2.2: ins+del'") {
             assertEquals(22, lines2.size)

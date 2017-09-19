@@ -12,6 +12,7 @@ import app.model.LocalRepo
 import app.model.Repo
 import app.model.Fact
 import app.utils.RepoHelper
+import io.reactivex.Observable
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RawText
@@ -87,10 +88,14 @@ class CodeLongevity(private val localRepo: LocalRepo,
     val tail: RevCommit? =
         if (tailRev != "") RevWalk(repo).parseCommit(repo.resolve(tailRev))
         else null
+    val df = DiffFormatter(DisabledOutputStream.INSTANCE)
+
+    init {
+        df.setRepository(repo)
+        df.setDetectRenames(true)
+    }
 
     fun update() {
-        val codeLines = compute()
-
         // TODO(anatoly): Add emails from server or hashAll.
         val emails = hashSetOf(localRepo.author.email)
 
@@ -99,20 +104,20 @@ class CodeLongevity(private val localRepo: LocalRepo,
         val totals: MutableMap<String, Int> = emails.associate { Pair(it, 0) }
                                                     .toMutableMap()
 
-        val repoTotal: Int = codeLines.size
+        var repoTotal: Int = 0
         var repoSum: Long = 0
-        for (line in codeLines) {
+        getLinesObservable().blockingSubscribe { line ->
+            repoTotal++
             repoSum += line.age
 
             val email = line.from.commit.authorIdent.emailAddress
-            if (!emails.contains(email)) {
-                continue
-            }
-            Logger.debug(line.toString())
-            Logger.debug("Age: ${line.age} secs")
+            if (emails.contains(email)) {
+                Logger.debug(line.toString())
+                Logger.debug("Age: ${line.age} secs")
 
-            sums[email] = sums[email]!! + line.age
-            totals[email] = totals[email]!! + 1
+                sums[email] = sums[email]!! + line.age
+                totals[email] = totals[email]!! + 1
+            }
         }
 
         val secondsInDay = 86400
@@ -146,12 +151,23 @@ class CodeLongevity(private val localRepo: LocalRepo,
     }
 
     /**
-     * Scans through the repo for alive and deleted code lines and returns
-     * a list of all code lines, both alive and deleted, between the given
-     * revisions.
+     * Returns a list of code lines, both alive and deleted, between
+     * the revisions of the repo.
      */
-    fun compute() : List<CodeLine> {
+    fun getLinesList() : List<CodeLine> {
         val codeLines: MutableList<CodeLine> = mutableListOf()
+        getLinesObservable().blockingSubscribe { line ->
+            codeLines.add(line)
+        }
+        return codeLines
+    }
+
+    /**
+     * Returns an observable for for code lines, both alive and deleted, between
+     * the revisions of the repo.
+     */
+    private fun getLinesObservable(): Observable<CodeLine> =
+        Observable.create { subscriber ->
 
         val treeWalk = TreeWalk(repo)
         treeWalk.setRecursive(true)
@@ -173,30 +189,9 @@ class CodeLongevity(private val localRepo: LocalRepo,
             }
         }
   
-        val df = DiffFormatter(DisabledOutputStream.INSTANCE)
-        df.setRepository(repo)
-        df.setDetectRenames(true)
-
-        val revWalk = RevWalk(repo)
-        revWalk.markStart(head)
-
-        var commit: RevCommit? = revWalk.next()  // move the walker to the head
-        while (commit != null && commit != tail) {
-            val parentCommit: RevCommit? = revWalk.next()
-
-            Logger.debug("commit: ${commit.getName()}; " +
-                "'${commit.getShortMessage()}'")
-            if (parentCommit != null) {
-                Logger.debug("parent commit: ${parentCommit.getName()}; "
-                    + "'${parentCommit.getShortMessage()}'")
-            }
-            else {
-                Logger.debug("parent commit: null")
-            }
-
+        getDiffsObservable().blockingSubscribe { (commit, diffs) ->
             // A step back in commits history. Update the files map according
             // to the diff.
-            val diffs = df.scan(parentCommit, commit)
             for (diff in diffs) {
                 val oldPath = diff.getOldPath()
                 val oldId = diff.getOldId().toObjectId()
@@ -250,7 +245,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                             val from = RevCommitLine(commit, newPath, idx)
                             var to = lines.get(idx)
                             val cl = CodeLine(from, to, fileText.getString(idx))
-                            codeLines.add(cl)
+                            subscriber.onNext(cl)
                             Logger.debug("Collected: ${cl.toString()}")
                         }
                         lines.subList(insStart, insEnd).clear()
@@ -280,7 +275,6 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     files.set(oldPath, files.remove(newPath)!!)
                 }
             }
-            commit = parentCommit
         }
 
         // If a tail revision was given then the map has to contain unclaimed
@@ -293,11 +287,41 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     val from = RevCommitLine(tail, file, idx)
                     val cl = CodeLine(from, lines[idx],
                         "no data (too lazy to compute)")
-                    codeLines.add(cl)
+                    subscriber.onNext(cl)
                 }
             }
         }
 
-        return codeLines
+        subscriber.onComplete()
+    }
+
+    /**
+     * Iterates over the diffs between commits in the repo's history.
+     */
+    private fun getDiffsObservable(): Observable<Pair<RevCommit, List<DiffEntry>>> =
+        Observable.create { subscriber ->
+
+        val revWalk = RevWalk(repo)
+        revWalk.markStart(head)
+
+        var commit: RevCommit? = revWalk.next()  // move the walker to the head
+        while (commit != null && commit != tail) {
+            val parentCommit: RevCommit? = revWalk.next()
+
+            Logger.debug("commit: ${commit.getName()}; " +
+                "'${commit.getShortMessage()}'")
+            if (parentCommit != null) {
+                Logger.debug("parent commit: ${parentCommit.getName()}; "
+                    + "'${parentCommit.getShortMessage()}'")
+            }
+            else {
+                Logger.debug("parent commit: null")
+            }
+
+            subscriber.onNext(Pair(commit, df.scan(parentCommit, commit)))
+            commit = parentCommit
+        }
+
+        subscriber.onComplete()
     }
 }
