@@ -17,6 +17,7 @@ import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.AnyObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -29,15 +30,21 @@ import java.util.Date
 /**
  * Represents a code line in a file revision.
  */
-class RevCommitLine(val commit: RevCommit, val file: String, val line: Int)
+class RevCommitLine(val commit: RevCommit, val fileId: AnyObjectId,
+                    val file: String, val line: Int,
+                    val isDeleted: Boolean) {
+
+    val id : String
+        get() = "${fileId.getName()}:$line"
+}
 
 /**
  * Represents a code line in repo's history.
  *
  * TODO(Alex): the text arg is solely for testing proposes (remove it)
  */
-class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
-               val text: String) {
+class CodeLine(val repo: Repository,
+               val from: RevCommitLine, val to: RevCommitLine) {
 
     // TODO(alex): oldId and newId may be computed as a hash built from commit,
     // file name and line number, if we are going to send the data outside a
@@ -48,18 +55,39 @@ class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
      * identify a line and update its lifetime computed at the previous
      * iteration.
      */
-    val oldId: String = ""
+    val oldId : String
+        get() = from.id
 
     /**
      * Id of the code line in a revision, where the line was deleted, or a head
      * revision, if the line is alive.
      */
-    val newId: String = ""
+    val newId : String
+        get() = to.id
 
     /**
      * The code line's age in seconds.
      */
-    val age = to.commit.getCommitTime() - from.commit.getCommitTime()
+    val age : Long
+        get() = (to.commit.getCommitTime() - from.commit.getCommitTime()).toLong()
+
+    /**
+     * The code line text.
+     */
+    val text : String
+        get() = RawText(repo.open(from.fileId).getBytes()).getString(from.line)
+
+    /**
+     * Email address of the line's author.
+     */
+    val email : String
+        get() = to.commit.authorIdent.emailAddress
+
+    /**
+     * True if the line is deleted.
+     */
+    val isDeleted : Boolean
+        get() = to.isDeleted
 
     /**
      * A pretty print of a code line; debugging.
@@ -70,8 +98,9 @@ class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
         val td = df.format(Date(to.commit.getCommitTime().toLong() * 1000))
         val fc = "${from.commit.getName()} '${from.commit.getShortMessage()}'"
         val tc = "${to.commit.getName()} '${to.commit.getShortMessage()}'"
+        val state = if (isDeleted) "deleted in" else "last known as"
         return "Line '$text' - '${from.file}:${from.line}' added in $fc $fd\n" +
-            "  last known as '${to.file}:${to.line}' in $tc $td"
+            "  ${state} '${to.file}:${to.line}' in $tc $td"
     }
 }
 
@@ -81,13 +110,10 @@ class CodeLine(val from: RevCommitLine, val to: RevCommitLine,
 class CodeLongevity(private val localRepo: LocalRepo,
                     private val serverRepo: Repo,
                     private val api: Api,
-                    private val git: Git, tailRev: String = "") {
+                    private val git: Git) {
     val repo: Repository = git.repository
     val head: RevCommit =
         RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
-    val tail: RevCommit? =
-        if (tailRev != "") RevWalk(repo).parseCommit(repo.resolve(tailRev))
-        else null
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
 
     init {
@@ -154,9 +180,9 @@ class CodeLongevity(private val localRepo: LocalRepo,
      * Returns a list of code lines, both alive and deleted, between
      * the revisions of the repo.
      */
-    fun getLinesList() : List<CodeLine> {
+    fun getLinesList(tail : RevCommit? = null) : List<CodeLine> {
         val codeLines: MutableList<CodeLine> = mutableListOf()
-        getLinesObservable().blockingSubscribe { line ->
+        getLinesObservable(tail).blockingSubscribe { line ->
             codeLines.add(line)
         }
         return codeLines
@@ -166,30 +192,31 @@ class CodeLongevity(private val localRepo: LocalRepo,
      * Returns an observable for for code lines, both alive and deleted, between
      * the revisions of the repo.
      */
-    private fun getLinesObservable(): Observable<CodeLine> =
+    fun getLinesObservable(tail : RevCommit? = null) : Observable<CodeLine> =
         Observable.create { subscriber ->
 
-        val treeWalk = TreeWalk(repo)
-        treeWalk.setRecursive(true)
-        treeWalk.addTree(head.getTree())
+        val headWalk = TreeWalk(repo)
+        headWalk.setRecursive(true)
+        headWalk.addTree(head.getTree())
 
         val files: MutableMap<String, ArrayList<RevCommitLine>> = mutableMapOf()
 
         // Build a map of file names and their code lines.
-        while (treeWalk.next()) {
-            val path = treeWalk.getPathString()
-            val fileLoader = repo.open(treeWalk.getObjectId(0))
+        while (headWalk.next()) {
+            val path = headWalk.getPathString()
+            val fileId = headWalk.getObjectId(0)
+            val fileLoader = repo.open(fileId)
             if (!RawText.isBinary(fileLoader.openStream())) {
                 val fileText = RawText(fileLoader.getBytes())
                 var lines = ArrayList<RevCommitLine>(fileText.size())
                 for (idx in 0 .. fileText.size() - 1) {
-                    lines.add(RevCommitLine(head, path, idx))
+                    lines.add(RevCommitLine(head, fileId, path, idx, false))
                 }
                 files.put(path, lines)
             }
         }
-  
-        getDiffsObservable().blockingSubscribe { (commit, diffs) ->
+
+        getDiffsObservable(tail).blockingSubscribe { (commit, diffs) ->
             // A step back in commits history. Update the files map according
             // to the diff.
             for (diff in diffs) {
@@ -210,12 +237,12 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     continue
                 }
 
-                // File was deleted, put its lines into the files map.
+                // File was deleted, initialize the line array in the files map.
                 if (diff.changeType == DiffEntry.ChangeType.DELETE) {
                     val fileLoader = repo.open(oldId)
                     val fileText = RawText(fileLoader.getBytes())
-                    val lines = ArrayList<RevCommitLine>(fileText.size())
-                    files.put(oldPath, lines)
+                    files.put(oldPath,
+                              ArrayList<RevCommitLine>(fileText.size()))
                 }
 
                 // If a file was deleted, then the new path is /dev/null.
@@ -238,15 +265,13 @@ class CodeLongevity(private val localRepo: LocalRepo,
                         var insEnd = edit.getEndB()
                         Logger.debug("ins ($insStart, $insEnd)")
 
-                        val fileLoader = repo.open(newId)
-                        val fileText = RawText(fileLoader.getBytes())
-
                         for (idx in insStart .. insEnd - 1) {
-                            val from = RevCommitLine(commit, newPath, idx)
+                            val from = RevCommitLine(commit, newId,
+                                                     newPath, idx, false)
                             var to = lines.get(idx)
-                            val cl = CodeLine(from, to, fileText.getString(idx))
-                            subscriber.onNext(cl)
+                            val cl = CodeLine(repo, from, to)
                             Logger.debug("Collected: ${cl.toString()}")
+                            subscriber.onNext(cl)
                         }
                         lines.subList(insStart, insEnd).clear()
                     }
@@ -264,7 +289,8 @@ class CodeLongevity(private val localRepo: LocalRepo,
 
                         var tmpLines = ArrayList<RevCommitLine>(delCount)
                         for (idx in delStart .. delEnd - 1) {
-                            tmpLines.add(RevCommitLine(commit, oldPath, idx))
+                            tmpLines.add(RevCommitLine(commit, oldId,
+                                                       oldPath, idx, true))
                         }
                         lines.addAll(delStart, tmpLines)
                     }
@@ -282,12 +308,22 @@ class CodeLongevity(private val localRepo: LocalRepo,
         // them all into the result lines list, so the caller can update their
         // ages properly.
         if (tail != null) {
-            for ((file, lines) in files) {
-                for (idx in 0 .. lines.size - 1) {
-                    val from = RevCommitLine(tail, file, idx)
-                    val cl = CodeLine(from, lines[idx],
-                        "no data (too lazy to compute)")
-                    subscriber.onNext(cl)
+            val tailWalk = TreeWalk(repo)
+            tailWalk.setRecursive(true)
+            tailWalk.addTree(tail.getTree())
+
+            while (tailWalk.next()) {
+                val filePath = tailWalk.getPathString()
+                val lines = files.get(filePath)
+                if (lines != null) {
+                    val fileId = tailWalk.getObjectId(0)
+                    for (idx in 0 .. lines.size - 1) {
+                        val from = RevCommitLine(tail, fileId,
+                                                 filePath, idx, false)
+                        val cl = CodeLine(repo, from, lines[idx])
+                        Logger.debug("Collected (tail): ${cl.toString()}")
+                        subscriber.onNext(cl)
+                    }
                 }
             }
         }
@@ -298,7 +334,8 @@ class CodeLongevity(private val localRepo: LocalRepo,
     /**
      * Iterates over the diffs between commits in the repo's history.
      */
-    private fun getDiffsObservable(): Observable<Pair<RevCommit, List<DiffEntry>>> =
+    private fun getDiffsObservable(tail : RevCommit?) :
+        Observable<Pair<RevCommit, List<DiffEntry>>> =
         Observable.create { subscriber ->
 
         val revWalk = RevWalk(repo)
