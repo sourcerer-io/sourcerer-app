@@ -4,9 +4,11 @@
 package app.model
 
 import app.utils.FileHelper
+import org.eclipse.jgit.diff.DiffEntry
 
 class DiffFile(
     val path: String = "",
+    val changeType: DiffEntry.ChangeType,
     val old: DiffContent = DiffContent(),
     val new: DiffContent = DiffContent(),
     var language: String = ""

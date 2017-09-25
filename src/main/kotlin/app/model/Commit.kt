@@ -27,6 +27,7 @@ data class Commit(
 ) {
     // Wrapping JGit's RevCommit.
     var raw: RevCommit? = null  // Not sent to sever.
+    var diffs: List<DiffFile> = listOf()
 
     constructor(revCommit: RevCommit) : this() {
         raw = revCommit

@@ -4,23 +4,20 @@
 
 package test.tests.hashers
 
-import app.FactKey
 import app.api.MockApi
 import app.hashers.CommitHasher
+import app.hashers.CommitCrawler
 import app.model.*
 import app.utils.RepoHelper
 import org.eclipse.jgit.api.Git
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
-import test.utils.TestRepo
 import java.io.File
-import java.util.*
 import java.util.stream.StreamSupport.stream
 import kotlin.streams.toList
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 
 class CommitHasherTest : Spek({
     val userName = "Contributor"
@@ -60,19 +57,13 @@ class CommitHasherTest : Spek({
         return lastCommit
     }
 
-    fun createDate(year: Int = 2017, month: Int = 1, day: Int = 1,
-                   hour: Int = 0, minute: Int = 0, seconds: Int = 0): Date {
-        val cal = Calendar.getInstance()
-        // Month in calendar is 0-based.
-        cal.set(year, month - 1, day, hour, minute, seconds)
-        return cal.time
-    }
-
     given("repo with initial commit and no history") {
         repo.commits = listOf()
 
         val mockApi = MockApi(mockRepo = repo)
-        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+        val observable = CommitCrawler.getObservable(gitHasher, repo)
+        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+            .updateFromObservable(observable)
 
         it("send added commits") {
             assertEquals(1, mockApi.receivedAddedCommits.size)
@@ -87,7 +78,9 @@ class CommitHasherTest : Spek({
         repo.commits = listOf(getLastCommit(git))
 
         val mockApi = MockApi(mockRepo = repo)
-        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+        val observable = CommitCrawler.getObservable(gitHasher, repo)
+        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+            .updateFromObservable(observable)
 
         it("doesn't send added commits") {
             assertEquals(0, mockApi.receivedAddedCommits.size)
@@ -105,7 +98,9 @@ class CommitHasherTest : Spek({
 
         val revCommit = git.commit().setMessage("Second commit.").call()
         val addedCommit = Commit(revCommit)
-        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+        val observable = CommitCrawler.getObservable(gitHasher, repo)
+        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+            .updateFromObservable(observable)
 
         it("doesn't send deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
@@ -139,7 +134,9 @@ class CommitHasherTest : Spek({
             val revCommit = git.commit().setMessage(message).call()
             authorCommits.add(Commit(revCommit))
         }
-        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+        val observable = CommitCrawler.getObservable(gitHasher, repo)
+        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+            .updateFromObservable(observable)
 
         it("posts five commits as added") {
             assertEquals(5, mockApi.receivedAddedCommits.size)
@@ -199,7 +196,9 @@ class CommitHasherTest : Spek({
         val removedCommit = addedCommits.removeAt(1)
         repo.commits = addedCommits.toList().asReversed()
 
-        CommitHasher(localRepo, repo, mockApi, gitHasher).update()
+        val observable = CommitCrawler.getObservable(gitHasher, repo)
+        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+            .updateFromObservable(observable)
 
         it("adds posts one commit as added and received commit is lost one") {
             assertEquals(1, mockApi.receivedAddedCommits.size)
@@ -208,70 +207,6 @@ class CommitHasherTest : Spek({
 
         it("doesn't posts deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
-        }
-    }
-
-    given("test of commits date facts") {
-        val testRepoPath = "../testrepo1"
-        val testRepo = TestRepo(testRepoPath)
-        val author1 = Author("Test1", "test@domain.com")
-        val author2 = Author("Test2", "test@domain.com")
-
-        val repo = Repo(rehash = "rehash", commits = listOf())
-        val mockApi = MockApi(mockRepo = repo)
-        val facts = mockApi.receivedFacts
-
-        afterEachTest {
-            facts.clear()
-        }
-
-        it("send two facts") {
-            testRepo.createFile("test1.txt", listOf("line1", "line2"))
-            testRepo.commit(message = "initial commit",
-                            author = author1,
-                            // Sunday.
-                            date = createDate(year = 2017, month = 1, day = 1,
-                                hour = 13, minute = 0, seconds = 0))
-
-            CommitHasher(localRepo, repo, mockApi, testRepo.git).update()
-
-            assertEquals(2, facts.size)
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 13,
-                1.0, author1)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 6,
-                1.0, author1)))
-        }
-
-        it("send more facts") {
-            testRepo.createFile("test2.txt", listOf("line1", "line2"))
-            testRepo.commit(message = "second commit",
-                            author = author2,
-                            // Monday.
-                            date = createDate(year=2017, month = 1, day = 2,
-                                hour = 18, minute = 0, seconds = 0))
-
-            testRepo.createFile("test3.txt", listOf("line1", "line2"))
-            testRepo.commit(message = "third commit",
-                            author = author1,
-                            // Monday.
-                            date = createDate(month = 1, day = 2,
-                                hour = 13, minute = 0, seconds = 0))
-
-            CommitHasher(localRepo, repo, mockApi, testRepo.git).update()
-
-            assertEquals(5, facts.size)
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 18,
-                1.0, author2)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 0,
-                1.0, author2)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 13,
-                2.0, author1)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 0,
-                1.0, author1)))
-        }
-
-        afterGroup {
-            testRepo.destroy()
         }
     }
 
