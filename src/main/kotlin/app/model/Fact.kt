@@ -9,7 +9,8 @@ import java.security.InvalidParameterException
  */
 data class Fact(
     var repo: Repo = Repo(),
-    var key: String = "",
+    var code: Int = 0,
+    var key: Int = 0,
     var value: Double = 0.0,
     var author: Author = Author()
 ) {
@@ -17,8 +18,9 @@ data class Fact(
     constructor(proto: Protos.Fact) : this() {
         repo = Repo(rehash = proto.repoRehash)
         author = Author("", proto.email)
+        code = proto.code
         key = proto.key
-        value = proto.value
+        value = proto.value1.toDoubleOrNull() ?: 0.0
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -30,8 +32,9 @@ data class Fact(
         return Protos.Fact.newBuilder()
             .setRepoRehash(repo.rehash)
             .setEmail(author.email)
+            .setCode(code)
             .setKey(key)
-            .setValue(value)
+            .setValue1(value.toString())
             .build()
     }
 

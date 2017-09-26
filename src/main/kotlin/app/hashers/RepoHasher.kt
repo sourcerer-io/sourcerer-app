@@ -57,7 +57,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             observable.connect()
 
             // TODO(anatoly): CodeLongevity hash from observable.
-            CodeLongevity(localRepo, serverRepo, api, git)
+            CodeLongevity(localRepo, serverRepo, api, git).update()
 
             // Confirm hashing completion.
             postRepoToServer()

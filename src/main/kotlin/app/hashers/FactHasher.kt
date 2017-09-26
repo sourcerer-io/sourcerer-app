@@ -3,7 +3,7 @@
 
 package app.hashers
 
-import app.FactKey
+import app.FactCodes
 import app.Logger
 import app.api.Api
 import app.model.Author
@@ -59,7 +59,7 @@ class FactHasher(private val localRepo: LocalRepo,
                         list.forEachIndexed { hour, count ->
                             if (count > 0) {
                                 facts.add(Fact(serverRepo,
-                                    FactKey.COMMITS_DAY_TIME + hour,
+                                    FactCodes.COMMITS_DAY_TIME, hour,
                                     count.toDouble(), author))
                             }
                         }
@@ -68,7 +68,7 @@ class FactHasher(private val localRepo: LocalRepo,
                         list.forEachIndexed { day, count ->
                             if (count > 0) {
                                 facts.add(Fact(serverRepo,
-                                    FactKey.COMMITS_DAY_WEEK + day,
+                                    FactCodes.COMMITS_DAY_WEEK, day,
                                     count.toDouble(), author))
                             }
                         }

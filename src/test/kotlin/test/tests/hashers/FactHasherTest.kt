@@ -3,7 +3,7 @@
 
 package test.tests.hashers
 
-import app.FactKey
+import app.FactCodes
 import app.api.MockApi
 import app.hashers.CommitCrawler
 import app.hashers.FactHasher
@@ -60,9 +60,9 @@ class FactHasherTest : Spek({
                 .updateFromObservable(observable)
 
             assertEquals(2, facts.size)
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 13,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 13,
                 1.0, author1)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 6,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 6,
                 1.0, author1)))
         }
 
@@ -84,13 +84,13 @@ class FactHasherTest : Spek({
                 .updateFromObservable(observable)
 
             assertEquals(5, facts.size)
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 18,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 18,
                 1.0, author2)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 0,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 0,
                 1.0, author2)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_TIME + 13,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 13,
                 2.0, author1)))
-            assertTrue(facts.contains(Fact(repo, FactKey.COMMITS_DAY_WEEK + 0,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 0,
                 1.0, author1)))
         }
 

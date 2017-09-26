@@ -57,10 +57,14 @@ message CommitGroup {
 
 // Key-value statistics for fun facts.
 message Fact {
-    string key = 1;
-    double value = 2;
-    string email = 3;
-    string repo_rehash = 4;
+    int32 code = 1;
+    int32 key = 2;
+    string value1 = 3;
+    string value2 = 4;
+    string value3 = 5;
+    string value4 = 6;
+    string email = 7;
+    string repo_rehash = 8;
 }
 
 // Used to send multiple stats in one request.
