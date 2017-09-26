@@ -12,6 +12,7 @@ class JavaExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "java"
         val FILE_EXTS = listOf("java")
+        val LIBRARIES = ExtractorInterface.getLibraries("java")
     }
 
     val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
@@ -56,27 +57,21 @@ class JavaExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
-
-        // TODO(anatoly): Load file statically.
-        val javaLibraries = File("data/libraries/java_libraries.txt")
-            .inputStream().bufferedReader()
-            .readLines()
-            .toSet()
+        val imports = mutableSetOf<String>()
 
         val regex = Regex("""import\s+(\w+[.\w+]*)""")
         fileContent.forEach {
             val res = regex.find(it)
             if (res != null) {
                 val importedName = res.groupValues[1]
-                javaLibraries.forEach { library ->
+                LIBRARIES.forEach { library ->
                     if (importedName.startsWith(library)) {
-                        libraries.add(library)
+                        imports.add(library)
                     }
                 }
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

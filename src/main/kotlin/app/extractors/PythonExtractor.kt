@@ -19,7 +19,7 @@ class PythonExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val regex =
             Regex("""(from\s+(\w+)[.\w+]*\s+import|import\s+(\w+[,\s*\w+]*))""")
@@ -28,10 +28,10 @@ class PythonExtractor : ExtractorInterface {
             if (res != null) {
                 val lineLibs = res.groupValues.last { it != "" }
                     .split(Regex(""",\s*"""))
-                libraries.addAll(lineLibs)
+                imports.addAll(lineLibs)
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

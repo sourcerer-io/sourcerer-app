@@ -95,6 +95,7 @@ class CommitHasher(private val localRepo: LocalRepo,
             .subscribe({ commitsBundle ->  // OnNext.
                 postCommitsToServer(commitsBundle)  // Send ready commits.
             }, { e ->  // OnError.
+                Logger.error("Hashing error: " + e.message)
                 throwables.add(e)  // TODO(anatoly): Top-class handling errors.
             })
     }

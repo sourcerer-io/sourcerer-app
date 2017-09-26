@@ -19,17 +19,17 @@ class RubyExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val regex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
         fileContent.forEach {
             val res = regex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues.last { it -> it != "" }
-                libraries.add(lineLib)
+                imports.add(lineLib)
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

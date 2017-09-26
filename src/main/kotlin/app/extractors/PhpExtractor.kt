@@ -19,7 +19,7 @@ class PhpExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val useRegex = Regex("""use\s+(\w+)[\\\w+]*""")
         val requireIncludeRegex = Regex("""(require|require_once|include|""" +
@@ -28,10 +28,10 @@ class PhpExtractor : ExtractorInterface {
             val res = useRegex.findAll(it) + requireIncludeRegex.findAll(it)
             if (res.toList().isNotEmpty()) {
                 val lineLib = res.toList().map { it.groupValues }.last().last()
-                libraries.add(lineLib)
+                imports.add(lineLib)
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

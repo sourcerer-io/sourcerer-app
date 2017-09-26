@@ -19,17 +19,17 @@ class CExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val regex = Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
         fileContent.forEach {
             val res = regex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues.last()
-                libraries.add(lineLib)
+                imports.add(lineLib)
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

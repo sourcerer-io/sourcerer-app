@@ -12,6 +12,7 @@ class CSharpExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "cs"
         val FILE_EXTS = listOf("cs")
+        val LIBRARIES = ExtractorInterface.getLibraries("cs")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -20,27 +21,21 @@ class CSharpExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
-
-        // TODO(anatoly): Load file statically.
-        val csLibraries = File("data/libraries/cs_libraries.txt")
-            .inputStream().bufferedReader()
-            .readLines()
-            .toSet()
+        val imports = mutableSetOf<String>()
 
         val regex = Regex("""using\s+(\w+[.\w+]*)""")
         fileContent.forEach {
             val res = regex.find(it)
             if (res != null) {
                 val importedName = res.groupValues[1]
-                csLibraries.forEach { library ->
+                LIBRARIES.forEach { library ->
                     if (importedName.startsWith(library)) {
-                        libraries.add(library)
+                        imports.add(library)
                     }
                 }
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

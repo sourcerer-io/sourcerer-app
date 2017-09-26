@@ -8,6 +8,14 @@ import app.model.DiffFile
 import app.model.CommitStats
 
 interface ExtractorInterface {
+    companion object {
+        fun getLibraries(name: String): Set<String> {
+            return ExtractorInterface::class.java.classLoader
+                .getResourceAsStream("data/libraries/${name}_libraries.txt")
+                .bufferedReader().readLines().toSet()
+        }
+    }
+
     fun extract(files: List<DiffFile>): List<CommitStats> {
         files.map { file ->
             file.old.imports = extractImports(file.old.content)
@@ -29,4 +37,6 @@ interface ExtractorInterface {
     fun extractImports(fileContent: List<String>): List<String> {
         return listOf()
     }
+
+
 }

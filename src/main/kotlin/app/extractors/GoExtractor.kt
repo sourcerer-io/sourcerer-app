@@ -19,26 +19,26 @@ class GoExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val singleImportRegex = Regex("""import\s+"(\w+)"""")
         fileContent.forEach {
             val res = singleImportRegex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues.last()
-                libraries.add(lineLib)
+                imports.add(lineLib)
             }
         }
         val multipleImportRegex = Regex("""import[\s\t\n]+\((.+?)\)""",
                 RegexOption.DOT_MATCHES_ALL)
         val contentJoined = fileContent.joinToString(separator = "")
         multipleImportRegex.findAll(contentJoined).forEach { matchResult ->
-            libraries.addAll(matchResult.groupValues.last()
+            imports.addAll(matchResult.groupValues.last()
                 .split(Regex("""(\t+|\n+|\s+)"""))
                 .filter { it.isNotEmpty() }
                 .map { it -> it.replace("\"", "") })
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

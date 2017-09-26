@@ -19,7 +19,7 @@ class ObjectiveCExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
+        val imports = mutableSetOf<String>()
 
         val sharpImportIncludeRegex =
             Regex("""#(import|include)\s+[">](\w+)[/\w+]*\.\w+[">]""")
@@ -30,10 +30,10 @@ class ObjectiveCExtractor : ExtractorInterface {
                 atImportRegex.findAll(it)
             if (res.toList().isNotEmpty()) {
                 val lineLib = res.toList().map { it.groupValues }.last().last()
-                libraries.add(lineLib)
+                imports.add(lineLib)
             }
         }
 
-        return libraries.toList()
+        return imports.toList()
     }
 }

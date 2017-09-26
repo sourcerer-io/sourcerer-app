@@ -6,12 +6,12 @@ package app.extractors
 
 import app.model.CommitStats
 import app.model.DiffFile
-import java.io.File
 
 class JavascriptExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "js"
         val FILE_EXTS = listOf("js")
+        val LIBRARIES = ExtractorInterface.getLibraries("js")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -20,20 +20,14 @@ class JavascriptExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val libraries = mutableSetOf<String>()
-
-        // TODO(anatoly): Load file statically.
-        val jsLibraries = File("data/libraries/js_libraries.txt")
-            .inputStream().bufferedReader()
-            .readLines()
-            .toSet()
+        val imports = mutableSetOf<String>()
 
         val splitRegex =
             Regex("""\s+|,|;|:|\\*|\n|\(|\)|\\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
         val fileTokens = fileContent.joinToString(separator = " ")
             .split(splitRegex)
-        libraries.addAll(fileTokens.filter { token -> token in jsLibraries })
+        imports.addAll(fileTokens.filter { token -> token in LIBRARIES })
 
-        return libraries.toList()
+        return imports.toList()
     }
 }
