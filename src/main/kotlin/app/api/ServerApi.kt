@@ -21,33 +21,33 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
 class ServerApi (private val configurator: Configurator) : Api {
-    private val HEADER_VERSION_CODE = "app-version-code"
-    private val HEADER_CONTENT_TYPE = "Content-Type"
-    private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
-    private val HEADER_COOKIE = "Cookie"
-    private val HEADER_SET_COOKIE = "Set-Cookie"
-    private val KEY_TOKEN = "Token="
+    companion object {
+        private val HEADER_VERSION_CODE = "app-version-code"
+        private val HEADER_CONTENT_TYPE = "Content-Type"
+        private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
+        private val HEADER_COOKIE = "Cookie"
+        private val HEADER_SET_COOKIE = "Set-Cookie"
+        private val KEY_TOKEN = "Token="
+    }
 
     private var token = ""
 
-    private fun cookieRequestInterceptor(): (Request) -> Request =
-        { request: Request ->
-            if (token.isNotEmpty()) {
-                request.header(Pair(HEADER_COOKIE, KEY_TOKEN + token))
-            }
-            request
+    private fun cookieRequestInterceptor() = { req: Request ->
+        if (token.isNotEmpty()) {
+            req.header(Pair(HEADER_COOKIE, KEY_TOKEN + token))
         }
+        req
+    }
 
-    private fun cookieResponseInterceptor(): (Request, Response) -> Response =
-        { request: Request, response: Response ->
-            val newToken = response.httpResponseHeaders[HEADER_SET_COOKIE]
-                ?.find { it.startsWith(KEY_TOKEN) }
-            if (newToken != null && newToken.isNotBlank()) {
-                token = newToken.substringAfter(KEY_TOKEN)
-                    .substringBefore(';')
-            }
-            response
+    private fun cookieResponseInterceptor() = { _: Request, res: Response ->
+        val newToken = res.httpResponseHeaders[HEADER_SET_COOKIE]
+            ?.find { it.startsWith(KEY_TOKEN) }
+        if (newToken != null && newToken.isNotBlank()) {
+            token = newToken.substringAfter(KEY_TOKEN)
+                .substringBefore(';')
         }
+        res
+    }
 
     init {
         val fuelManager = FuelManager.instance

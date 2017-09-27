@@ -35,7 +35,7 @@ class AuthState constructor(private val context: Context,
         if (!connectionError) {
             context.changeState(ListRepoState(context, api, configurator))
         } else {
-            context.changeState(CloseState(context, api, configurator))
+            context.changeState(CloseState())
         }
     }
 

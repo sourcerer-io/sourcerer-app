@@ -6,7 +6,6 @@ package app.extractors
 
 import app.model.CommitStats
 import app.model.DiffFile
-import java.io.File
 
 class CSharpExtractor : ExtractorInterface {
     companion object {

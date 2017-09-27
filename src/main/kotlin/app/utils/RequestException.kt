@@ -8,8 +8,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.nio.charset.Charset
 import java.security.InvalidParameterException
 
-class RequestException(val exception: Exception)
-        : Exception(exception.message) {
+class RequestException(exception: Exception) : Exception(exception.message) {
     private val AUTH_ERROR_CODES = listOf(401, 403)
 
     var httpStatusCode: Int = 0

@@ -16,16 +16,17 @@ import app.utils.PasswordHelper
 import app.utils.RepoHelper
 import app.utils.UiHelper
 import com.beust.jcommander.JCommander
+import com.beust.jcommander.MissingCommandException
 
 fun main(argv : Array<String>) {
     Main(argv)
 }
 
-class Main {
+class Main(argv: Array<String>) {
     private val configurator = FileConfigurator()
     private val api = ServerApi(configurator)
 
-    constructor(argv: Array<String>) {
+    init {
         val options = Options()
         val commandAdd = CommandAdd()
         val commandConfig = CommandConfig()
@@ -40,32 +41,29 @@ class Main {
             .addCommand(commandRemove.name, commandRemove)
             .build()
 
-        jc.parse(*argv)
+        try {
+            jc.parse(*argv)
+            options.password = PasswordHelper.hashPassword(options.password)
+            configurator.setOptions(options)
 
-        options.password = PasswordHelper.hashPassword(options.password)
-        configurator.setOptions(options)
-
-        if (options.help) {
-            showHelp(jc)
-            return
-        }
-
-        if (options.setup) {
-            doSetup()
-            return
-        }
-
-        when (jc.parsedCommand) {
-            commandAdd.name -> doAdd(commandAdd)
-            commandConfig.name -> doConfig(commandConfig)
-            commandList.name -> doList(commandList)
-            commandRemove.name -> doRemove(commandRemove)
-            else -> startUi()
+            if (options.help) {
+                showHelp(jc)
+            } else if (options.setup) {
+                doSetup()
+            } else when (jc.parsedCommand) {
+                commandAdd.name -> doAdd(commandAdd)
+                commandConfig.name -> doConfig(commandConfig)
+                commandList.name -> doList()
+                commandRemove.name -> doRemove(commandRemove)
+                else -> startUi()
+            }
+        } catch (e: MissingCommandException) {
+            Logger.error("No such command: ${e.unknownCommand}")
         }
     }
 
     private fun startUi() {
-        val consoleUi = ConsoleUi(api, configurator)
+        ConsoleUi(api, configurator)
     }
 
     private fun doAdd(commandAdd: CommandAdd) {
@@ -97,7 +95,7 @@ class Main {
         configurator.saveToFile()
     }
 
-    private fun doList(commandList: CommandList) {
+    private fun doList() {
         RepoHelper.printRepos(configurator.getLocalRepos(),
                               "Tracked repositories:",
                               "No tracked repositories")

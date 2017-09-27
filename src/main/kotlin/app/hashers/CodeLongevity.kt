@@ -68,7 +68,7 @@ class CodeLine(val repo: Repository,
      * The code line's age in seconds.
      */
     val age : Long
-        get() = (to.commit.getCommitTime() - from.commit.getCommitTime()).toLong()
+        get() = (to.commit.commitTime - from.commit.commitTime).toLong()
 
     /**
      * The code line text.
@@ -109,7 +109,7 @@ class CodeLine(val repo: Repository,
 class CodeLongevity(private val localRepo: LocalRepo,
                     private val serverRepo: Repo,
                     private val api: Api,
-                    private val git: Git) {
+                    git: Git) {
     val repo: Repository = git.repository
     val head: RevCommit =
         RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
@@ -129,7 +129,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
         val totals: MutableMap<String, Int> = emails.associate { Pair(it, 0) }
                                                     .toMutableMap()
 
-        var repoTotal: Int = 0
+        var repoTotal = 0
         var repoSum: Long = 0
         getLinesObservable().blockingSubscribe { line ->
             repoTotal++
@@ -207,7 +207,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
             val fileLoader = repo.open(fileId)
             if (!RawText.isBinary(fileLoader.openStream())) {
                 val fileText = RawText(fileLoader.getBytes())
-                var lines = ArrayList<RevCommitLine>(fileText.size())
+                val lines = ArrayList<RevCommitLine>(fileText.size())
                 for (idx in 0 .. fileText.size() - 1) {
                     lines.add(RevCommitLine(head, fileId, path, idx, false))
                 }
@@ -226,7 +226,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                 Logger.debug("old: '$oldPath', new: '$newPath'")
 
                 // Skip binary files.
-                var fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
+                val fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
                 if (RawText.isBinary(repo.open(fileId).openStream())) {
                     continue
                 }
@@ -240,8 +240,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                 if (diff.changeType == DiffEntry.ChangeType.DELETE) {
                     val fileLoader = repo.open(oldId)
                     val fileText = RawText(fileLoader.getBytes())
-                    files.put(oldPath,
-                              ArrayList<RevCommitLine>(fileText.size()))
+                    files.put(oldPath, ArrayList(fileText.size()))
                 }
 
                 // If a file was deleted, then the new path is /dev/null.
@@ -260,16 +259,16 @@ class CodeLongevity(private val localRepo: LocalRepo,
                     // Insertion case: track the lines.
                     val insCount = edit.getLengthB()
                     if (insCount > 0) {
-                        var insStart = edit.getBeginB()
-                        var insEnd = edit.getEndB()
+                        val insStart = edit.getBeginB()
+                        val insEnd = edit.getEndB()
                         Logger.debug("ins ($insStart, $insEnd)")
 
                         for (idx in insStart .. insEnd - 1) {
                             val from = RevCommitLine(commit, newId,
                                                      newPath, idx, false)
-                            var to = lines.get(idx)
+                            val to = lines.get(idx)
                             val cl = CodeLine(repo, from, to)
-                            Logger.debug("Collected: ${cl.toString()}")
+                            Logger.debug("Collected: ${cl}")
                             subscriber.onNext(cl)
                         }
                         lines.subList(insStart, insEnd).clear()
@@ -286,7 +285,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                         val delEnd = edit.getEndA()
                         Logger.debug("del ($delStart, $delEnd)")
 
-                        var tmpLines = ArrayList<RevCommitLine>(delCount)
+                        val tmpLines = ArrayList<RevCommitLine>(delCount)
                         for (idx in delStart .. delEnd - 1) {
                             tmpLines.add(RevCommitLine(commit, oldId,
                                                        oldPath, idx, true))
@@ -320,7 +319,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
                         val from = RevCommitLine(tail, fileId,
                                                  filePath, idx, false)
                         val cl = CodeLine(repo, from, lines[idx])
-                        Logger.debug("Collected (tail): ${cl.toString()}")
+                        Logger.debug("Collected (tail): $cl")
                         subscriber.onNext(cl)
                     }
                 }
@@ -340,7 +339,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
         val revWalk = RevWalk(repo)
         revWalk.markStart(head)
 
-        var commit: RevCommit? = revWalk.next()  // move the walker to the head
+        var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
         while (commit != null && commit != tail) {
             val parentCommit: RevCommit? = revWalk.next()
 

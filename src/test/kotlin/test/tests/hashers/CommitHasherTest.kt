@@ -20,10 +20,29 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 class CommitHasherTest : Spek({
+    fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
+
+        val initialRevCommit = stream(git.log().call().spliterator(), false)
+            .toList().first()
+        return RepoHelper.calculateRepoRehash(Commit(initialRevCommit).rehash,
+            localRepo)
+    }
+
+    fun getLastCommit(git: Git): Commit {
+        val revCommits = stream(git.log().call().spliterator(), false).toList()
+        val lastCommit = Commit(revCommits.first())
+        return lastCommit
+    }
+
+    fun cleanRepos() {
+        Runtime.getRuntime().exec("src/test/delete_repo.sh").waitFor()
+    }
+
     val userName = "Contributor"
     val userEmail = "test@domain.com"
 
     // Creation of test repo.
+    cleanRepos()
     val repoPath = "./tmp_repo/.git"
     val git = Git.init().setGitDir(File(repoPath)).call()
     val config = git.repository.config
@@ -40,22 +59,6 @@ class CommitHasherTest : Spek({
                                                     localRepo)
     val repo = Repo(rehash = repoRehash,
                     initialCommitRehash = initialCommit.rehash)
-
-    fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
-
-        val initialRevCommit = stream(git.log().call().spliterator(), false)
-                               .toList().first()
-        val initialCommit = Commit(initialRevCommit)
-        val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
-                                                        localRepo)
-        return repoRehash
-    }
-
-    fun getLastCommit(git: Git): Commit {
-        val revCommits = stream(git.log().call().spliterator(), false).toList()
-        val lastCommit = Commit(revCommits.first())
-        return lastCommit
-    }
 
     given("repo with initial commit and no history") {
         repo.commits = listOf()
@@ -210,5 +213,5 @@ class CommitHasherTest : Spek({
         }
     }
 
-    Runtime.getRuntime().exec("src/test/delete_repo.sh").waitFor()
+    cleanRepos()
 })

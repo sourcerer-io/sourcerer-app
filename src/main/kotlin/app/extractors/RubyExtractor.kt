@@ -25,7 +25,7 @@ class RubyExtractor : ExtractorInterface {
         fileContent.forEach {
             val res = regex.find(it)
             if (res != null) {
-                val lineLib = res.groupValues.last { it -> it != "" }
+                val lineLib = res.groupValues.last { it != "" }
                 imports.add(lineLib)
             }
         }

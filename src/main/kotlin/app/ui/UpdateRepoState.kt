@@ -32,6 +32,6 @@ class UpdateRepoState constructor(private val context: Context,
     }
 
     override fun next() {
-        context.changeState(CloseState(context, api, configurator))
+        context.changeState(CloseState())
     }
 }

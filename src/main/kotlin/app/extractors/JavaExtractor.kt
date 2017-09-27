@@ -6,16 +6,13 @@ package app.extractors
 
 import app.model.CommitStats
 import app.model.DiffFile
-import java.io.File
 
 class JavaExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "java"
         val FILE_EXTS = listOf("java")
         val LIBRARIES = ExtractorInterface.getLibraries("java")
-    }
-
-    val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
+        val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized", "boolean",
             "do", "if", "private", "this", "break", "double", "implements",
             "protected", "throw", "byte", "else", "import", "public", "throws",
@@ -23,6 +20,7 @@ class JavaExtractor : ExtractorInterface {
             "extends", "int", "short", "try", "char", "final", "interface",
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
+    }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
         files.map { file -> file.language = GoExtractor.LANGUAGE_NAME }

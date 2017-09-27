@@ -9,8 +9,8 @@ import app.config.Configurator
 /**
  * Console user interface.
  */
-class ConsoleUi(private val api: Api,
-                private val configurator: Configurator) : Context {
+class ConsoleUi(api: Api,
+                configurator: Configurator) : Context {
     var state: ConsoleState = OpenState(this, api, configurator)
 
     init {

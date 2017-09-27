@@ -26,7 +26,7 @@ object RepoHelper {
 
         var git: Git? = null
         var repository: Repository? = null
-        var commitId: ObjectId? = null
+        val commitId: ObjectId?
         try {
             git = Git.open(File(path))
             repository = git.repository

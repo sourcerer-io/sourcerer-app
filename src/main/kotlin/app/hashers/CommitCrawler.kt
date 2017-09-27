@@ -22,7 +22,7 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
 object CommitCrawler {
-    fun getObservable(git: Git, repo: Repo) = Observable
+    fun getObservable(git: Git, repo: Repo): Observable<Commit> = Observable
         .create<Commit> { subscriber ->
             try {
                 val revWalk = RevWalk(git.repository)

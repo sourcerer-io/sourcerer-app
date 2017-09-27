@@ -30,7 +30,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         println("Hashing $localRepo...")
         val git = loadGit(localRepo.path)
         try {
-            val (rehashes, authors) = fetchRehashesAndAuthors(git)
+            val (rehashes, _) = fetchRehashesAndAuthors(git)
 
             localRepo.parseGitConfig(git.repository.config)
             if (localRepo.author.email.isBlank()) {

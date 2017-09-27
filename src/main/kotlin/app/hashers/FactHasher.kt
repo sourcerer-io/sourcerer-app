@@ -35,6 +35,7 @@ class FactHasher(private val localRepo: LocalRepo,
 
         val throwables = mutableListOf<Throwable>()
 
+        // TODO(anatoly): Filter hashing by email as in CommitHasher.
         observable
             .subscribe({ commit ->  // OnNext.
                 // Calculate facts.
