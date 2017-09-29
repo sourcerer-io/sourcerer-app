@@ -7,6 +7,7 @@ import app.hashers.RepoHasher
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.utils.HashingException
 import app.utils.RequestException
 
 /**
@@ -20,9 +21,12 @@ class UpdateRepoState constructor(private val context: Context,
         println("Hashing your git repositories.")
         for (repo in configurator.getLocalRepos()) {
             try {
-                RepoHasher(repo, api, configurator)
-            } catch (e: RequestException) {
-                Logger.error("Network error while hashing $repo", e)
+                RepoHasher(repo, api, configurator).update()
+            } catch (e: HashingException) {
+                Logger.error("During hashing ${e.errors.size} errors occurred:")
+                e.errors.forEach { error ->
+                    Logger.error("", error)
+                }
             } catch (e: Exception) {
                 Logger.error("Error while hashing $repo", e)
             }

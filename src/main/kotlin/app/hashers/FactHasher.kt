@@ -29,11 +29,10 @@ class FactHasher(private val localRepo: LocalRepo,
         }
     }
 
-    fun updateFromObservable(observable: Observable<Commit>) {
+    fun updateFromObservable(observable: Observable<Commit>,
+                             onError: (Throwable) -> Unit) {
         val factsDayWeek = hashMapOf<Author, Array<Int>>()
         val factsDayTime = hashMapOf<Author, Array<Int>>()
-
-        val throwables = mutableListOf<Throwable>()
 
         // TODO(anatoly): Filter hashing by email as in CommitHasher.
         observable
@@ -51,9 +50,7 @@ class FactHasher(private val localRepo: LocalRepo,
                 factDayTime[dateTime.hour] += 1
                 factsDayWeek[author] = factDayWeek
                 factsDayTime[author] = factDayTime
-            }, { e ->  // OnError.
-                throwables.add(e)  // TODO(anatoly): Top-class handling errors.
-            }, {  // OnComplete.
+            }, onError, {  // OnComplete.
                 try {
                     val facts = mutableListOf<Fact>()
                     factsDayTime.map { (author, list) ->
@@ -76,7 +73,7 @@ class FactHasher(private val localRepo: LocalRepo,
                     }
                     postFactsToServer(facts)
                 } catch (e: Throwable) {
-                    throwables.add(e)
+                    onError(e)
                 }
             })
     }

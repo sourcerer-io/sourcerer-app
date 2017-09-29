@@ -63,10 +63,15 @@ class CommitHasherTest : Spek({
     given("repo with initial commit and no history") {
         repo.commits = listOf()
 
+        val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
-            .updateFromObservable(observable)
+            .updateFromObservable(observable, { e -> errors.add(e) })
+
+        it ("has no errors") {
+            assertEquals(0, errors.size)
+        }
 
         it("send added commits") {
             assertEquals(1, mockApi.receivedAddedCommits.size)
@@ -80,10 +85,15 @@ class CommitHasherTest : Spek({
     given("repo with initial commit") {
         repo.commits = listOf(getLastCommit(git))
 
+        val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
-            .updateFromObservable(observable)
+            .updateFromObservable(observable, { e -> errors.add(e) })
+
+        it ("has no errors") {
+            assertEquals(0, errors.size)
+        }
 
         it("doesn't send added commits") {
             assertEquals(0, mockApi.receivedAddedCommits.size)
@@ -97,13 +107,17 @@ class CommitHasherTest : Spek({
     given("happy path: added one commit") {
         repo.commits = listOf(getLastCommit(git))
 
+        val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
-
         val revCommit = git.commit().setMessage("Second commit.").call()
         val addedCommit = Commit(revCommit)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
-            .updateFromObservable(observable)
+            .updateFromObservable(observable, { e -> errors.add(e) })
+
+        it ("has no errors") {
+            assertEquals(0, errors.size)
+        }
 
         it("doesn't send deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
@@ -121,6 +135,7 @@ class CommitHasherTest : Spek({
     given("happy path: added a few new commits") {
         repo.commits = listOf(getLastCommit(git))
 
+        val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
 
         val otherAuthorsNames = listOf("a", "b", "a")
@@ -139,7 +154,11 @@ class CommitHasherTest : Spek({
         }
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
-            .updateFromObservable(observable)
+            .updateFromObservable(observable, { e -> errors.add(e) })
+
+        it ("has no errors") {
+            assertEquals(0, errors.size)
+        }
 
         it("posts five commits as added") {
             assertEquals(5, mockApi.receivedAddedCommits.size)
@@ -185,6 +204,7 @@ class CommitHasherTest : Spek({
     given("lost server") {
         repo.commits = listOf(getLastCommit(git))
 
+        val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
 
         // Add some commits.
@@ -201,7 +221,11 @@ class CommitHasherTest : Spek({
 
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
-            .updateFromObservable(observable)
+            .updateFromObservable(observable, { e -> errors.add(e) })
+
+        it ("has no errors") {
+            assertEquals(0, errors.size)
+        }
 
         it("adds posts one commit as added and received commit is lost one") {
             assertEquals(1, mockApi.receivedAddedCommits.size)

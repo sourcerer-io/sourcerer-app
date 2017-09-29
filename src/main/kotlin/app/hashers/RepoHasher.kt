@@ -6,9 +6,9 @@ package app.hashers
 import app.Logger
 import app.api.Api
 import app.config.Configurator
-import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
+import app.utils.HashingException
 import app.utils.RepoHelper
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
@@ -26,7 +26,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         if (!RepoHelper.isValidRepo(localRepo.path)) {
             throw IllegalArgumentException("Invalid repo $localRepo")
         }
+    }
 
+    fun update() {
         println("Hashing $localRepo...")
         val git = loadGit(localRepo.path)
         try {
@@ -46,26 +48,44 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             // Get repo setup (commits, emails to hash) from server.
             getRepoFromServer()
 
+            // Common error handling for subscribers.
+            // Exceptions can't be thrown out of reactive chain.
+            val errors = mutableListOf<Throwable>()
+            val onError: (Throwable) -> Unit = {
+                e -> errors.add(e)
+                Logger.error("Error while hashing:", e)
+            }
+
             // Hash by all plugins.
             val observable = CommitCrawler.getObservable(git, serverRepo)
                                              .publish()
             CommitHasher(localRepo, serverRepo, api, rehashes)
-                .updateFromObservable(observable)
+                .updateFromObservable(observable, onError)
             FactHasher(localRepo, serverRepo, api)
-                .updateFromObservable(observable)
+                .updateFromObservable(observable, onError)
             // Start and synchronously wait until all subscribers complete.
             observable.connect()
 
             // TODO(anatoly): CodeLongevity hash from observable.
-            CodeLongevity(localRepo, serverRepo, api, git).update()
+            try {
+                CodeLongevity(localRepo, serverRepo, api, git).update()
+            }
+            catch (e: Throwable) {
+                onError(e)
+            }
 
             // Confirm hashing completion.
             postRepoToServer()
+
+            if (errors.isNotEmpty()) {
+                throw HashingException(errors)
+            }
+
+            println("Hashing $localRepo successfully finished.")
         }
         finally {
             closeGit(git)
         }
-        println("Hashing $localRepo successfully finished.")
     }
 
     private fun loadGit(path: String): Git {
@@ -104,7 +124,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     private fun fetchRehashesAndAuthors(git: Git):
-        Pair<LinkedList<String>, HashMap<String, Author>> {
+        Pair<LinkedList<String>, HashSet<String>> {
         val head: RevCommit = RevWalk(git.repository)
             .parseCommit(git.repository.resolve(RepoHelper.MASTER_BRANCH))
 
@@ -112,21 +132,17 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         revWalk.markStart(head)
 
         val commitsRehashes = LinkedList<String>()
-        val contributors = hashMapOf<String, Author>()
+        val authors = hashSetOf<String>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
             commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
-            if (!contributors.containsKey(commit.authorIdent.emailAddress)) {
-                val author = Author(commit.authorIdent.name,
-                                    commit.authorIdent.emailAddress)
-                contributors.put(commit.authorIdent.emailAddress, author)
-            }
+            authors.add(commit.authorIdent.emailAddress)
             commit.disposeBody()
             commit = revWalk.next()
         }
         revWalk.dispose()
 
-        return Pair(commitsRehashes, contributors)
+        return Pair(commitsRehashes, authors)
     }
 }

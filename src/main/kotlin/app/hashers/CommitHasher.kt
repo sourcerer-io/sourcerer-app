@@ -61,11 +61,10 @@ class CommitHasher(private val localRepo: LocalRepo,
     }
 
     // Hash added and missing server commits and send them to server.
-    fun updateFromObservable(observable: Observable<Commit>) {
+    fun updateFromObservable(observable: Observable<Commit>,
+                             onError: (Throwable) -> Unit) {
         val lastKnownCommit = serverRepo.commits.lastOrNull()
         val knownCommits = serverRepo.commits.toHashSet()
-
-        val throwables = mutableListOf<Throwable>()
 
         observable
             .takeWhile { new ->  // Hash until last known commit.
@@ -94,9 +93,6 @@ class CommitHasher(private val localRepo: LocalRepo,
             .buffer(20, TimeUnit.SECONDS)  // Group ready commits by time.
             .subscribe({ commitsBundle ->  // OnNext.
                 postCommitsToServer(commitsBundle)  // Send ready commits.
-            }, { e ->  // OnError.
-                Logger.error("Hashing error: " + e.message)
-                throwables.add(e)  // TODO(anatoly): Top-class handling errors.
-            })
+            }, onError)
     }
 }

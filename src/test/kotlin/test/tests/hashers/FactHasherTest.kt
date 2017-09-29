@@ -55,10 +55,12 @@ class FactHasherTest : Spek({
                 date = createDate(year = 2017, month = 1, day = 1,  // Sunday.
                     hour = 13, minute = 0, seconds = 0))
 
+            val errors = mutableListOf<Throwable>()
             val observable = CommitCrawler.getObservable(testRepo.git, repo)
             FactHasher(localRepo, repo, mockApi)
-                .updateFromObservable(observable)
+                .updateFromObservable(observable, { e -> errors.add(e) })
 
+            assertEquals(0, errors.size)
             assertEquals(2, facts.size)
             assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 13,
                 1.0, author1)))
@@ -79,10 +81,12 @@ class FactHasherTest : Spek({
                 date = createDate(year=2017, month = 1, day = 2,  // Monday.
                     hour = 13, minute = 0, seconds = 0))
 
+            val errors = mutableListOf<Throwable>()
             val observable = CommitCrawler.getObservable(testRepo.git, repo)
             FactHasher(localRepo, repo, mockApi)
-                .updateFromObservable(observable)
+                .updateFromObservable(observable, { e -> errors.add(e) })
 
+            assertEquals(0, errors.size)
             assertEquals(5, facts.size)
             assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 18,
                 1.0, author2)))

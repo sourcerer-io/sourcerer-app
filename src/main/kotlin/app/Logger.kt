@@ -44,7 +44,7 @@ object Logger {
     /**
      * Log error message with exception info.
      */
-    fun error(message: String, e: Exception) {
+    fun error(message: String, e: Throwable) {
         if (LEVEL >= ERROR) {
             println("[e] $message: $e")
         }
