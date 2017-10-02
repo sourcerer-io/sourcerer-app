@@ -32,7 +32,7 @@ object RepoHelper {
             repository = git.repository
             commitId = repository.resolve(MASTER_BRANCH)
         } catch (e: Exception) {
-            Logger.error("Cannot access repository at path $path", e)
+           Logger.error("Cannot access repository at path $path", e)
             return false
         } finally {
             repository?.close()
@@ -42,7 +42,6 @@ object RepoHelper {
         if (commitId != null) {
             return true
         }
-        Logger.error("Repository at path $path is empty")
         return false
     }
 

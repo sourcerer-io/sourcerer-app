@@ -19,6 +19,9 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.MissingCommandException
 
 fun main(argv : Array<String>) {
+    Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable? ->
+        Logger.error("Uncaught exception", e)
+    }
     Main(argv)
 }
 
@@ -27,6 +30,9 @@ class Main(argv: Array<String>) {
     private val api = ServerApi(configurator)
 
     init {
+        Analytics.uuid = configurator.getUuidPersistent()
+        Analytics.trackStart()
+
         val options = Options()
         val commandAdd = CommandAdd()
         val commandConfig = CommandConfig()
@@ -58,8 +64,13 @@ class Main(argv: Array<String>) {
                 else -> startUi()
             }
         } catch (e: MissingCommandException) {
-            Logger.error("No such command: ${e.unknownCommand}")
+            Logger.error(
+                message = "No such command: ${e.unknownCommand}",
+                code = "no-command"
+            )
         }
+
+        Analytics.trackExit()
     }
 
     private fun startUi() {
@@ -74,8 +85,11 @@ class Main(argv: Array<String>) {
             configurator.addLocalRepoPersistent(localRepo)
             configurator.saveToFile()
             println("Added git repository at $path.")
+
+            Analytics.trackConfigChanged()
         } else {
-            Logger.error("No valid git repository found at $path.")
+            Logger.error(message = "No valid git repository found at $path.",
+                         code = "repo-invalid")
         }
     }
 
@@ -83,7 +97,8 @@ class Main(argv: Array<String>) {
         val (key, value) = commandOptions.pair
 
         if (!arrayListOf("username", "password").contains(key)) {
-            Logger.error("No such key $key")
+            Logger.error(message = "No such key $key",
+                         code = "invalid-params")
             return
         }
 
@@ -93,6 +108,8 @@ class Main(argv: Array<String>) {
         }
 
         configurator.saveToFile()
+
+        Analytics.trackConfigChanged()
     }
 
     private fun doList() {
@@ -108,6 +125,8 @@ class Main(argv: Array<String>) {
             configurator.removeLocalRepoPersistent(LocalRepo(path))
             configurator.saveToFile()
             println("Repository removed from tracking list.")
+
+            Analytics.trackConfigChanged()
         } else {
             println("Repository not found in tracking list.")
         }

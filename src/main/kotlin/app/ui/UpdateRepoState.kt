@@ -3,6 +3,7 @@
 
 package app.ui
 
+import app.Analytics
 import app.hashers.RepoHasher
 import app.Logger
 import app.api.Api
@@ -33,6 +34,8 @@ class UpdateRepoState constructor(private val context: Context,
         }
         println("The repositories have been hashed. See result online on your "
                 + "Sourcerer profile.")
+
+        Analytics.trackHashingSuccess()
     }
 
     override fun next() {

@@ -16,6 +16,7 @@ interface Configurator {
     fun getRepos(): List<Repo>
     fun setUsernameCurrent(username: String)
     fun setPasswordCurrent(password: String)
+    fun getUuidPersistent(): String
     fun setUsernamePersistent(username: String)
     fun setPasswordPersistent(password: String)
     fun addLocalRepoPersistent(localRepo: LocalRepo)

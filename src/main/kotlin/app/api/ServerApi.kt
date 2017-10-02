@@ -13,8 +13,8 @@ import app.model.FactGroup
 import app.model.Repo
 import app.model.User
 import app.utils.RequestException
-import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Method
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.google.protobuf.InvalidProtocolBufferException
@@ -30,6 +30,7 @@ class ServerApi (private val configurator: Configurator) : Api {
         private val KEY_TOKEN = "Token="
     }
 
+    private val fuelManager = FuelManager()
     private var token = ""
 
     private fun cookieRequestInterceptor() = { req: Request ->
@@ -50,7 +51,6 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     init {
-        val fuelManager = FuelManager.instance
         fuelManager.basePath = BuildConfig.API_BASE_URL
         fuelManager.addRequestInterceptor { cookieRequestInterceptor() }
         fuelManager.addResponseInterceptor { cookieResponseInterceptor() }
@@ -62,38 +62,49 @@ class ServerApi (private val configurator: Configurator) : Api {
     private val password
         get() = configurator.getPassword()
 
+    private fun post(path: String): Request {
+        return fuelManager.request(Method.POST, path)
+    }
+
+    private fun get(path: String): Request {
+        return fuelManager.request(Method.GET, path)
+    }
+
+    private fun delete(path: String): Request {
+        return fuelManager.request(Method.DELETE, path)
+    }
+
     private fun createRequestGetToken(): Request {
-        return Fuel.post("/auth").authenticate(username, password)
+        return post("/auth").authenticate(username, password)
                    .header(getVersionCodeHeader())
     }
 
     private fun createRequestGetUser(): Request {
-        return Fuel.get("/user")
+        return get("/user")
     }
 
     private fun createRequestGetRepo(repoRehash: String): Request {
-        return Fuel.get("/repo/$repoRehash")
+        return get("/repo/$repoRehash")
     }
 
     private fun createRequestPostRepo(repo: Repo): Request {
-        return Fuel.post("/repo").header(getContentTypeHeader())
-                   .body(repo.serialize())
+        return post("/repo").header(getContentTypeHeader())
+                            .body(repo.serialize())
     }
 
     private fun createRequestPostCommits(commits: CommitGroup): Request {
-        return Fuel.post("/commits").header(getContentTypeHeader())
-                   .body(commits.serialize())
+        return post("/commits").header(getContentTypeHeader())
+                               .body(commits.serialize())
     }
 
     private fun createRequestDeleteCommits(commits: CommitGroup): Request {
-        return Fuel.delete("/commits").header(getContentTypeHeader())
-                   .body(commits.serialize())
+        return delete("/commits").header(getContentTypeHeader())
+                                 .body(commits.serialize())
     }
 
-    private fun createRequestPostFacts(facts: FactGroup):
-        Request {
-        return Fuel.post("/facts").header(getContentTypeHeader())
-                   .body(facts.serialize())
+    private fun createRequestPostFacts(facts: FactGroup): Request {
+        return post("/facts").header(getContentTypeHeader())
+                             .body(facts.serialize())
     }
 
     private fun <T> makeRequest(request: Request,
@@ -102,13 +113,13 @@ class ServerApi (private val configurator: Configurator) : Api {
         try {
             Logger.debug("Request $requestName initialized")
             val (_, res, result) = request.responseString()
-            val (_, error) = result
-            if (error == null) {
+            val (_, e) = result
+            if (e == null) {
                 Logger.debug("Request $requestName success")
                 return parser(res.data)
             } else {
-                Logger.error("Request $requestName error", error)
-                throw RequestException(error)
+                Logger.error("Request $requestName error", e)
+                throw RequestException(e)
             }
         } catch (e: InvalidProtocolBufferException) {
             Logger.error("Request $requestName error while parsing", e)

@@ -34,19 +34,19 @@ object Logger {
 
     /**
      * Log error message with exception info.
+     *
+     * @property message the message for user and logs.
+     * @property e the exception if presented.
+     * @property code the code of error if exception is not presented.
      */
-    fun error(message: String) {
+    fun error(message: String, e: Throwable? = null, code: String = "",
+              logOnly: Boolean = false) {
         if (LEVEL >= ERROR) {
-            println("[e] $message.")
+            println("[e] $message" + if (e != null) ": $e" else "")
         }
-    }
-
-    /**
-     * Log error message with exception info.
-     */
-    fun error(message: String, e: Throwable) {
-        if (LEVEL >= ERROR) {
-            println("[e] $message: $e")
+        if (!logOnly) {
+            Analytics.trackError(e = e, code = code)
+            //TODO(anatoly): Add error tracking software.
         }
     }
 

@@ -13,7 +13,8 @@ class MockConfigurator(var mockUsername: String = "",
                        var mockIsFirstLaunch: Boolean = true,
                        var mockRepos: MutableList<Repo> = mutableListOf(),
                        var mockLocalRepos: MutableList<LocalRepo> =
-                           mutableListOf()) : Configurator {
+                           mutableListOf(),
+                       var uuid: String = "") : Configurator {
     var mockCurrent: Config = Config()
     var mockPersistent: Config = Config()
     var mockOptions: Options = Options()
@@ -48,6 +49,10 @@ class MockConfigurator(var mockUsername: String = "",
 
     override fun setPasswordCurrent(password: String) {
         mockCurrent.password = password
+    }
+
+    override fun getUuidPersistent(): String {
+        return uuid
     }
 
     override fun setUsernamePersistent(username: String) {

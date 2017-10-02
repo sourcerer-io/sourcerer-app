@@ -3,6 +3,7 @@
 
 package app.ui
 
+import app.Analytics
 import app.api.Api
 import app.config.Configurator
 import app.model.LocalRepo
@@ -44,6 +45,8 @@ class AddRepoState constructor(private val context: Context,
                 }
             }
         }
+
+        Analytics.trackConfigSetup()
     }
 
     override fun next() {

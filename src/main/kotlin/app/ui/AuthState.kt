@@ -3,6 +3,7 @@
 
 package app.ui
 
+import app.Analytics
 import app.BuildConfig
 import app.api.Api
 import app.config.Configurator
@@ -74,6 +75,10 @@ class AuthState constructor(private val context: Context,
             println("You are successfully authenticated. Your profile page is "
                     + BuildConfig.PROFILE_URL + configurator.getUsername())
             saveCredentialsIfChanged()
+
+            Analytics.username = configurator.getUsername()
+            Analytics.trackAuth()
+
             return true
         } catch (e: RequestException) {
             if (e.isAuthError) {

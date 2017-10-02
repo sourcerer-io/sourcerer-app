@@ -3,6 +3,7 @@
 
 package app.hashers
 
+import app.Analytics
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -53,7 +54,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val errors = mutableListOf<Throwable>()
             val onError: (Throwable) -> Unit = {
                 e -> errors.add(e)
-                Logger.error("Error while hashing:", e)
+                Logger.error("Hashing error", e)
             }
 
             // Hash by all plugins.
@@ -82,6 +83,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             }
 
             println("Hashing $localRepo successfully finished.")
+            Analytics.trackHashingRepoSuccess()
         }
         finally {
             closeGit(git)

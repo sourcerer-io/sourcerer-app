@@ -21,6 +21,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
+import java.util.UUID
 
 /**
  * Singleton class that manage configs and CLI options.
@@ -85,6 +86,17 @@ class FileConfigurator : Configurator {
      */
     init {
         loadFromFile()
+        assignUuidIfMissing()
+    }
+
+    /**
+     * Generates UUID for analytics on install.
+     */
+    private fun assignUuidIfMissing() {
+        if (persistent.uuid.isNotEmpty()) {
+            return
+        }
+        persistent.uuid = UUID.randomUUID().toString()
     }
 
     /**
@@ -150,6 +162,13 @@ class FileConfigurator : Configurator {
      */
     override fun setPasswordCurrent(password: String) {
         current.password = PasswordHelper.hashPassword(password)
+    }
+
+    /**
+     * Gets UUID.
+     */
+    override fun getUuidPersistent(): String {
+        return persistent.uuid
     }
 
     /**

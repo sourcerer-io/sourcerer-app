@@ -10,6 +10,7 @@ import app.utils.Options
  * Config data class.
  */
 class Config (
+        var uuid: String = "",
         var username: String = "",
         var password: String = "",
         var localRepos: MutableSet<LocalRepo> = mutableSetOf()
