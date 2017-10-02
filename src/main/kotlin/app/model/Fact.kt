@@ -11,7 +11,7 @@ data class Fact(
     var repo: Repo = Repo(),
     var code: Int = 0,
     var key: Int = 0,
-    var value: Double = 0.0,
+    var value: String = "",
     var author: Author = Author()
 ) {
     @Throws(InvalidParameterException::class)
@@ -20,7 +20,7 @@ data class Fact(
         author = Author("", proto.email)
         code = proto.code
         key = proto.key
-        value = proto.value1.toDoubleOrNull() ?: 0.0
+        value = ""
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -34,7 +34,7 @@ data class Fact(
             .setEmail(author.email)
             .setCode(code)
             .setKey(key)
-            .setValue1(value.toString())
+            .setValue1(value)
             .build()
     }
 

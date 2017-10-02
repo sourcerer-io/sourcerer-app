@@ -52,13 +52,12 @@ class CommitHasherTest : Spek({
 
     // Common parameters for CommitHasher.
     val gitHasher = Git.open(File(repoPath))
-    val localRepo = LocalRepo(repoPath)
-    localRepo.author = Author(userName, userEmail)
     val initialCommit = Commit(git.commit().setMessage("Initial commit").call())
     val repoRehash = RepoHelper.calculateRepoRehash(initialCommit.rehash,
-                                                    localRepo)
+        LocalRepo(repoPath).also { it.author = Author(userName, userEmail) })
     val repo = Repo(rehash = repoRehash,
                     initialCommitRehash = initialCommit.rehash)
+    val emails = hashSetOf(userEmail)
 
     given("repo with initial commit and no history") {
         repo.commits = listOf()
@@ -66,7 +65,7 @@ class CommitHasherTest : Spek({
         val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
-        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+        CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
 
         it ("has no errors") {
@@ -88,7 +87,7 @@ class CommitHasherTest : Spek({
         val errors = mutableListOf<Throwable>()
         val mockApi = MockApi(mockRepo = repo)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
-        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+        CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
 
         it ("has no errors") {
@@ -112,7 +111,7 @@ class CommitHasherTest : Spek({
         val revCommit = git.commit().setMessage("Second commit.").call()
         val addedCommit = Commit(revCommit)
         val observable = CommitCrawler.getObservable(gitHasher, repo)
-        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+        CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
 
         it ("has no errors") {
@@ -153,9 +152,9 @@ class CommitHasherTest : Spek({
             authorCommits.add(Commit(revCommit))
         }
         val observable = CommitCrawler.getObservable(gitHasher, repo)
-        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+        CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
-
+      
         it ("has no errors") {
             assertEquals(0, errors.size)
         }
@@ -220,7 +219,7 @@ class CommitHasherTest : Spek({
         repo.commits = addedCommits.toList().asReversed()
 
         val observable = CommitCrawler.getObservable(gitHasher, repo)
-        CommitHasher(localRepo, repo, mockApi, repo.commits.map {it.rehash})
+        CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
 
         it ("has no errors") {

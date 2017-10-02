@@ -7,7 +7,6 @@ import app.FactCodes
 import app.Logger
 import app.api.Api
 import app.model.Author
-import app.model.LocalRepo
 import app.model.Repo
 import app.model.Fact
 import app.utils.RepoHelper
@@ -106,9 +105,9 @@ class CodeLine(val repo: Repository,
 /**
  * Used to compute age of code lines in the repo.
  */
-class CodeLongevity(private val localRepo: LocalRepo,
-                    private val serverRepo: Repo,
+class CodeLongevity(private val serverRepo: Repo,
                     private val api: Api,
+                    private val emails: HashSet<String>,
                     git: Git) {
     val repo: Repository = git.repository
     val head: RevCommit =
@@ -121,9 +120,6 @@ class CodeLongevity(private val localRepo: LocalRepo,
     }
 
     fun update() {
-        // TODO(anatoly): Add emails from server or hashAll.
-        val emails = hashSetOf(localRepo.author.email)
-
         val sums: MutableMap<String, Long> = emails.associate { Pair(it, 0L) }
                                                    .toMutableMap()
         val totals: MutableMap<String, Int> = emails.associate { Pair(it, 0) }
@@ -150,7 +146,7 @@ class CodeLongevity(private val localRepo: LocalRepo,
         val stats = mutableListOf<Fact>()
         stats.add(Fact(repo = serverRepo,
                        code = FactCodes.LINE_LONGEVITY_REPO,
-                       value = repoAvg.toDouble()))
+                       value = repoAvg.toString()))
         val repoAvgDays = repoAvg / secondsInDay
         Logger.info("Repo average code line age is $repoAvgDays days, "
               + "lines total: $repoTotal")
@@ -160,13 +156,8 @@ class CodeLongevity(private val localRepo: LocalRepo,
             val avg = if (total > 0) { sums[email]!! / total } else 0
             stats.add(Fact(repo = serverRepo,
                            code = FactCodes.LINE_LONGEVITY,
-                           value = avg.toDouble(),
+                           value = avg.toString(),
                            author = Author(email = email)))
-            if (email == localRepo.author.email) {
-                val avgDays = avg / secondsInDay
-                Logger.info("Your average code line age is $avgDays days, "
-                      + "lines total: $total")
-            }
         }
 
         if (stats.size > 0) {

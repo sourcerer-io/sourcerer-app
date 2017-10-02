@@ -7,7 +7,6 @@ import app.Logger
 import app.api.Api
 import app.extractors.Extractor
 import app.model.Commit
-import app.model.LocalRepo
 import app.model.Repo
 import io.reactivex.Observable
 import java.util.concurrent.TimeUnit
@@ -15,10 +14,10 @@ import java.util.concurrent.TimeUnit
 /**
  * CommitHasher hashes repository and uploads stats to server.
  */
-class CommitHasher(private val localRepo: LocalRepo,
-                   private val serverRepo: Repo = Repo(),
+class CommitHasher(private val serverRepo: Repo = Repo(),
                    private val api: Api,
-                   private val rehashes: List<String>) {
+                   private val rehashes: List<String>,
+                   private val emails: HashSet<String>) {
 
     init {
         // Delete locally missing commits from server. If found at least one
@@ -28,36 +27,6 @@ class CommitHasher(private val localRepo: LocalRepo,
         val deletedCommits = serverRepo.commits
             .takeWhile { it.rehash != firstOverlapCommitRehash }
         deleteCommitsOnServer(deletedCommits)
-    }
-
-    private fun findFirstOverlappingCommitRehash(): String? {
-
-        val serverHistoryRehashes = serverRepo.commits
-                                              .map { commit -> commit.rehash }
-                                              .toHashSet()
-        return rehashes.firstOrNull { rehash ->
-            serverHistoryRehashes.contains(rehash)
-        }
-    }
-
-    private fun postCommitsToServer(commits: List<Commit>) {
-        if (commits.isNotEmpty()) {
-            api.postCommits(commits)
-            Logger.debug("Sent ${commits.size} added commits to server")
-        }
-    }
-
-    private fun deleteCommitsOnServer(commits: List<Commit>) {
-        if (commits.isNotEmpty()) {
-            api.deleteCommits(commits)
-            Logger.debug("Sent ${commits.size} deleted commits to server")
-        }
-    }
-
-    private val emailFilter: (Commit) -> Boolean = {
-        val email = it.author.email
-        localRepo.hashAllContributors || (email == localRepo.author.email ||
-            serverRepo.emails.contains(email))
     }
 
     // Hash added and missing server commits and send them to server.
@@ -70,10 +39,10 @@ class CommitHasher(private val localRepo: LocalRepo,
             .takeWhile { new ->  // Hash until last known commit.
                 new.rehash != lastKnownCommit?.rehash
             }
-            .filter { commit ->  // Don't hash known.
-                knownCommits.isEmpty() || !knownCommits.contains(commit)
-            }
-            .filter { commit -> emailFilter(commit) }  // Email filtering.
+            // Don't hash known to server commits.
+            .filter { commit -> !knownCommits.contains(commit) }
+            // Hash only commits made by authors with specified emails.
+            .filter { commit -> emails.contains(commit.author.email) }
             .map { commit ->
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
@@ -94,5 +63,28 @@ class CommitHasher(private val localRepo: LocalRepo,
             .subscribe({ commitsBundle ->  // OnNext.
                 postCommitsToServer(commitsBundle)  // Send ready commits.
             }, onError)
+    }
+
+    private fun findFirstOverlappingCommitRehash(): String? {
+        val serverHistoryRehashes = serverRepo.commits
+                                              .map { commit -> commit.rehash }
+                                              .toHashSet()
+        return rehashes.firstOrNull { rehash ->
+            serverHistoryRehashes.contains(rehash)
+        }
+    }
+
+    private fun postCommitsToServer(commits: List<Commit>) {
+        if (commits.isNotEmpty()) {
+            api.postCommits(commits)
+            Logger.debug("Sent ${commits.size} added commits to server")
+        }
+    }
+
+    private fun deleteCommitsOnServer(commits: List<Commit>) {
+        if (commits.isNotEmpty()) {
+            api.deleteCommits(commits)
+            Logger.debug("Sent ${commits.size} deleted commits to server")
+        }
     }
 }

@@ -18,6 +18,7 @@ import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
 import java.io.IOException
 import java.util.*
+import kotlin.collections.HashSet
 
 class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                  private  val configurator: Configurator) {
@@ -33,12 +34,14 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         println("Hashing $localRepo...")
         val git = loadGit(localRepo.path)
         try {
-            val (rehashes, _) = fetchRehashesAndAuthors(git)
+            val (rehashes, emails) = fetchRehashesAndEmails(git)
 
             localRepo.parseGitConfig(git.repository.config)
             if (localRepo.author.email.isBlank()) {
                 throw IllegalStateException("Can't load email from Git config")
             }
+
+            val filteredEmails = filterEmails(emails)
 
             initServerRepo(rehashes.last)
 
@@ -60,16 +63,17 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             // Hash by all plugins.
             val observable = CommitCrawler.getObservable(git, serverRepo)
                                              .publish()
-            CommitHasher(localRepo, serverRepo, api, rehashes)
+            CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
-            FactHasher(localRepo, serverRepo, api)
+            FactHasher(serverRepo, api, filteredEmails)
                 .updateFromObservable(observable, onError)
+
             // Start and synchronously wait until all subscribers complete.
             observable.connect()
 
             // TODO(anatoly): CodeLongevity hash from observable.
             try {
-                CodeLongevity(localRepo, serverRepo, api, git).update()
+                CodeLongevity(serverRepo, api, filteredEmails, git).update()
             }
             catch (e: Throwable) {
                 onError(e)
@@ -125,7 +129,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             serverRepo.initialCommitRehash, localRepo)
     }
 
-    private fun fetchRehashesAndAuthors(git: Git):
+    private fun fetchRehashesAndEmails(git: Git):
         Pair<LinkedList<String>, HashSet<String>> {
         val head: RevCommit = RevWalk(git.repository)
             .parseCommit(git.repository.resolve(RepoHelper.MASTER_BRANCH))
@@ -134,17 +138,29 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         revWalk.markStart(head)
 
         val commitsRehashes = LinkedList<String>()
-        val authors = hashSetOf<String>()
+        val emails = hashSetOf<String>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
             commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
-            authors.add(commit.authorIdent.emailAddress)
+            emails.add(commit.authorIdent.emailAddress)
             commit.disposeBody()
             commit = revWalk.next()
         }
         revWalk.dispose()
 
-        return Pair(commitsRehashes, authors)
+        return Pair(commitsRehashes, emails)
+    }
+
+    private fun filterEmails(emails: HashSet<String>): HashSet<String> {
+        if (localRepo.hashAllContributors) {
+            return emails
+        }
+
+        val knownEmails = mutableListOf<String>()
+        knownEmails.add(serverRepo.userEmail)
+        knownEmails.addAll(serverRepo.emails)
+
+        return knownEmails.filter { emails.contains(it) }.toHashSet()
     }
 }
