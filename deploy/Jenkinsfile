@@ -13,11 +13,13 @@ podTemplate(label: 'build-pod-sourcerer-app',
 ) {
   node('build-pod-sourcerer-app') {
     stage('checkout') {
+      sh("pwd")
       checkout scm
     }
 
     stage('build jar and test') {
       container('gradle') {
+        sh("pwd")
         sh("./do.sh build_jar_inside")
       }
     }
