@@ -1,7 +1,7 @@
 podTemplate(label: 'build-pod-sourcerer-app',
     containers: [
         containerTemplate(name: 'jnlp', image: 'gcr.io/cloud-solutions-images/jenkins-k8s-slave', args: '${computer.jnlpmac} ${computer.name}'),
-        containerTemplate(name: 'gradle', image: 'gradle:4.2.0', ttyEnabled: true, command: 'tail -f /dev/null')
+        containerTemplate(name: 'gradle', image: 'gcr.io/sourcerer-1377/gradle:4.2.0', ttyEnabled: true, command: 'tail -f /dev/null')
     ],
     envVars: [
       envVar(key: 'CONTAINER_TAG', value: "${env.BRANCH_NAME}.${env.BUILD_NUMBER}")
