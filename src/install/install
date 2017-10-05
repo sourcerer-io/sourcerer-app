@@ -3,7 +3,7 @@
 
 echo "Installing sourcerer app.."
 
-SERVER=https://sourcerer.io
+SERVER=$SERVER_EXT
 DOWNLOAD_URL=$SERVER/app/download
 JAR_DIR=/usr/local/lib
 SCRIPT_DIR=/usr/local/bin

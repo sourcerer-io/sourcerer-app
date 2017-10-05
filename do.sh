@@ -23,6 +23,7 @@ ARGUMENTS=${@}
 
 TAG="${CONTAINER_TAG:-latest}"
 NAMESPACE="${NAMESPACE:-staging}"
+ENV="${ENV:-development}"
 VOLUME="${BUILD_VOLUME:-$PWD}"
 PROJECT=sourcerer-app
 PORT=3182
@@ -35,11 +36,12 @@ GRADLE_VERSION=4.2.0
 
 # run only inside build container
 build_jar_inside() {
-  gradle build
+  gradle build -Penv $ENV
 }
 
 build_jar() {
-  docker run -i -v $VOLUME:/home/gradle/app --workdir=/home/gradle/app gradle:$GRADLE_VERSION \
+  docker run -i -v $VOLUME:/home/gradle/app --workdir=/home/gradle/app -e ENV=$ENV \
+  gradle:$GRADLE_VERSION \
     ./do.sh build_jar_inside
 }
 

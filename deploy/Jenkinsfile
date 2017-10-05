@@ -12,13 +12,20 @@ podTemplate(label: 'build-pod-sourcerer-app',
     ]
 ) {
   node('build-pod-sourcerer-app') {
+    def namespace = 'staging'
+    def env = 'development'
+    if (env.BRANCH_NAME == 'master') {
+      env = 'production'
+      namespace = 'production'
+    }
+
     stage('checkout') {
       checkout scm
     }
 
     stage('build jar and test') {
       container('gradle') {
-        sh("./do.sh build_jar_inside")
+        sh("ENV=${env} ./do.sh build_jar_inside")
       }
     }
 
@@ -33,10 +40,6 @@ podTemplate(label: 'build-pod-sourcerer-app',
     }
     
     stage('deploy') {
-      def namespace = 'staging'
-      if (env.BRANCH_NAME == 'master') {
-        namespace = 'production'
-      }
       println "Deploying to ${namespace} kubernetes namespace"
       sh("NAMESPACE=${namespace} ./do.sh deploy")
     }
