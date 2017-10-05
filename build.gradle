@@ -30,7 +30,8 @@ buildConfig {
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
-    buildConfigField 'String', 'API_BASE_URL', 'http://localhost:3181'
+    buildConfigField 'String', 'API_BASE_URL',
+            'https://staging.eng.sourcerer.io/api/commit'
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'
     buildConfigField 'String', 'GA_TRACKING_ID', 'UA-107129190-2'
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
