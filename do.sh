@@ -36,7 +36,7 @@ GRADLE_VERSION=4.2.0
 
 # run only inside build container
 build_jar_inside() {
-  gradle build -Penv $ENV
+  gradle -Penv=$ENV build
 }
 
 build_jar() {
