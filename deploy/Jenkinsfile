@@ -13,9 +13,9 @@ podTemplate(label: 'build-pod-sourcerer-app',
 ) {
   node('build-pod-sourcerer-app') {
     def namespace = 'staging'
-    def env = 'development'
+    def benv = 'development'
     if (env.BRANCH_NAME == 'master') {
-      env = 'production'
+      benv = 'production'
       namespace = 'production'
     }
 
@@ -25,7 +25,7 @@ podTemplate(label: 'build-pod-sourcerer-app',
 
     stage('build jar and test') {
       container('gradle') {
-        sh("ENV=${env} ./do.sh build_jar_inside")
+        sh("ENV=${benv} ./do.sh build_jar_inside")
       }
     }
 
