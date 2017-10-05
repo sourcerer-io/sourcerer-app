@@ -11,7 +11,7 @@ podTemplate(label: 'build-pod-sourcerer-app',
         hostPathVolume(hostPath: '/usr/bin/docker', mountPath: '/usr/bin/docker')
     ]
 ) {
-  node('build-pod-frontend') {
+  node('build-pod-sourcerer-app') {
     stage('checkout') {
       checkout scm
     }
