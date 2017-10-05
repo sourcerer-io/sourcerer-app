@@ -99,4 +99,6 @@ jar {
         exclude "META-INF/*.DSA"
         exclude "META-INF/*.RSA"
     }
+
+    baseName 'sourcerer-app'
 }
