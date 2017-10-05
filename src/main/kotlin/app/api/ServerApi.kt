@@ -51,7 +51,7 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     init {
-        fuelManager.basePath = BuildConfig.API_BASE_URL
+        fuelManager.basePath = BuildConfig.API_BASE_PATH
         fuelManager.addRequestInterceptor { cookieRequestInterceptor() }
         fuelManager.addResponseInterceptor { cookieResponseInterceptor() }
     }

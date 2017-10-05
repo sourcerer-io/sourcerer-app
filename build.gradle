@@ -17,6 +17,8 @@ plugins {
     id 'de.fuerstenau.buildconfig' version '1.1.8'
 }
 
+
+
 apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "kotlin"
@@ -25,16 +27,33 @@ apply plugin: "com.google.protobuf"
 apply plugin: "org.junit.platform.gradle.plugin"
 
 buildConfig {
+    ext.environment = project.hasProperty('env') &&
+        env == 'production' ? 'prod' : 'dev'
+
     clsName = 'BuildConfig'
     packageName = 'app'
+
+    // API.
+    def apiBasePath = 'https://staging.eng.sourcerer.io/api/commit'
+    if (ext.environment == 'prod') {
+        apiBasePath = 'https://sourcerer.io/api/commit'
+    }
+    apiBasePath = project.hasProperty('api') ? api : apiBasePath
+
+    buildConfigField 'String', 'API_BASE_PATH', apiBasePath
+
+    // Common.
+    buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
+
+    // App version.
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
-    buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
-    buildConfigField 'String', 'API_BASE_URL',
-            'https://staging.eng.sourcerer.io/api/commit'
+
+    // Google Analytics.
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'
     buildConfigField 'String', 'GA_TRACKING_ID', 'UA-107129190-2'
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
+
     buildConfig
 }
 
