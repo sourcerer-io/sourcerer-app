@@ -22,6 +22,16 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
+import java.io.InputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.ObjectOutputStream
+import java.io.ObjectInputStream
+import java.io.Serializable
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -103,42 +113,76 @@ class CodeLine(val repo: Repository,
 }
 
 /**
+ * A data class used to store line age information.
+ */
+class CodeLineAges : Serializable {
+    /**
+     * A pair of (line age sum, line count) representing an aggregated line ages.
+     */
+    data class AggrAge(var sum: Long = 0L, var count: Int = 0) : Serializable
+
+    /**
+     * A code line info: an (age, email) pair.
+     */
+    data class LineInfo(var age: Long, var email: String) : Serializable
+
+    /**
+     * Aggregated code line ages for user emails, collected from all deleted
+     * lines.
+     */
+    var aggrAges: HashMap<String, AggrAge> = hashMapOf()
+
+    /**
+     * A map of existing code lines ids to their ages at the revision.
+     */
+    var lastingLines: HashMap<String, LineInfo> = hashMapOf()
+}
+
+/**
  * Used to compute age of code lines in the repo.
  */
 class CodeLongevity(private val serverRepo: Repo,
-                    private val api: Api,
                     private val emails: HashSet<String>,
                     git: Git) {
     val repo: Repository = git.repository
     val head: RevCommit =
         RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
+    val storageDir = ".sourcerer/data/longevity"
+    val storagePath = "$storageDir/${serverRepo.rehash}"
 
     init {
         df.setRepository(repo)
         df.setDetectRenames(true)
     }
 
-    fun update() {
-        val sums: MutableMap<String, Long> = emails.associate { Pair(it, 0L) }
-                                                   .toMutableMap()
-        val totals: MutableMap<String, Int> = emails.associate { Pair(it, 0) }
-                                                    .toMutableMap()
+    /**
+     * Update code line age statistics on the server.
+     */
+    fun updateStats(api: Api) {
+        // If no changes, then nothing to update, return early.
+        val ages = scan() ?: return
 
         var repoTotal = 0
         var repoSum: Long = 0
-        getLinesObservable().blockingSubscribe { line ->
-            repoTotal++
-            repoSum += line.age
+        val aggrAges : HashMap<String, CodeLineAges.AggrAge> = hashMapOf()
 
-            val email = line.from.commit.authorIdent.emailAddress
+        ages.aggrAges.forEach { (email, aggrAge) ->
+            repoSum += aggrAge.sum
+            repoTotal += aggrAge.count
             if (emails.contains(email)) {
-                Logger.debug(line.toString())
-                Logger.debug("Age: ${line.age} secs")
-
-                sums[email] = sums[email]!! + line.age
-                totals[email] = totals[email]!! + 1
+                aggrAges.put(email, aggrAge)
             }
+        }
+
+        ages.lastingLines.forEach { (_, info) ->
+            val aggrAge =
+                aggrAges.getOrPut(info.email, { CodeLineAges.AggrAge() })
+            aggrAge.sum += info.age
+            aggrAge.count += 1
+
+            repoSum += info.age
+            repoTotal += 1
         }
 
         val secondsInDay = 86400
@@ -152,8 +196,9 @@ class CodeLongevity(private val serverRepo: Repo,
               + "lines total: $repoTotal")
 
         for (email in emails) {
-            val total = totals[email] ?: 0
-            val avg = if (total > 0) { sums[email]!! / total } else 0
+            val aggrAge = aggrAges[email] ?: CodeLineAges.AggrAge()
+            val avg = if (aggrAge.count > 0) { aggrAge.sum / aggrAge.count }
+                      else 0
             stats.add(Fact(repo = serverRepo,
                            code = FactCodes.LINE_LONGEVITY,
                            value = avg.toString(),
@@ -164,6 +209,60 @@ class CodeLongevity(private val serverRepo: Repo,
             api.postFacts(stats)
             Logger.debug("Sent ${stats.size} stats to server")
         }
+    }
+
+    /**
+     * Scans the repo to extract code line ages.
+     */
+    fun scan() : CodeLineAges? {
+        // Load existing age data if any.
+        val iStream = try { ObjectInputStream(FileInputStream(storagePath)) }
+            catch(e : Exception ) { null }
+        val storedHead = iStream?.readObject() as RevCommit?
+        if (storedHead == head) {
+            return null
+        }
+
+        val ageData = (iStream?.readObject() ?: CodeLineAges()) as CodeLineAges
+
+        // Update ages.
+        getLinesObservable(storedHead).blockingSubscribe { line ->
+            Logger.debug("Scanning: ${line}")
+            if (line.to.isDeleted) {
+                var age = line.age
+                if (ageData.lastingLines.contains(line.oldId)) {
+                    age += ageData.lastingLines.remove(line.oldId)!!.age
+                }
+                val aggrAge = ageData.aggrAges.getOrPut(line.email,
+                        { CodeLineAges.AggrAge() } )
+                aggrAge.sum += age
+                aggrAge.count += 1
+
+            } else {
+                var age = line.age
+                if (ageData.lastingLines.contains(line.oldId)) {
+                    age += ageData.lastingLines.remove(line.oldId)!!.age
+                }
+                ageData.lastingLines.put(line.newId,
+                                         CodeLineAges.LineInfo(age, line.email))
+            }
+        }
+
+        // Store ages for subsequent runs.
+        if (Files.notExists(Paths.get(storageDir))) {
+            Files.createDirectories(Paths.get(storageDir))
+        }
+        val oStream = ObjectOutputStream(FileOutputStream(storagePath))
+        oStream.writeObject(head)
+        oStream.writeObject(ageData)
+        return ageData
+    }
+
+    /**
+     * Clears the stored age data if any.
+     */
+    fun dropSavedData() {
+        File(storagePath).delete()
     }
 
     /**

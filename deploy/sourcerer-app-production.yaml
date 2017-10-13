@@ -1,0 +1,32 @@
+kind: Service
+metadata:
+  name: sourcerer-app
+  labels:
+    app: sourcerer-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: sourcerer-app
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sourcerer-app
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: sourcerer-app
+    spec:
+      containers:
+      - name: sourcerer-app
+        image: gcr.io/sourcerer-1377/sourcerer-app:CONTAINER_TAG
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi

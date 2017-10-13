@@ -1,0 +1,48 @@
+podTemplate(label: 'build-pod-sourcerer-app',
+    containers: [
+        containerTemplate(name: 'jnlp', image: 'gcr.io/cloud-solutions-images/jenkins-k8s-slave', args: '${computer.jnlpmac} ${computer.name}'),
+        containerTemplate(name: 'gradle', image: 'gcr.io/sourcerer-1377/gradle:4.2.0', ttyEnabled: true, command: 'tail -f /dev/null')
+    ],
+    envVars: [
+      envVar(key: 'CONTAINER_TAG', value: "${env.BRANCH_NAME}.${env.BUILD_NUMBER}")
+    ],
+    volumes: [
+        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),
+        hostPathVolume(hostPath: '/usr/bin/docker', mountPath: '/usr/bin/docker')
+    ]
+) {
+  node('build-pod-sourcerer-app') {
+    def namespace = 'staging'
+    def benv = 'development'
+    if (env.BRANCH_NAME == 'master') {
+      benv = 'production'
+      namespace = 'production'
+    }
+
+    stage('checkout') {
+      checkout scm
+    }
+
+    stage('build jar and test') {
+      container('gradle') {
+        sh("ENV=${benv} ./do.sh build_jar_inside")
+      }
+    }
+
+    stage('build nginx') {
+      container('gradle') {
+        sh("./do.sh build_prod_inside")
+      }
+    }
+
+    stage('push') {
+      sh("./do.sh push")
+    }
+    
+    stage('deploy') {
+      println "Deploying to ${namespace} kubernetes namespace"
+      sh("NAMESPACE=${namespace} ./do.sh deploy")
+    }
+  }
+}
+
