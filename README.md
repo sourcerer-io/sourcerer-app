@@ -1,12 +1,26 @@
-# sourcerer-app
-Sourcerer hashes your git repos into intelligent engineering profiles.
+<h1 align="center">
+  <br>
+  <a href="https://sourcerer.io"><img src="https://user-images.githubusercontent.com/29913247/31576516-0ce3e9ae-b105-11e7-9a8b-89f96bd44a3d.png" alt="Sourcerer" width="200"></a>
+  <br>
+  Sourcerer App
+  <br>
+</h1>
+
+<h3 align="center">
+  Sourcerer app creates an intelligent profile for software engineers.<br/>
+  Get early access on <a href="https://sourcerer.io">Sourcerer</a>.
+</h3>
+<br>
+
+Prerequirements
+=================
+
+* Sourcerer alpha/beta access
+* Linux or macOS
+* Java Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
 
 Install/uninstall
 =================
-
-Sourcerer requires Java Platform installed on the system.
-* Proceed with JRE(http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) if on Linux,
-* or with JDK(http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) if on OS X.
 
 To install sourcerer run the following command:
 
@@ -33,7 +47,7 @@ $ git clone https://github.com/sourcerer-io/sourcerer-app.git
 $ cd sourcerer-app
 
 # Build
-$ gradle build
+$ gradle build -Penv=production
 
 # Run the app
 $ java -jar build/libs/sourcerer-app.jar
