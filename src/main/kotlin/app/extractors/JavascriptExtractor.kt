@@ -9,9 +9,10 @@ import app.model.DiffFile
 
 class JavascriptExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "js"
+        val LANGUAGE_NAME = "javascript"
         val FILE_EXTS = listOf("js")
         val LIBRARIES = ExtractorInterface.getLibraries("js")
+        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -29,5 +30,11 @@ class JavascriptExtractor : ExtractorInterface {
         imports.addAll(fileTokens.filter { token -> token in LIBRARIES })
 
         return imports.toList()
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

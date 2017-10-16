@@ -11,6 +11,7 @@ class RubyExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "ruby"
         val FILE_EXTS = listOf("rb", "rbw")
+        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -31,5 +32,19 @@ class RubyExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
+        val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

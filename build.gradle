@@ -88,6 +88,7 @@ dependencies {
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit',
             version: '4.8.0.201706111038-r'
     compile "org.slf4j:slf4j-nop:1.7.2"
+    compile 'org.jpmml:pmml-evaluator:1.3.9'
 
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.spek:spek-api:1.1.4'

@@ -11,6 +11,7 @@ class ObjectiveCExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "objectivec"
         val FILE_EXTS = listOf("m", "mm")
+        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -35,5 +36,19 @@ class ObjectiveCExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

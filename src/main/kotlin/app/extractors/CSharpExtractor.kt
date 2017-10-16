@@ -9,9 +9,10 @@ import app.model.DiffFile
 
 class CSharpExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "cs"
+        val LANGUAGE_NAME = "csharp"
         val FILE_EXTS = listOf("cs")
         val LIBRARIES = ExtractorInterface.getLibraries("cs")
+        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -36,5 +37,19 @@ class CSharpExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^.*using\s+(\w+[.\w+]*)""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }
