@@ -12,20 +12,36 @@ import org.jpmml.evaluator.FieldValue
 import org.jpmml.evaluator.ModelEvaluatorFactory
 import org.jpmml.evaluator.ProbabilityDistribution
 import org.jpmml.model.PMMLUtil
+import java.io.InputStream
 
 interface ExtractorInterface {
     companion object {
-        fun getLibraries(name: String): Set<String> {
+        private val librariesCache = hashMapOf<String, Set<String>>()
+        private val evaluatorsCache = hashMapOf<String, Evaluator>()
+
+        private fun getResource(path: String): InputStream {
             return ExtractorInterface::class.java.classLoader
-                .getResourceAsStream("data/libraries/${name}_libraries.txt")
-                .bufferedReader().readLines().toSet()
+                .getResourceAsStream(path)
         }
+
+        fun getLibraries(name: String): Set<String> {
+            if (librariesCache.containsKey(name)) {
+                return librariesCache[name]!!
+            }
+            val libraries = getResource("data/libraries/${name}_libraries.txt")
+                .bufferedReader().readLines().toSet()
+            librariesCache.put(name, libraries)
+            return libraries
+        }
+
         fun getLibrariesModelEvaluator(name: String): Evaluator {
-            val pmml = PMMLUtil.unmarshal(
-                           ExtractorInterface::class.java.classLoader
-                           .getResourceAsStream("data/models/$name.pmml"))
+            if (evaluatorsCache.containsKey(name)) {
+                return evaluatorsCache[name]!!
+            }
+            val pmml = PMMLUtil.unmarshal(getResource("data/models/$name.pmml"))
             val evaluator = ModelEvaluatorFactory.newInstance()
                                                  .newModelEvaluator(pmml)
+            evaluatorsCache.put(name, evaluator)
             return evaluator
         }
     }
