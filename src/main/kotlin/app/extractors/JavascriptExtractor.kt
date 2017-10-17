@@ -24,8 +24,8 @@ class JavascriptExtractor : ExtractorInterface {
         val imports = mutableSetOf<String>()
 
         val splitRegex =
-            Regex("""\s+|,|;|:|\\*|\n|\(|\)|\\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
-        val fileTokens = fileContent.joinToString(separator = " ")
+            Regex("""\s+|,|;|:|\*|\n|\(|\)|\\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
+        val fileTokens = fileContent.joinToString(separator = " ").toLowerCase()
             .split(splitRegex)
         imports.addAll(fileTokens.filter { token -> token in LIBRARIES })
 
