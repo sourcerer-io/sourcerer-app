@@ -113,7 +113,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     private fun getRepoFromServer() {
-        serverRepo = api.getRepo(serverRepo.rehash)
+        val repo = api.getRepo(serverRepo.rehash)
+        serverRepo.commits = repo.commits
         Logger.debug("Received repo from server with " +
             serverRepo.commits.size + " commits")
         Logger.debug(serverRepo.toString())
