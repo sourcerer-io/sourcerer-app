@@ -5,6 +5,9 @@ build/
 sourcerer-app.iml
 sourcerer-app.ipr
 sourcerer-app.iws
+app.iml
+app.ipr
+app.iws
 /confluence/target
 /dependencies
 /dist

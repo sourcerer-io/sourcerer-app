@@ -46,7 +46,7 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             .map { commit ->
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
-                Logger.debug("Stats: ${commit.stats.size} entries")
+                Logger.info("Stats: ${commit.stats.size} entries")
 
                 // Count lines on all non-binary files. This is additional
                 // statistics to CommitStats because not all file extensions
@@ -77,14 +77,14 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             api.postCommits(commits)
-            Logger.debug("Sent ${commits.size} added commits to server")
+            Logger.info("Sent ${commits.size} added commits to server")
         }
     }
 
     private fun deleteCommitsOnServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             api.deleteCommits(commits)
-            Logger.debug("Sent ${commits.size} deleted commits to server")
+            Logger.info("Sent ${commits.size} deleted commits to server")
         }
     }
 }

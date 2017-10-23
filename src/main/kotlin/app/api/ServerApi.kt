@@ -118,14 +118,11 @@ class ServerApi (private val configurator: Configurator) : Api {
                 Logger.debug("Request $requestName success")
                 return parser(res.data)
             } else {
-                Logger.error("Request $requestName error", e)
                 throw RequestException(e)
             }
         } catch (e: InvalidProtocolBufferException) {
-            Logger.error("Request $requestName error while parsing", e)
             throw RequestException(e)
         } catch (e: InvalidParameterException) {
-            Logger.error("Request $requestName error while parsing", e)
             throw RequestException(e)
         }
     }

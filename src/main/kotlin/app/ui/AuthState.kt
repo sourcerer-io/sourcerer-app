@@ -5,6 +5,7 @@ package app.ui
 
 import app.Analytics
 import app.BuildConfig
+import app.Logger
 import app.api.Api
 import app.config.Configurator
 import app.utils.PasswordHelper
@@ -76,8 +77,8 @@ class AuthState constructor(private val context: Context,
                     + BuildConfig.PROFILE_URL + configurator.getUsername())
             saveCredentialsIfChanged()
 
-            Analytics.username = configurator.getUsername()
-            Analytics.trackAuth()
+            Logger.username = configurator.getUsername()
+            Logger.info("Auth success", Logger.Events.AUTH)
 
             return true
         } catch (e: RequestException) {

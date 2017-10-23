@@ -207,7 +207,7 @@ class CodeLongevity(private val serverRepo: Repo,
 
         if (stats.size > 0) {
             api.postFacts(stats)
-            Logger.debug("Sent ${stats.size} stats to server")
+            Logger.info("Sent ${stats.size} facts to server")
         }
     }
 
@@ -227,7 +227,7 @@ class CodeLongevity(private val serverRepo: Repo,
 
         // Update ages.
         getLinesObservable(storedHead).blockingSubscribe { line ->
-            Logger.debug("Scanning: ${line}")
+            Logger.trace("Scanning: ${line}")
             if (line.to.isDeleted) {
                 var age = line.age
                 if (ageData.lastingLines.contains(line.oldId)) {
@@ -313,7 +313,7 @@ class CodeLongevity(private val serverRepo: Repo,
                 val oldId = diff.getOldId().toObjectId()
                 val newPath = diff.getNewPath()
                 val newId = diff.getNewId().toObjectId()
-                Logger.debug("old: '$oldPath', new: '$newPath'")
+                Logger.trace("old: '$oldPath', new: '$newPath'")
 
                 // Skip binary files.
                 val fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
@@ -351,14 +351,14 @@ class CodeLongevity(private val serverRepo: Repo,
                     if (insCount > 0) {
                         val insStart = edit.getBeginB()
                         val insEnd = edit.getEndB()
-                        Logger.debug("ins ($insStart, $insEnd)")
+                        Logger.trace("ins ($insStart, $insEnd)")
 
                         for (idx in insStart .. insEnd - 1) {
                             val from = RevCommitLine(commit, newId,
                                                      newPath, idx, false)
                             val to = lines.get(idx)
                             val cl = CodeLine(repo, from, to)
-                            Logger.debug("Collected: ${cl}")
+                            Logger.trace("Collected: ${cl}")
                             subscriber.onNext(cl)
                         }
                         lines.subList(insStart, insEnd).clear()
@@ -373,7 +373,7 @@ class CodeLongevity(private val serverRepo: Repo,
                     if (delCount > 0) {
                         val delStart = edit.getBeginA()
                         val delEnd = edit.getEndA()
-                        Logger.debug("del ($delStart, $delEnd)")
+                        Logger.trace("del ($delStart, $delEnd)")
 
                         val tmpLines = ArrayList<RevCommitLine>(delCount)
                         for (idx in delStart .. delEnd - 1) {
@@ -409,7 +409,7 @@ class CodeLongevity(private val serverRepo: Repo,
                         val from = RevCommitLine(tail, fileId,
                                                  filePath, idx, false)
                         val cl = CodeLine(repo, from, lines[idx])
-                        Logger.debug("Collected (tail): $cl")
+                        Logger.trace("Collected (tail): $cl")
                         subscriber.onNext(cl)
                     }
                 }

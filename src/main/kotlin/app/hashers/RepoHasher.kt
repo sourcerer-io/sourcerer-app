@@ -3,7 +3,6 @@
 
 package app.hashers
 
-import app.Analytics
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -32,6 +31,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     fun update() {
         println("Hashing $localRepo...")
+        Logger.info("Hashing of repo started")
         val git = loadGit(localRepo.path)
         try {
             val (rehashes, emails) = fetchRehashesAndEmails(git)
@@ -44,6 +44,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val filteredEmails = filterEmails(emails)
 
             initServerRepo(rehashes.last)
+            Logger.debug("Local repo path: ${localRepo.path}")
+            Logger.debug("Repo rehash: ${serverRepo.rehash}")
 
             if (!isKnownRepo()) {
                 // Notify server about new contributor and his email.
@@ -57,12 +59,12 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val errors = mutableListOf<Throwable>()
             val onError: (Throwable) -> Unit = {
                 e -> errors.add(e)
-                Logger.error("Hashing error", e)
+                Logger.error(e, "Hashing error")
             }
 
             // Hash by all plugins.
             val observable = CommitCrawler.getObservable(git, serverRepo)
-                                             .publish()
+                                          .publish()
             CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
             FactHasher(serverRepo, api, filteredEmails)
@@ -87,7 +89,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             }
 
             println("Hashing $localRepo successfully finished.")
-            Analytics.trackHashingRepoSuccess()
+            Logger.info("Hashing repo succesfully",
+                Logger.Events.HASHING_REPO_SUCCESS)
         }
         finally {
             closeGit(git)
@@ -115,7 +118,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     private fun getRepoFromServer() {
         val repo = api.getRepo(serverRepo.rehash)
         serverRepo.commits = repo.commits
-        Logger.debug("Received repo from server with " +
+        Logger.info("Received repo from server with " +
             serverRepo.commits.size + " commits")
         Logger.debug(serverRepo.toString())
     }

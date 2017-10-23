@@ -102,7 +102,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
     private fun postFactsToServer(facts: List<Fact>) {
         if (facts.isNotEmpty()) {
             api.postFacts(facts)
-            Logger.debug("Sent ${facts.size} facts to server")
+            Logger.info("Sent ${facts.size} facts to server")
         }
     }
 }

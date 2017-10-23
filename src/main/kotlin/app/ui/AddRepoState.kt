@@ -4,6 +4,7 @@
 package app.ui
 
 import app.Analytics
+import app.Logger
 import app.api.Api
 import app.config.Configurator
 import app.model.LocalRepo
@@ -46,7 +47,7 @@ class AddRepoState constructor(private val context: Context,
             }
         }
 
-        Analytics.trackConfigSetup()
+        Logger.info("Config setup", Logger.Events.CONFIG_SETUP)
     }
 
     override fun next() {

@@ -19,8 +19,8 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.MissingCommandException
 
 fun main(argv : Array<String>) {
-    Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable? ->
-        Logger.error("Uncaught exception", e)
+    Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable ->
+        Logger.error(e, "Uncaught exception")
     }
     Main(argv)
 }
@@ -30,8 +30,8 @@ class Main(argv: Array<String>) {
     private val api = ServerApi(configurator)
 
     init {
-        Analytics.uuid = configurator.getUuidPersistent()
-        Analytics.trackStart()
+        Logger.uuid = configurator.getUuidPersistent()
+        Logger.info("App started", Logger.Events.START)
 
         val options = Options()
         val commandAdd = CommandAdd()
@@ -64,13 +64,10 @@ class Main(argv: Array<String>) {
                 else -> startUi()
             }
         } catch (e: MissingCommandException) {
-            Logger.error(
-                message = "No such command: ${e.unknownCommand}",
-                code = "no-command"
-            )
+            Logger.warn("No such command: ${e.unknownCommand}")
         }
 
-        Analytics.trackExit()
+        Logger.info("App finished", Logger.Events.EXIT)
     }
 
     private fun startUi() {
@@ -86,10 +83,9 @@ class Main(argv: Array<String>) {
             configurator.saveToFile()
             println("Added git repository at $path.")
 
-            Analytics.trackConfigChanged()
+            Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
         } else {
-            Logger.error(message = "No valid git repository found at $path.",
-                         code = "repo-invalid")
+            Logger.warn("No valid git repository found at specified path")
         }
     }
 
@@ -97,8 +93,7 @@ class Main(argv: Array<String>) {
         val (key, value) = commandOptions.pair
 
         if (!arrayListOf("username", "password").contains(key)) {
-            Logger.error(message = "No such key $key",
-                         code = "invalid-params")
+            Logger.warn("No such key $key")
             return
         }
 
@@ -109,7 +104,7 @@ class Main(argv: Array<String>) {
 
         configurator.saveToFile()
 
-        Analytics.trackConfigChanged()
+        Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
     }
 
     private fun doList() {
@@ -126,7 +121,7 @@ class Main(argv: Array<String>) {
             configurator.saveToFile()
             println("Repository removed from tracking list.")
 
-            Analytics.trackConfigChanged()
+            Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
         } else {
             println("Repository not found in tracking list.")
         }

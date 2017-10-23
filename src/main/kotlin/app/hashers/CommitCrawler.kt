@@ -35,7 +35,7 @@ object CommitCrawler {
                 // to calculate the diff of the initial commit.
                 subscriber.onNext(Commit())
             } catch (e: Exception) {
-                Logger.error("Commit producing error", e)
+                Logger.error(e, "Commit producing error")
                 subscriber.onError(e)
             }
             subscriber.onComplete()

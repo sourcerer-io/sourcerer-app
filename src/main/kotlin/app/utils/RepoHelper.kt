@@ -32,7 +32,7 @@ object RepoHelper {
             repository = git.repository
             commitId = repository.resolve(MASTER_BRANCH)
         } catch (e: Exception) {
-           Logger.error("Cannot access repository at path $path", e)
+           Logger.error(e, "Cannot access repository at specified path")
             return false
         } finally {
             repository?.close()
@@ -49,13 +49,13 @@ object RepoHelper {
         return try {
             Paths.get(path).toFile().isDirectory
         } catch (e: InvalidPathException) {
-            Logger.error("Invalid path $path", e)
+            Logger.error(e, "Invalid path")
             false
         } catch (e: UnsupportedOperationException) {
-            Logger.error("Invalid path $path", e)
+            Logger.error(e, "Invalid path")
             false
         } catch (e: SecurityException) {
-            Logger.error("Cannot access repository at path $path", e)
+            Logger.error(e, "Cannot access repository at specified path")
             false
         }
     }

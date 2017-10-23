@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
@@ -72,7 +71,7 @@ class FileConfigurator : Configurator {
         System.getProperty("user.home")
     }
     catch (e: SecurityException) {
-        Logger.error("Cannot access user directory", e)
+        Logger.error(e, "Cannot access user directory")
         null
     }
 
@@ -232,21 +231,21 @@ class FileConfigurator : Configurator {
                 mapper.readValue(it, Config::class.java)
             }
         } catch (e: IOException) {
-            if(e is NoSuchFileException){
-                Logger.info("No config file found")
+            if (e is NoSuchFileException){
+                Logger.warn("No config file found")
             } else {
-                Logger.error("Cannot access config file", e)
+                Logger.error(e, "Cannot access config file")
             }
         } catch (e: SecurityException) {
-            Logger.error("Cannot access config file", e)
+            Logger.error(e, "Cannot access config file")
         } catch (e: InvalidPathException) {
-            Logger.error("Cannot access config file", e)
+            Logger.error(e, "Cannot access config file")
         } catch (e: JsonParseException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: JsonMappingException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: IllegalStateException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         }
 
         persistent = loadConfig
@@ -261,17 +260,17 @@ class FileConfigurator : Configurator {
                 mapper.writeValue(it, persistent)
             }
         } catch (e: IOException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: SecurityException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: InvalidPathException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: JsonParseException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: JsonMappingException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: IllegalStateException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         }
     }
 

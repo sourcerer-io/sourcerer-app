@@ -39,20 +39,27 @@ buildConfig {
         apiBasePath = 'https://sourcerer.io/api/commit'
     }
     apiBasePath = project.hasProperty('api') ? api : apiBasePath
-
     buildConfigField 'String', 'API_BASE_PATH', apiBasePath
 
     // Common.
+    buildConfigField 'String', 'ENVIRONMENT', ext.environment
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
 
+    // Logging.
+    buildConfigField 'int', 'LOG_LEVEL', '3'
+
     // Google Analytics.
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'
     buildConfigField 'String', 'GA_TRACKING_ID', 'UA-107129190-2'
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
+
+    // Logging.
+    buildConfigField 'String', 'SENTRY_DSN', 'https://0263d6473bd24a9ba40e25aa5fb0a242:c5451dc815074bff8ce3fb9f0851f2f5@sentry.io/233260'
+    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'true'
 
     buildConfig
 }
@@ -89,6 +96,7 @@ dependencies {
             version: '4.8.0.201706111038-r'
     compile "org.slf4j:slf4j-nop:1.7.2"
     compile 'org.jpmml:pmml-evaluator:1.3.9'
+    compile 'io.sentry:sentry:1.6.0'
 
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.spek:spek-api:1.1.4'
