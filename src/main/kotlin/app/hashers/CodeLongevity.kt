@@ -25,6 +25,7 @@ import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.io.InputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.io.ObjectInputStream
@@ -146,7 +147,9 @@ class CodeLongevity(private val serverRepo: Repo,
                     git: Git) {
     val repo: Repository = git.repository
     val head: RevCommit =
-        RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH))
+        try { RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH)) }
+        catch(e: Exception) { throw Exception("No branch") }
+
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
     val storageDir = ".sourcerer/data/longevity"
     val storagePath = "$storageDir/${serverRepo.rehash}"
@@ -215,15 +218,27 @@ class CodeLongevity(private val serverRepo: Repo,
      * Scans the repo to extract code line ages.
      */
     fun scan() : CodeLineAges? {
-        // Load existing age data if any.
-        val iStream = try { ObjectInputStream(FileInputStream(storagePath)) }
-            catch(e : Exception ) { null }
-        val storedHead = iStream?.readObject() as RevCommit?
-        if (storedHead == head) {
-            return null
-        }
+        var storedHead: RevCommit? = null
+        var ageData: CodeLineAges = CodeLineAges()
 
-        val ageData = (iStream?.readObject() ?: CodeLineAges()) as CodeLineAges
+        // Load existing age data if any. Expected format: commit id and
+        // CodeLineAges structure following it.
+        try {
+            val iStream = ObjectInputStream(FileInputStream(storagePath))
+            val storedHeadId = iStream.readUTF()
+            Logger.debug("Stored repo head: $storedHeadId")
+            storedHead = RevWalk(repo).parseCommit(repo.resolve(storedHeadId))
+            if (storedHead == head) {
+                return null
+            }
+            ageData = (iStream.readObject() ?: CodeLineAges()) as CodeLineAges
+        }
+        catch(e: FileNotFoundException) { }
+        catch(e: Exception) {
+            Logger.error(
+                "Failed to read longevity data. CAUTION: data will be recomputed.",
+                e)
+        }
 
         // Update ages.
         getLinesObservable(storedHead).blockingSubscribe { line ->
@@ -252,9 +267,16 @@ class CodeLongevity(private val serverRepo: Repo,
         if (Files.notExists(Paths.get(storageDir))) {
             Files.createDirectories(Paths.get(storageDir))
         }
-        val oStream = ObjectOutputStream(FileOutputStream(storagePath))
-        oStream.writeObject(head)
-        oStream.writeObject(ageData)
+        try {
+            val oStream = ObjectOutputStream(FileOutputStream(storagePath))
+            oStream.writeUTF(head.getName())
+            oStream.writeObject(ageData)
+        }
+        catch(e: Exception) {
+            Logger.error(
+                "Failed to save longevity data. CAUTION: data will be recomputed on a next run.",
+                e)
+        }
         return ageData
     }
 
