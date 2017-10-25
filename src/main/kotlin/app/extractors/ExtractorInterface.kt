@@ -4,15 +4,25 @@
 
 package app.extractors
 
+import app.Logger
 import app.model.DiffFile
 import app.model.CommitStats
 import org.dmg.pmml.FieldName
+import org.dmg.pmml.PMML
 import org.jpmml.evaluator.Evaluator
 import org.jpmml.evaluator.FieldValue
 import org.jpmml.evaluator.ModelEvaluatorFactory
 import org.jpmml.evaluator.ProbabilityDistribution
 import org.jpmml.model.PMMLUtil
+import org.jpmml.sklearn.PickleUtil
+import sklearn.pipeline.Pipeline
+import sklearn2pmml.PMMLPipeline
 import java.io.InputStream
+import org.jpmml.sklearn.CompressedInputStreamStorage
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.Paths
 
 interface ExtractorInterface {
     companion object {
@@ -34,14 +44,62 @@ interface ExtractorInterface {
             return libraries
         }
 
+        fun unpickleModel(path: String): PMML {
+            val stream = getResource(path)
+            val storage = CompressedInputStreamStorage(stream)
+            var pklObject = PickleUtil.unpickle(storage)
+            val pipeline = pklObject as Pipeline
+            pklObject = PMMLPipeline().setSteps(pipeline.getSteps())
+            val pmml = pklObject.encodePMML()
+            return pmml
+        }
+
         fun getLibrariesModelEvaluator(name: String): Evaluator {
             if (evaluatorsCache.containsKey(name)) {
                 return evaluatorsCache[name]!!
             }
-            val pmml = PMMLUtil.unmarshal(getResource("data/models/$name.pmml"))
+
+            val pmmlDir = ".sourcerer/data/pmml"
+            val pmmlPath = "$pmmlDir/$name.pmml"
+            val pklPath = "data/pkl/$name.pkl.z"
+
+            Logger.info("Loading $name evaluator")
+
+            if (Files.notExists(Paths.get(pmmlPath))) {
+                val pmml = unpickleModel(pklPath)
+                if (Files.notExists(Paths.get(pmmlDir))) {
+                    Files.createDirectories(Paths.get(pmmlDir))
+                }
+                try {
+                    val oStream = FileOutputStream(pmmlPath)
+                    PMMLUtil.marshal(pmml, oStream)
+                }
+                catch(e: Exception) {
+                    Logger.error(e, "Failed to create $name evaluator cache")
+                }
+            }
+
+            val pmml = if (Files.exists(Paths.get(pmmlPath))) {
+                try {
+                    PMMLUtil.unmarshal(FileInputStream(pmmlPath))
+                }
+                catch (e: Exception) {
+                    Logger.error(e, "Failed to load $name evaluator cache, " +
+                        "building again")
+                    unpickleModel(pklPath)
+                }
+            }
+            else {
+                Logger.warn("No $name evaluator cache found, building now")
+                unpickleModel(pklPath)
+            }
+
             val evaluator = ModelEvaluatorFactory.newInstance()
                                                  .newModelEvaluator(pmml)
             evaluatorsCache.put(name, evaluator)
+
+            Logger.info("$name evaluator ready")
+
             return evaluator
         }
     }
@@ -71,7 +129,7 @@ interface ExtractorInterface {
         files.filter { file -> file.language.isNotBlank() }
             .forEach { file ->
                 val oldFileLibraries = mutableListOf<String>()
-                file.old.content.forEach {
+                file.getAllDeleted().forEach {
                     val lineLibs = getLineLibraries(it, file.old.imports)
                     oldFileLibraries.addAll(lineLibs)
                 }
@@ -82,7 +140,7 @@ interface ExtractorInterface {
                 }
 
                 val newFileLibraries = mutableListOf<String>()
-                file.new.content.forEach {
+                file.getAllAdded().forEach {
                     val lineLibs = getLineLibraries(it, file.new.imports)
                     newFileLibraries.addAll(lineLibs)
                 }
@@ -98,11 +156,11 @@ interface ExtractorInterface {
 
         val libraryStats = allImports.map {
             CommitStats(
-                numLinesAdded = oldLibraryToCount.getOrDefault(it, 0),
-                numLinesDeleted = newLibraryToCount.getOrDefault(it, 0),
+                numLinesAdded = newLibraryToCount.getOrDefault(it, 0),
+                numLinesDeleted = oldLibraryToCount.getOrDefault(it, 0),
                 type = Extractor.TYPE_LIBRARY,
                 tech = it)
-        }
+        }.filter {it.numLinesAdded > 0 || it.numLinesDeleted > 0}
 
         return files.filter { file -> file.language.isNotBlank() }
                     .groupBy { file -> file.language }
@@ -131,14 +189,15 @@ interface ExtractorInterface {
         return tokens
     }
 
-    fun getLineLibraries(line: String, fileLibraries: List<String>): List<String> {
+    fun getLineLibraries(line: String, fileLibraries: List<String>):
+        List<String> {
         return listOf()
     }
 
     fun getLineLibraries(line: String,
-                          fileLibraries: List<String>,
-                          evaluator: Evaluator,
-                          languageLabel: String): List<String> {
+                         fileLibraries: List<String>,
+                         evaluator: Evaluator,
+                         languageLabel: String): List<String> {
         val arguments = LinkedHashMap<FieldName, FieldValue>()
 
         for (inputField in evaluator.inputFields) {
@@ -150,12 +209,16 @@ interface ExtractorInterface {
         val result = evaluator.evaluate(arguments)
 
         val targetFieldName = evaluator.targetFields[0].name
-        val targetFieldValue = result[targetFieldName] as ProbabilityDistribution
+        val targetFieldValue = result[targetFieldName]
+            as ProbabilityDistribution
 
         val categoryValues = targetFieldValue.categoryValues.toList()
-        val probabilities = categoryValues.map { targetFieldValue.getProbability(it) }
+        val probabilities = categoryValues.map {
+            targetFieldValue.getProbability(it)
+        }
         val maxProbability = probabilities.max() as Double
-        val maxProbabilityCategory = categoryValues[probabilities.indexOf(maxProbability)]
+        val maxProbabilityCategory =
+            categoryValues[probabilities.indexOf(maxProbability)]
         val selectedCategories = categoryValues.filter {
             targetFieldValue.getProbability(it) >= 0.1 * maxProbability
         }

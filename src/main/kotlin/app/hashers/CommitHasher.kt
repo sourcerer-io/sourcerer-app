@@ -44,9 +44,12 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             // Hash only commits made by authors with specified emails.
             .filter { commit -> emails.contains(commit.author.email) }
             .map { commit ->
+                Logger.info("Extracting stats")
+
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
                 Logger.info("Stats: ${commit.stats.size} entries")
+                Logger.debug(commit.stats.toString())
 
                 // Count lines on all non-binary files. This is additional
                 // statistics to CommitStats because not all file extensions
