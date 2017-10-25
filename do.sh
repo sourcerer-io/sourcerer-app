@@ -41,7 +41,7 @@ build_jar_inside() {
   if [ "$NAMESPACE" == "sandbox" ]; then
     API="https://sandbox.eng.sourcerer.io/"
   elif [ "$NAMESPACE" == "staging" ]; then
-    API="https://sandbox.eng.sourcerer.io/"
+    API="https://staging.eng.sourcerer.io/"
   else
     API="https://sourcerer.io/"
   fi
