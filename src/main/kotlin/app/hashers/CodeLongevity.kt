@@ -236,8 +236,9 @@ class CodeLongevity(private val serverRepo: Repo,
         catch(e: FileNotFoundException) { }
         catch(e: Exception) {
             Logger.error(
-                "Failed to read longevity data. CAUTION: data will be recomputed.",
-                e)
+                e,
+                "Failed to read longevity data. CAUTION: data will be recomputed."
+              )
         }
 
         // Update ages.
@@ -274,8 +275,9 @@ class CodeLongevity(private val serverRepo: Repo,
         }
         catch(e: Exception) {
             Logger.error(
-                "Failed to save longevity data. CAUTION: data will be recomputed on a next run.",
-                e)
+                e,
+                "Failed to save longevity data. CAUTION: data will be recomputed on a next run."
+              )
         }
         return ageData
     }

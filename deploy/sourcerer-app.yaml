@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: sourcerer-app
 spec:
-  replicas: 2
+  replicas: $REPLICAS
   template:
     metadata:
       labels:
@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: sourcerer-app
-        image: gcr.io/sourcerer-1377/sourcerer-app:CONTAINER_TAG
+        image: gcr.io/sourcerer-1377/sourcerer-app:$CONTAINER_TAG
         imagePullPolicy: Always
         resources:
           requests:

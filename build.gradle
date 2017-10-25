@@ -38,11 +38,7 @@ buildConfig {
     packageName = 'app'
 
     // API.
-    def apiBasePath = 'https://staging.eng.sourcerer.io/api/commit'
-    if (ext.environment == 'prod') {
-        apiBasePath = 'https://sourcerer.io/api/commit'
-    }
-    apiBasePath = project.hasProperty('api') ? api : apiBasePath
+    def apiBasePath = project.hasProperty('api') ? api : 'https://sourcerer.io/api/commit'
     buildConfigField 'String', 'API_BASE_PATH', apiBasePath
 
     // Common.
