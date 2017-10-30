@@ -11,12 +11,6 @@ buildscript {
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.1"
         classpath "org.junit.platform:junit-platform-gradle-plugin:1.0.0-RC2"
     }
-
-    // Extract models.
-    copy {
-        from tarTree(resources.gzip('src/main/resources/data/models.tar.gz'))
-        into file(projectDir.toString() + '/src/main/resources/data')
-    }
 }
 
 plugins {
@@ -119,14 +113,6 @@ protobuf {
 sourceSets.main.java.srcDirs += 'build/generated/source/proto/main/java'
 sourceSets.test.java.srcDirs += 'src/test/kotlin'
 compileKotlin.dependsOn ':generateProto'
-
-sourceSets {
-    main {
-        resources {
-            exclude 'data/models.tar.gz'
-        }
-    }
-}
 
 // Include dependent libraries in archive.
 jar {

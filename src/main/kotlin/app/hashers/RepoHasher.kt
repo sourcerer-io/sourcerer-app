@@ -124,6 +124,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     private fun postRepoToServer() {
+        serverRepo.commits = listOf()
         api.postRepo(serverRepo)
         Logger.debug(serverRepo.toString())
     }
