@@ -4,6 +4,7 @@
 
 package app.extractors
 
+import app.BuildConfig
 import app.Logger
 import app.model.DiffFile
 import app.model.CommitStats
@@ -23,6 +24,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
 
 interface ExtractorInterface {
     companion object {
@@ -44,14 +47,53 @@ interface ExtractorInterface {
             return libraries
         }
 
-        fun unpickleModel(path: String): PMML {
-            val stream = getResource(path)
+        fun unpickleModel(stream: FileInputStream): PMML {
             val storage = CompressedInputStreamStorage(stream)
             var pklObject = PickleUtil.unpickle(storage)
             val pipeline = pklObject as Pipeline
             pklObject = PMMLPipeline().setSteps(pipeline.getSteps())
             val pmml = pklObject.encodePMML()
             return pmml
+        }
+
+        private fun downloadModel(name: String, outputDir: String) {
+            val url = BuildConfig.LIBRARY_MODELS_URL + "$name.pkl.z"
+            val outputPath = "$outputDir/$name.pkl.z"
+
+            if (Files.notExists(Paths.get(outputDir))) {
+                Files.createDirectories(Paths.get(outputDir))
+            }
+
+            val builder = HttpClientBuilder.create()
+            val client = builder.build()
+            try {
+                client.execute(HttpGet(url)).use { response ->
+                    val entity = response.entity
+                    if (entity != null) {
+                        FileOutputStream(outputPath).use { outstream ->
+                            entity.writeTo(outstream)
+                            outstream.flush()
+                            outstream.close()
+                        }
+                    }
+
+                }
+            }
+            catch (e: Exception) {
+                Logger.error(e, "Failed to download $name model")
+            }
+        }
+
+        private fun getPickleInputStream(pklPath: String): FileInputStream {
+            val pklStream = try {
+                FileInputStream(pklPath)
+            }
+            catch (e: Exception) {
+                val description = "Failed to load $pklPath"
+                Logger.error(e, description)
+                throw Exception(description)
+            }
+            return pklStream
         }
 
         fun getLibrariesModelEvaluator(name: String): Evaluator {
@@ -61,15 +103,24 @@ interface ExtractorInterface {
 
             val pmmlDir = ".sourcerer/data/pmml"
             val pmmlPath = "$pmmlDir/$name.pmml"
-            val pklPath = "data/pkl/$name.pkl.z"
+            val pklDir = ".sourcerer/data/pkl"
+            val pklPath = "$pklDir/$name.pkl.z"
+
+            if (Files.notExists(Paths.get(pklPath))) {
+                Logger.info("Downloading $name.pkl.z")
+                downloadModel(name, pklDir)
+                Logger.info("Downloaded $name.pkl.z")
+            }
 
             Logger.info("Loading $name evaluator")
 
+            if (Files.notExists(Paths.get(pmmlDir))) {
+                Files.createDirectories(Paths.get(pmmlDir))
+            }
+
             if (Files.notExists(Paths.get(pmmlPath))) {
-                val pmml = unpickleModel(pklPath)
-                if (Files.notExists(Paths.get(pmmlDir))) {
-                    Files.createDirectories(Paths.get(pmmlDir))
-                }
+                val pklStream = getPickleInputStream(pklPath)
+                val pmml = unpickleModel(pklStream)
                 try {
                     val oStream = FileOutputStream(pmmlPath)
                     PMMLUtil.marshal(pmml, oStream)
@@ -84,14 +135,14 @@ interface ExtractorInterface {
                     PMMLUtil.unmarshal(FileInputStream(pmmlPath))
                 }
                 catch (e: Exception) {
-                    Logger.error(e, "Failed to load $name evaluator cache, " +
-                        "building again")
-                    unpickleModel(pklPath)
+                    val description = "Failed to load $name evaluator cache"
+                    Logger.error(e, description)
+                    throw Exception(description)
                 }
             }
             else {
                 Logger.warn("No $name evaluator cache found, building now")
-                unpickleModel(pklPath)
+                unpickleModel(getPickleInputStream(pklPath))
             }
 
             val evaluator = ModelEvaluatorFactory.newInstance()
