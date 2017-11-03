@@ -90,6 +90,12 @@ class ExtractorTest : Spek({
             assertExtractsLineLibraries("Tebru\\Retrofit",
                     line, PhpExtractor())
         }
+
+        it("c extractor extracts the library") {
+            val line = "grpc_test_init(argc, argv);"
+            assertExtractsLineLibraries("grpc",
+                    line, CExtractor())
+        }
     }
 
     given("code line doesn't use libraries" ) {
@@ -141,6 +147,11 @@ class ExtractorTest : Spek({
         it("cpp extractor returns empty list") {
             val line = "std::cerr << status.ToString() << std::endl;"
             assertExtractsNoLibraries(line, CppExtractor())
+        }
+
+        it("c extractor returns empty list") {
+            val line = "int main(int argc, char **argv) {"
+            assertExtractsNoLibraries(line, CExtractor())
         }
     }
 })

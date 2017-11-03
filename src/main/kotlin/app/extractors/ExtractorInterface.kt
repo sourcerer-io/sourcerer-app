@@ -278,6 +278,15 @@ interface ExtractorInterface {
             return emptyList()
         }
 
+        // For C language.
+        // Consider line with language label being the one with high probability
+        // as not having library.
+        // Keep it while the number of libraries is small.
+        if (languageLabel == CExtractor.LANGUAGE_NAME &&
+            languageLabel in selectedCategories) {
+            return emptyList()
+        }
+
         val lineLibraries = fileLibraries.filter { it in selectedCategories }
         return lineLibraries
     }
