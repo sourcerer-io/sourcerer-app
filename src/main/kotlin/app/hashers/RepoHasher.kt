@@ -31,7 +31,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     fun update() {
         println("Hashing $localRepo...")
-        Logger.info("Hashing of repo started")
+        Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
             val (rehashes, emails) = fetchRehashesAndEmails(git)
@@ -44,8 +44,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val filteredEmails = filterEmails(emails)
 
             initServerRepo(rehashes.last)
-            Logger.debug("Local repo path: ${localRepo.path}")
-            Logger.debug("Repo rehash: ${serverRepo.rehash}")
+            Logger.debug { "Local repo path: ${localRepo.path}" }
+            Logger.debug { "Repo rehash: ${serverRepo.rehash}" }
 
             if (!isKnownRepo()) {
                 // Notify server about new contributor and his email.
@@ -89,8 +89,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             }
 
             println("Hashing $localRepo successfully finished.")
-            Logger.info("Hashing repo succesfully",
-                Logger.Events.HASHING_REPO_SUCCESS)
+            Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
+                { "Hashing repo succesfully" }
         }
         finally {
             closeGit(git)
@@ -118,15 +118,16 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     private fun getRepoFromServer() {
         val repo = api.getRepo(serverRepo.rehash)
         serverRepo.commits = repo.commits
-        Logger.info("Received repo from server with " +
-            serverRepo.commits.size + " commits")
-        Logger.debug(serverRepo.toString())
+        Logger.info{
+            "Received repo from server with ${serverRepo.commits.size} commits"
+        }
+        Logger.debug { serverRepo.toString() }
     }
 
     private fun postRepoToServer() {
         serverRepo.commits = listOf()
         api.postRepo(serverRepo)
-        Logger.debug(serverRepo.toString())
+        Logger.debug { serverRepo.toString() }
     }
 
     private fun initServerRepo(initCommitRehash: String) {

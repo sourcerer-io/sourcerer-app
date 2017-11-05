@@ -195,8 +195,9 @@ class CodeLongevity(private val serverRepo: Repo,
                        code = FactCodes.LINE_LONGEVITY_REPO,
                        value = repoAvg.toString()))
         val repoAvgDays = repoAvg / secondsInDay
-        Logger.info("Repo average code line age is $repoAvgDays days, "
-              + "lines total: $repoTotal")
+        Logger.info {
+            "Repo average code line age is $repoAvgDays days, lines total: $repoTotal"
+        }
 
         for (email in emails) {
             val aggrAge = aggrAges[email] ?: CodeLineAges.AggrAge()
@@ -210,7 +211,7 @@ class CodeLongevity(private val serverRepo: Repo,
 
         if (stats.size > 0) {
             api.postFacts(stats)
-            Logger.info("Sent ${stats.size} facts to server")
+            Logger.info { "Sent ${stats.size} facts to server" }
         }
     }
 
@@ -226,7 +227,7 @@ class CodeLongevity(private val serverRepo: Repo,
         try {
             val iStream = ObjectInputStream(FileInputStream(storagePath))
             val storedHeadId = iStream.readUTF()
-            Logger.debug("Stored repo head: $storedHeadId")
+            Logger.debug { "Stored repo head: $storedHeadId" }
             storedHead = RevWalk(repo).parseCommit(repo.resolve(storedHeadId))
             if (storedHead == head) {
                 return null
@@ -243,7 +244,7 @@ class CodeLongevity(private val serverRepo: Repo,
 
         // Update ages.
         getLinesObservable(storedHead).blockingSubscribe { line ->
-            Logger.trace("Scanning: ${line}")
+            Logger.trace { "Scanning: ${line}" }
             if (line.to.isDeleted) {
                 var age = line.age
                 if (ageData.lastingLines.contains(line.oldId)) {
@@ -337,7 +338,7 @@ class CodeLongevity(private val serverRepo: Repo,
                 val oldId = diff.getOldId().toObjectId()
                 val newPath = diff.getNewPath()
                 val newId = diff.getNewId().toObjectId()
-                Logger.trace("old: '$oldPath', new: '$newPath'")
+                Logger.trace { "old: '$oldPath', new: '$newPath'" }
 
                 // Skip binary files.
                 val fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
@@ -375,14 +376,14 @@ class CodeLongevity(private val serverRepo: Repo,
                     if (insCount > 0) {
                         val insStart = edit.getBeginB()
                         val insEnd = edit.getEndB()
-                        Logger.trace("ins ($insStart, $insEnd)")
+                        Logger.trace { "ins ($insStart, $insEnd)" }
 
                         for (idx in insStart .. insEnd - 1) {
                             val from = RevCommitLine(commit, newId,
                                                      newPath, idx, false)
                             val to = lines.get(idx)
                             val cl = CodeLine(repo, from, to)
-                            Logger.trace("Collected: ${cl}")
+                            Logger.trace { "Collected: ${cl}" }
                             subscriber.onNext(cl)
                         }
                         lines.subList(insStart, insEnd).clear()
@@ -397,7 +398,7 @@ class CodeLongevity(private val serverRepo: Repo,
                     if (delCount > 0) {
                         val delStart = edit.getBeginA()
                         val delEnd = edit.getEndA()
-                        Logger.trace("del ($delStart, $delEnd)")
+                        Logger.trace { "del ($delStart, $delEnd)" }
 
                         val tmpLines = ArrayList<RevCommitLine>(delCount)
                         for (idx in delStart .. delEnd - 1) {
@@ -433,7 +434,7 @@ class CodeLongevity(private val serverRepo: Repo,
                         val from = RevCommitLine(tail, fileId,
                                                  filePath, idx, false)
                         val cl = CodeLine(repo, from, lines[idx])
-                        Logger.trace("Collected (tail): $cl")
+                        Logger.trace { "Collected (tail): $cl" }
                         subscriber.onNext(cl)
                     }
                 }
@@ -457,14 +458,23 @@ class CodeLongevity(private val serverRepo: Repo,
         while (commit != null && commit != tail) {
             val parentCommit: RevCommit? = revWalk.next()
 
-            Logger.debug("commit: ${commit.getName()}; " +
-                "'${commit.getShortMessage()}'")
-            if (parentCommit != null) {
-                Logger.debug("parent commit: ${parentCommit.getName()}; "
-                    + "'${parentCommit.getShortMessage()}'")
-            }
-            else {
-                Logger.debug("parent commit: null")
+            // Smart casts are not yet supported for a mutable variable captured
+            // in an inline lambda, see
+            // https://youtrack.jetbrains.com/issue/KT-7186.
+            if (Logger.isDebug) {
+                val commitName = commit.getName()
+                val commitMsg = commit.getShortMessage()
+                Logger.debug { "commit: $commitName; '$commitMsg'" }
+                if (parentCommit != null) {
+                    val parentCommitName = parentCommit.getName()
+                    val parentCommitMsg = parentCommit.getShortMessage()
+                    Logger.debug {
+                        "parent commit: ${parentCommitName}; '${parentCommitMsg}'"
+                    }
+                }
+                else {
+                    Logger.debug { "parent commit: null" }
+                }
             }
 
             subscriber.onNext(Pair(commit, df.scan(parentCommit, commit)))

@@ -107,12 +107,12 @@ interface ExtractorInterface {
             val pklPath = "$pklDir/$name.pkl.z"
 
             if (Files.notExists(Paths.get(pklPath))) {
-                Logger.info("Downloading $name.pkl.z")
+                Logger.info { "Downloading $name.pkl.z" }
                 downloadModel(name, pklDir)
-                Logger.info("Downloaded $name.pkl.z")
+                Logger.info { "Downloaded $name.pkl.z" }
             }
 
-            Logger.info("Loading $name evaluator")
+            Logger.info { "Loading $name evaluator" }
 
             if (Files.notExists(Paths.get(pmmlDir))) {
                 Files.createDirectories(Paths.get(pmmlDir))
@@ -141,7 +141,7 @@ interface ExtractorInterface {
                 }
             }
             else {
-                Logger.warn("No $name evaluator cache found, building now")
+                Logger.warn { "No $name evaluator cache found, building now" }
                 unpickleModel(getPickleInputStream(pklPath))
             }
 
@@ -149,7 +149,7 @@ interface ExtractorInterface {
                                                  .newModelEvaluator(pmml)
             evaluatorsCache.put(name, evaluator)
 
-            Logger.info("$name evaluator ready")
+            Logger.info { "$name evaluator ready" }
 
             return evaluator
         }

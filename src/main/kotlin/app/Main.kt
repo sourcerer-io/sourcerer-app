@@ -31,7 +31,7 @@ class Main(argv: Array<String>) {
 
     init {
         Logger.uuid = configurator.getUuidPersistent()
-        Logger.info("App started", Logger.Events.START)
+        Logger.info(Logger.Events.START) { "App started" }
 
         val options = Options()
         val commandAdd = CommandAdd()
@@ -64,10 +64,10 @@ class Main(argv: Array<String>) {
                 else -> startUi()
             }
         } catch (e: MissingCommandException) {
-            Logger.warn("No such command: ${e.unknownCommand}")
+            Logger.warn { "No such command: ${e.unknownCommand}" }
         }
 
-        Logger.info("App finished", Logger.Events.EXIT)
+        Logger.info(Logger.Events.EXIT) { "App finished" }
     }
 
     private fun startUi() {
@@ -83,9 +83,9 @@ class Main(argv: Array<String>) {
             configurator.saveToFile()
             println("Added git repository at $path.")
 
-            Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
+            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
-            Logger.warn("No valid git repository found at specified path")
+            Logger.warn { "No valid git repository found at specified path" }
         }
     }
 
@@ -93,7 +93,7 @@ class Main(argv: Array<String>) {
         val (key, value) = commandOptions.pair
 
         if (!arrayListOf("username", "password").contains(key)) {
-            Logger.warn("No such key $key")
+            Logger.warn { "No such key $key" }
             return
         }
 
@@ -104,7 +104,7 @@ class Main(argv: Array<String>) {
 
         configurator.saveToFile()
 
-        Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
+        Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
     }
 
     private fun doList() {
@@ -121,7 +121,7 @@ class Main(argv: Array<String>) {
             configurator.saveToFile()
             println("Repository removed from tracking list.")
 
-            Logger.info("Config changed", Logger.Events.CONFIG_CHANGED)
+            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
             println("Repository not found in tracking list.")
         }

@@ -44,12 +44,12 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             // Hash only commits made by authors with specified emails.
             .filter { commit -> emails.contains(commit.author.email) }
             .map { commit ->
-                Logger.info("Extracting stats")
+                Logger.info { "Extracting stats" }
 
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
-                Logger.info("Stats: ${commit.stats.size} entries")
-                Logger.debug(commit.stats.toString())
+                Logger.info { "Stats: ${commit.stats.size} entries" }
+                Logger.debug { commit.stats.toString() }
 
                 // Count lines on all non-binary files. This is additional
                 // statistics to CommitStats because not all file extensions
@@ -80,14 +80,14 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             api.postCommits(commits)
-            Logger.info("Sent ${commits.size} added commits to server")
+            Logger.info { "Sent ${commits.size} added commits to server" }
         }
     }
 
     private fun deleteCommitsOnServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
             api.deleteCommits(commits)
-            Logger.info("Sent ${commits.size} deleted commits to server")
+            Logger.info { "Sent ${commits.size} deleted commits to server" }
         }
     }
 }

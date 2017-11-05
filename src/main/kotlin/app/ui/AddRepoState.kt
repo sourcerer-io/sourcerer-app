@@ -47,7 +47,7 @@ class AddRepoState constructor(private val context: Context,
             }
         }
 
-        Logger.info("Config setup", Logger.Events.CONFIG_SETUP)
+        Logger.info(Logger.Events.CONFIG_SETUP) { "Config setup" }
     }
 
     override fun next() {

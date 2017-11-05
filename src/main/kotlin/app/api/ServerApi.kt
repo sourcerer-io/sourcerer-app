@@ -111,11 +111,11 @@ class ServerApi (private val configurator: Configurator) : Api {
                                 requestName: String,
                                 parser: (ByteArray) -> T): T {
         try {
-            Logger.debug("Request $requestName initialized")
+            Logger.debug { "Request $requestName initialized" }
             val (_, res, result) = request.responseString()
             val (_, e) = result
             if (e == null) {
-                Logger.debug("Request $requestName success")
+                Logger.debug { "Request $requestName success" }
                 return parser(res.data)
             } else {
                 throw RequestException(e)

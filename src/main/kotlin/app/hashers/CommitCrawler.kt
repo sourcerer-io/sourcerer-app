@@ -43,10 +43,11 @@ object CommitCrawler {
         .pairWithNext()  // Pair commits to get diff.
         .map { (new, old) ->
             // Mapping and stats extraction.
-            Logger.debug("Commit: ${new.raw?.name ?: ""}: "
-                + new.raw?.shortMessage)
+            Logger.debug {
+                "Commit: ${new.raw?.name ?: ""}: ${new.raw?.shortMessage}"
+            }
             new.diffs = getDiffFiles(git, new, old)
-            Logger.debug("Diff: ${new.diffs.size} entries")
+            Logger.debug { "Diff: ${new.diffs.size} entries" }
             new.repo = repo
             new
         }

@@ -232,7 +232,7 @@ class FileConfigurator : Configurator {
             }
         } catch (e: IOException) {
             if (e is NoSuchFileException){
-                Logger.warn("No config file found")
+                Logger.warn { "No config file found" }
             } else {
                 Logger.error(e, "Cannot access config file")
             }

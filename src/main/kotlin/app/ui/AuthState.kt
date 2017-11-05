@@ -78,7 +78,7 @@ class AuthState constructor(private val context: Context,
             saveCredentialsIfChanged()
 
             Logger.username = configurator.getUsername()
-            Logger.info("Auth success", Logger.Events.AUTH)
+            Logger.info(Logger.Events.AUTH) { "Auth success" }
 
             return true
         } catch (e: RequestException) {

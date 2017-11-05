@@ -28,32 +28,38 @@ object Logger {
     /**
      * Current log level. All that higher than this level will not be displayed.
      */
-    private const val LEVEL = BuildConfig.LOG_LEVEL
+    @kotlin.PublishedApi
+    internal const val LEVEL = BuildConfig.LOG_LEVEL
 
     /**
      * Error level.
      */
-    private const val ERROR = 0
+    @kotlin.PublishedApi
+    internal const val ERROR = 0
 
     /**
      * Warning level.
      */
-    private const val WARN = 1
+    @kotlin.PublishedApi
+    internal const val WARN = 1
 
     /**
      * Information level.
      */
-    private const val INFO = 2
+    @kotlin.PublishedApi
+    internal const val INFO = 2
 
     /**
      * Debug level.
      */
-    private const val DEBUG = 3
+    @kotlin.PublishedApi
+    internal const val DEBUG = 3
 
     /**
      * Trace level. For extremely detailed and high volume debug logs.
      */
-    private const val TRACE = 4
+    @kotlin.PublishedApi
+    internal const val TRACE = 4
 
     /**
      * Print stack trace on error log.
@@ -112,45 +118,51 @@ object Logger {
     /**
      * Log warning message. Don't log private information with this method.
      */
-    fun warn(message: String) {
+    inline fun warn(message: () -> String) {
+        val msg = message()
         if (LEVEL >= WARN) {
-            println("[w] $message.")
+            println("[w] $msg.")
         }
-        addBreadcrumb(message, Breadcrumb.Level.WARNING)
+        addBreadcrumb(msg, Breadcrumb.Level.WARNING)
     }
 
     /**
      * Log information message. Don't log private information with this method.
      */
-    fun info(message: String, event: String = "") {
+    inline fun info(event: String = "", message: () -> String) {
+        val msg = message()
         if (LEVEL >= INFO) {
-            println("[i] $message.")
+            println("[i] $msg.")
         }
         if (event.isNotBlank()) {
             Analytics.trackEvent(event)
         }
-        addBreadcrumb(message, Breadcrumb.Level.INFO)
+        addBreadcrumb(msg, Breadcrumb.Level.INFO)
     }
 
     /**
      * Log debug message.
      */
-    fun debug(message: String) {
+    inline fun debug(message: () -> String) {
         if (LEVEL >= DEBUG) {
-            println("[d] $message.")
+            println("[d] ${message()}.")
         }
     }
 
     /**
      * Log trace message.
      */
-    fun trace(message: String) {
+    inline fun trace(message: () -> String) {
         if (LEVEL >= TRACE) {
-            println("[t] $message.")
+            println("[t] ${message()}.")
         }
     }
 
-    private fun addBreadcrumb(message: String, level: Breadcrumb.Level) {
+    val isDebug: Boolean
+        inline get() = LEVEL >= DEBUG
+
+    @kotlin.PublishedApi
+    internal fun addBreadcrumb(message: String, level: Breadcrumb.Level) {
         sentryContext.recordBreadcrumb(BreadcrumbBuilder()
             .setMessage(message)
             .setLevel(level)

@@ -18,7 +18,7 @@ class UpdateRepoState constructor(private val context: Context,
     : ConsoleState {
     override fun doAction() {
         println("Hashing your git repositories.")
-        Logger.info("Hashing started")
+        Logger.info { "Hashing started" }
 
         for (repo in configurator.getLocalRepos()) {
             try {
@@ -34,7 +34,7 @@ class UpdateRepoState constructor(private val context: Context,
 
         println("The repositories have been hashed. See result online on your "
                 + "Sourcerer profile.")
-        Logger.info("Hashing success", Logger.Events.HASHING_SUCCESS)
+        Logger.info(Logger.Events.HASHING_SUCCESS) { "Hashing success" }
     }
 
     override fun next() {
