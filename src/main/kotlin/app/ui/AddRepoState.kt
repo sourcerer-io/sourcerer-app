@@ -3,7 +3,6 @@
 
 package app.ui
 
-import app.Analytics
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -42,7 +41,9 @@ class AddRepoState constructor(private val context: Context,
                     configurator.addLocalRepoPersistent(localRepo)
                     configurator.saveToFile()
                 } else {
-                    println("No valid git repository found at $pathString.")
+                    println("Directory should contain valid git repository.")
+                    println("Make sure that master branch with at least one " +
+                        "commit exists.")
                 }
             }
         }
