@@ -1,6 +1,7 @@
 .DS_Store
 .gradle/
 .idea/
+.sourcerer
 build/
 sourcerer-app.iml
 sourcerer-app.ipr
@@ -20,4 +21,3 @@ app.iws
 /ultimate/ideaSDK
 /ultimate/out
 /ultimate/tmp
-src/main/resources/data/models/

@@ -48,6 +48,15 @@ object CommitCrawler {
             }
             new.diffs = getDiffFiles(git, new, old)
             Logger.debug { "Diff: ${new.diffs.size} entries" }
+            // Count lines on all non-binary files. This is additional
+            // statistics to CommitStats because not all file extensions
+            // may be supported.
+            new.numLinesAdded = new.diffs.fold(0) { total, file ->
+                total + file.getAllAdded().size
+            }
+            new.numLinesDeleted = new.diffs.fold(0) { total, file ->
+                total + file.getAllDeleted().size
+            }
             new.repo = repo
             new
         }

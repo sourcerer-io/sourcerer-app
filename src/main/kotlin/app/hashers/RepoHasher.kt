@@ -67,7 +67,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                                           .publish()
             CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
-            FactHasher(serverRepo, api, filteredEmails)
+            FactHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
 
             // Start and synchronously wait until all subscribers complete.

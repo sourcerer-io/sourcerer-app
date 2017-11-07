@@ -51,15 +51,6 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
                 Logger.info { "Stats: ${commit.stats.size} entries" }
                 Logger.debug { commit.stats.toString() }
 
-                // Count lines on all non-binary files. This is additional
-                // statistics to CommitStats because not all file extensions
-                // may be supported.
-                commit.numLinesAdded = commit.diffs.fold(0) { total, file ->
-                    total + file.getAllAdded().size
-                }
-                commit.numLinesDeleted = commit.diffs.fold(0) { total, file ->
-                    total + file.getAllDeleted().size
-                }
                 commit
             }
             .buffer(20, TimeUnit.SECONDS)  // Group ready commits by time.

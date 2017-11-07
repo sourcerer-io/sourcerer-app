@@ -86,4 +86,12 @@ data class Commit(
     override fun hashCode(): Int {
         return rehash.hashCode()
     }
+
+    fun getAllAdded(): List<String> {
+        return diffs.map { it.getAllAdded() }.flatten()
+    }
+
+    fun getAllDeleted(): List<String> {
+        return diffs.map { it.getAllDeleted() }.flatten()
+    }
 }
