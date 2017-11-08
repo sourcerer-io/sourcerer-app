@@ -146,8 +146,9 @@ class CodeLongevity(private val serverRepo: Repo,
                     private val emails: HashSet<String>,
                     git: Git) {
     val repo: Repository = git.repository
+    val revWalk = RevWalk(repo)
     val head: RevCommit =
-        try { RevWalk(repo).parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH)) }
+        try { revWalk.parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH)) }
         catch(e: Exception) { throw Exception("No branch") }
 
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
@@ -228,7 +229,7 @@ class CodeLongevity(private val serverRepo: Repo,
             val iStream = ObjectInputStream(FileInputStream(storagePath))
             val storedHeadId = iStream.readUTF()
             Logger.debug { "Stored repo head: $storedHeadId" }
-            storedHead = RevWalk(repo).parseCommit(repo.resolve(storedHeadId))
+            storedHead = revWalk.parseCommit(repo.resolve(storedHeadId))
             if (storedHead == head) {
                 return null
             }
@@ -451,9 +452,7 @@ class CodeLongevity(private val serverRepo: Repo,
         Observable<Pair<RevCommit, List<DiffEntry>>> =
         Observable.create { subscriber ->
 
-        val revWalk = RevWalk(repo)
         revWalk.markStart(head)
-
         var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
         while (commit != null && commit != tail) {
             val parentCommit: RevCommit? = revWalk.next()
