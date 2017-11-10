@@ -41,11 +41,10 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     private fun cookieResponseInterceptor() = { _: Request, res: Response ->
-        val newToken = res.httpResponseHeaders[HEADER_SET_COOKIE]
+        val newToken = res.headers[HEADER_SET_COOKIE]
             ?.find { it.startsWith(KEY_TOKEN) }
         if (newToken != null && newToken.isNotBlank()) {
-            token = newToken.substringAfter(KEY_TOKEN)
-                .substringBefore(';')
+            token = newToken.substringAfter(KEY_TOKEN).substringBefore(';')
         }
         res
     }
