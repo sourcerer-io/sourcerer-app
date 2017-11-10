@@ -193,7 +193,6 @@ class FactHasherTest : Spek({
                 "2")))
         }
 
-
         afterGroup {
             testRepo.destroy()
         }

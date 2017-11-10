@@ -22,7 +22,6 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
-import java.io.InputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -211,7 +210,7 @@ class CodeLongevity(private val serverRepo: Repo,
         }
 
         if (stats.size > 0) {
-            api.postFacts(stats)
+            api.postFacts(stats).onErrorThrow()
             Logger.info { "Sent ${stats.size} facts to server" }
         }
     }

@@ -98,3 +98,13 @@ message Repo {
     // starts after last commit from the overlap.
     repeated Commit commits = 5;
 }
+
+// Errors from server.
+message Error {
+    uint32 code = 1;
+    string message = 2;
+}
+
+message Errors {
+    repeated Error errors = 1;
+}

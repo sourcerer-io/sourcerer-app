@@ -53,7 +53,10 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
 
                 commit
             }
-            .buffer(20, TimeUnit.SECONDS)  // Group ready commits by time.
+            // Group ready commits by time and count. Max payload 10 mb,
+            // one commit with stats takes around 1 kb, so pack by max 1000
+            // with 10x margin of safety.
+            .buffer(20, TimeUnit.SECONDS, 1000)
             .subscribe({ commitsBundle ->  // OnNext.
                 postCommitsToServer(commitsBundle)  // Send ready commits.
             }, onError)
@@ -70,14 +73,14 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
 
     private fun postCommitsToServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
-            api.postCommits(commits)
+            api.postCommits(commits).onErrorThrow()
             Logger.info { "Sent ${commits.size} added commits to server" }
         }
     }
 
     private fun deleteCommitsOnServer(commits: List<Commit>) {
         if (commits.isNotEmpty()) {
-            api.deleteCommits(commits)
+            api.deleteCommits(commits).onErrorThrow()
             Logger.info { "Sent ${commits.size} deleted commits to server" }
         }
     }

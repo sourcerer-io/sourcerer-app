@@ -12,7 +12,6 @@ import app.model.Fact
 import app.model.FactGroup
 import app.model.Repo
 import app.model.User
-import app.utils.RequestException
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Method
 import com.github.kittinunf.fuel.core.Request
@@ -108,22 +107,27 @@ class ServerApi (private val configurator: Configurator) : Api {
 
     private fun <T> makeRequest(request: Request,
                                 requestName: String,
-                                parser: (ByteArray) -> T): T {
+                                parser: (ByteArray) -> T): Result<T> {
+        var error: ApiError? = null
+        var data: T? = null
+
         try {
             Logger.debug { "Request $requestName initialized" }
             val (_, res, result) = request.responseString()
             val (_, e) = result
             if (e == null) {
                 Logger.debug { "Request $requestName success" }
-                return parser(res.data)
+                data = parser(res.data)
             } else {
-                throw RequestException(e)
+                error = ApiError(e)
             }
         } catch (e: InvalidProtocolBufferException) {
-            throw RequestException(e)
+            error = ApiError(e)
         } catch (e: InvalidParameterException) {
-            throw RequestException(e)
+            error = ApiError(e)
         }
+
+        return Result(data, error)
     }
 
     private fun getVersionCodeHeader(): Pair<String, String> {
@@ -134,16 +138,16 @@ class ServerApi (private val configurator: Configurator) : Api {
         return Pair(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_PROTO)
     }
 
-    override fun authorize() {
+    override fun authorize(): Result<Unit> {
         return makeRequest(createRequestGetToken(), "getToken", {})
     }
 
-    override fun getUser(): User {
+    override fun getUser(): Result<User> {
         return makeRequest(createRequestGetUser(), "getUser",
                            { body -> User(body) })
     }
 
-    override fun getRepo(repoRehash: String): Repo {
+    override fun getRepo(repoRehash: String): Result<Repo> {
         if (repoRehash.isBlank()) {
             throw IllegalArgumentException()
         }
@@ -152,25 +156,25 @@ class ServerApi (private val configurator: Configurator) : Api {
                            { body -> Repo(body) })
     }
 
-    override fun postRepo(repo: Repo) {
-        makeRequest(createRequestPostRepo(repo),
-                    "postRepo", {})
+    override fun postRepo(repo: Repo): Result<Unit> {
+        return makeRequest(createRequestPostRepo(repo),
+                           "postRepo", {})
     }
 
-    override fun postCommits(commitsList: List<Commit>) {
+    override fun postCommits(commitsList: List<Commit>): Result<Unit> {
         val commits = CommitGroup(commitsList)
-        makeRequest(createRequestPostCommits(commits),
-                    "postCommits", {})
+        return makeRequest(createRequestPostCommits(commits),
+                           "postCommits", {})
     }
 
-    override fun deleteCommits(commitsList: List<Commit>) {
+    override fun deleteCommits(commitsList: List<Commit>): Result<Unit> {
         val commits = CommitGroup(commitsList)
-        makeRequest(createRequestDeleteCommits(commits),
-                    "deleteCommits", {})
+        return makeRequest(createRequestDeleteCommits(commits),
+                           "deleteCommits", {})
     }
 
-    override fun postFacts(factsList: List<Fact>) {
+    override fun postFacts(factsList: List<Fact>): Result<Unit> {
         val facts = FactGroup(factsList)
-        makeRequest(createRequestPostFacts(facts), "postFacts", {})
+        return makeRequest(createRequestPostFacts(facts), "postFacts", {})
     }
 }

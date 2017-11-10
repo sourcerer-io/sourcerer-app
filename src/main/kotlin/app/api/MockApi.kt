@@ -21,40 +21,45 @@ class MockApi(  // GET requests.
     // DELETE requests.
     var receivedDeletedCommits: MutableList<Commit> = mutableListOf()
 
-    override fun authorize() {
+    override fun authorize(): Result<Unit> {
         Logger.debug { "MockApi: authorize request" }
+        return Result()
     }
 
-    override fun getUser(): User {
+    override fun getUser(): Result<User> {
         Logger.debug { "MockApi: getUser request" }
-        return mockUser
+        return Result(mockUser)
     }
 
-    override fun getRepo(repoRehash: String): Repo {
+    override fun getRepo(repoRehash: String): Result<Repo> {
         Logger.debug { "MockApi: getRepo request" }
-        return mockRepo
+        return Result(mockRepo)
     }
 
-    override fun postRepo(repo: Repo) {
+    override fun postRepo(repo: Repo): Result<Unit> {
         Logger.debug { "MockApi: postRepo request ($repo)" }
         receivedRepos.add(repo)
+        return Result()
     }
 
-    override fun postCommits(commitsList: List<Commit>) {
+    override fun postCommits(commitsList: List<Commit>): Result<Unit> {
         Logger.debug {
             "MockApi: postCommits request (${commitsList.size} commits)"
         }
         receivedAddedCommits.addAll(commitsList)
+        return Result()
     }
 
-    override fun deleteCommits(commitsList: List<Commit>) {
+    override fun deleteCommits(commitsList: List<Commit>): Result<Unit> {
         Logger.debug {
             "MockApi: deleteCommits request (${commitsList.size} commits)" }
         receivedDeletedCommits.addAll(commitsList)
+        return Result()
     }
 
-    override fun postFacts(factsList: List<Fact>) {
+    override fun postFacts(factsList: List<Fact>): Result<Unit> {
         Logger.debug { "MockApi: postStats request (${factsList.size} stats)" }
         receivedFacts.addAll(factsList)
+        return Result()
     }
 }

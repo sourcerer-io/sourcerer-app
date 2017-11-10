@@ -9,11 +9,15 @@ import app.model.Repo
 import app.model.User
 
 interface Api {
-    fun authorize()
-    fun getUser(): User
-    fun getRepo(repoRehash: String): Repo
-    fun postRepo(repo: Repo)
-    fun postCommits(commitsList: List<Commit>)
-    fun deleteCommits(commitsList: List<Commit>)
-    fun postFacts(factsList: List<Fact>)
+    companion object {
+        val OUT_OF_DATE = 1
+    }
+
+    fun authorize(): Result<Unit>
+    fun getUser(): Result<User>
+    fun getRepo(repoRehash: String): Result<Repo>
+    fun postRepo(repo: Repo): Result<Unit>
+    fun postCommits(commitsList: List<Commit>): Result<Unit>
+    fun deleteCommits(commitsList: List<Commit>): Result<Unit>
+    fun postFacts(factsList: List<Fact>): Result<Unit>
 }

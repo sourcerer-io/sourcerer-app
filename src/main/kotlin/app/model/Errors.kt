@@ -7,26 +7,23 @@ import app.Protos
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
-/**
- * Group of key-value facts.
- */
-data class FactGroup(
-        var stats: List<Fact> = listOf()
+data class Errors (
+    var errors: List<Error> = listOf()
 ) {
     @Throws(InvalidParameterException::class)
-    constructor(proto: Protos.FactGroup) : this() {
-        stats = proto.factsList.map { it -> Fact(it) }
+    constructor(proto: Protos.Errors) : this() {
+        errors = proto.errorsList.map { error -> Error(error) }
     }
 
     @Throws(InvalidProtocolBufferException::class)
-    constructor(bytes: ByteArray) : this(Protos.FactGroup.parseFrom(bytes))
+    constructor(bytes: ByteArray) : this(Protos.Errors.parseFrom(bytes))
 
     constructor(serialized: String) : this(serialized.toByteArray())
 
-    fun getProto(): Protos.FactGroup {
-        return Protos.FactGroup.newBuilder()
-                .addAllFacts(stats.map { it -> it.getProto() })
-                .build()
+    fun getProto(): Protos.Errors {
+        return Protos.Errors.newBuilder()
+            .addAllErrors(errors.map { error -> error.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {

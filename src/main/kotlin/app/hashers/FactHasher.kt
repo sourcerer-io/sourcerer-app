@@ -82,7 +82,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
         fsRepoDateStart[email] = timestamp
 
         // RepoDateEnd.
-        if ((fsRepoDateEnd[email] ?: -1) == -1L) {
+        if (fsRepoDateEnd[email]!! == -1L) {
             fsRepoDateEnd[email] = timestamp
         }
 
@@ -137,7 +137,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
 
     private fun postFactsToServer(facts: List<Fact>) {
         if (facts.isNotEmpty()) {
-            api.postFacts(facts)
+            api.postFacts(facts).onErrorThrow()
             Logger.info { "Sent ${facts.size} facts to server" }
         }
     }

@@ -88,9 +88,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 throw HashingException(errors)
             }
 
-            println("Hashing $localRepo successfully finished.")
+            println("Hashing $localRepo complete finished.")
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
-                { "Hashing repo succesfully" }
+                { "Hashing repo completed" }
         }
         finally {
             closeGit(git)
@@ -116,7 +116,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     private fun getRepoFromServer() {
-        val repo = api.getRepo(serverRepo.rehash)
+        val repo = api.getRepo(serverRepo.rehash).getOrThrow()
         serverRepo.commits = repo.commits
         Logger.info{
             "Received repo from server with ${serverRepo.commits.size} commits"
@@ -126,7 +126,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     private fun postRepoToServer() {
         serverRepo.commits = listOf()
-        api.postRepo(serverRepo)
+        api.postRepo(serverRepo).onErrorThrow()
         Logger.debug { serverRepo.toString() }
     }
 
