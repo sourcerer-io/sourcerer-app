@@ -332,8 +332,10 @@ class CodeLongevity(private val serverRepo: Repo,
 
         getDiffsObservable(tail).blockingSubscribe { (commit, diffs) ->
             // A step back in commits history. Update the files map according
-            // to the diff.
-            for (diff in diffs) {
+            // to the diff. Traverse the diffs backwards to handle double
+            // renames properly.
+            // TODO(alex): cover file renames by tests (see APP-132 issue).
+            for (diff in diffs.asReversed()) {
                 val oldPath = diff.getOldPath()
                 val oldId = diff.getOldId().toObjectId()
                 val newPath = diff.getNewPath()
