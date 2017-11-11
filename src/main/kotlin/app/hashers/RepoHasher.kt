@@ -41,11 +41,11 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 throw IllegalStateException("Can't load email from Git config")
             }
 
-            val filteredEmails = filterEmails(emails)
-
             initServerRepo(rehashes.last)
             Logger.debug { "Local repo path: ${localRepo.path}" }
             Logger.debug { "Repo rehash: ${serverRepo.rehash}" }
+
+            val filteredEmails = filterEmails(emails)
 
             if (!isKnownRepo()) {
                 // Notify server about new contributor and his email.
@@ -165,7 +165,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             return emails
         }
 
-        val knownEmails = mutableListOf<String>()
+        val knownEmails = hashSetOf<String>()
+        knownEmails.add(localRepo.author.email)
         knownEmails.add(serverRepo.userEmail)
         knownEmails.addAll(serverRepo.emails)
 
