@@ -4,6 +4,7 @@
 package app.api
 
 import app.Logger
+import app.model.Author
 import app.model.Commit
 import app.model.Repo
 import app.model.Fact
@@ -17,6 +18,7 @@ class MockApi(  // GET requests.
     var receivedRepos: MutableList<Repo> = mutableListOf()
     var receivedAddedCommits: MutableList<Commit> = mutableListOf()
     var receivedFacts: MutableList<Fact> = mutableListOf()
+    var receivedAuthors: MutableList<Author> = mutableListOf()
 
     // DELETE requests.
     var receivedDeletedCommits: MutableList<Commit> = mutableListOf()
@@ -58,8 +60,15 @@ class MockApi(  // GET requests.
     }
 
     override fun postFacts(factsList: List<Fact>): Result<Unit> {
-        Logger.debug { "MockApi: postStats request (${factsList.size} stats)" }
+        Logger.debug { "MockApi: postFacts request (${factsList.size} facts)" }
         receivedFacts.addAll(factsList)
+        return Result()
+    }
+
+    override fun postAuthors(authorsList: List<Author>): Result<Unit> {
+        Logger.debug { "MockApi: postAuthors request (${authorsList.size} " +
+            "stats)" }
+        receivedAuthors.addAll(authorsList)
         return Result()
     }
 }

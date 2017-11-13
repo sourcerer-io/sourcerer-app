@@ -6,6 +6,8 @@ package app.api
 import app.BuildConfig
 import app.Logger
 import app.config.Configurator
+import app.model.Author
+import app.model.AuthorGroup
 import app.model.Commit
 import app.model.CommitGroup
 import app.model.Fact
@@ -105,6 +107,11 @@ class ServerApi (private val configurator: Configurator) : Api {
                              .body(facts.serialize())
     }
 
+    private fun createRequestPostAuthors(authors: AuthorGroup): Request {
+        return post("/authors").header(getContentTypeHeader())
+                               .body(authors.serialize())
+    }
+
     private fun <T> makeRequest(request: Request,
                                 requestName: String,
                                 parser: (ByteArray) -> T): Result<T> {
@@ -176,5 +183,10 @@ class ServerApi (private val configurator: Configurator) : Api {
     override fun postFacts(factsList: List<Fact>): Result<Unit> {
         val facts = FactGroup(factsList)
         return makeRequest(createRequestPostFacts(facts), "postFacts", {})
+    }
+
+    override fun postAuthors(authorsList: List<Author>): Result<Unit> {
+        val authors = AuthorGroup(authorsList)
+        return makeRequest(createRequestPostAuthors(authors), "postAuthors", {})
     }
 }

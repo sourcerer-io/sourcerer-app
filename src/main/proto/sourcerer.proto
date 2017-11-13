@@ -72,6 +72,16 @@ message FactGroup {
     repeated Fact facts = 1;
 }
 
+// Used to authors for invitational procedures.
+message Author {
+    string email = 1;
+    string repo_rehash = 2;
+}
+
+message AuthorGroup {
+    repeated Author authors = 1;
+}
+
 // User properties and indentity information about repos.
 message User {
     // List of known repos containing basic information for indentifying repo.

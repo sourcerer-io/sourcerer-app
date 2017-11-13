@@ -30,9 +30,9 @@ class ApiError(exception: Exception) : Exception(exception.message) {
     get() = AUTH_ERROR_CODES.contains(httpStatusCode)
 
     constructor(fuelError: FuelError) : this(fuelError as Exception) {
-        httpStatusCode = fuelError.response.httpStatusCode
-        httpResponseMessage = fuelError.response.httpResponseMessage
-        if (fuelError.response.httpResponseHeaders["Content-Type"]
+        httpStatusCode = fuelError.response.statusCode
+        httpResponseMessage = fuelError.response.responseMessage
+        if (fuelError.response.headers["Content-Type"]
             ?.contains("application/octet-stream") == true) {
             try {
                 serverErrors = Errors(fuelError.response.data).errors

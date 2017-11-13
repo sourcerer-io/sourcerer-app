@@ -6,6 +6,7 @@ package app.hashers
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
 import app.utils.HashingException
@@ -51,6 +52,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 // Notify server about new contributor and his email.
                 postRepoToServer()
             }
+
+            postAuthorsToServer(filteredEmails)
+
             // Get repo setup (commits, emails to hash) from server.
             getRepoFromServer()
 
@@ -128,6 +132,12 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         serverRepo.commits = listOf()
         api.postRepo(serverRepo).onErrorThrow()
         Logger.debug { serverRepo.toString() }
+    }
+
+    private fun postAuthorsToServer(emails: HashSet<String>) {
+        api.postAuthors(emails.map { email ->
+            Author(email=email, repo=serverRepo)
+        }).onErrorThrow()
     }
 
     private fun initServerRepo(initCommitRehash: String) {

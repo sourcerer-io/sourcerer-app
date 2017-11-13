@@ -3,6 +3,7 @@
 
 package app.api
 
+import app.model.Author
 import app.model.Commit
 import app.model.Fact
 import app.model.Repo
@@ -20,4 +21,5 @@ interface Api {
     fun postCommits(commitsList: List<Commit>): Result<Unit>
     fun deleteCommits(commitsList: List<Commit>): Result<Unit>
     fun postFacts(factsList: List<Fact>): Result<Unit>
+    fun postAuthors(authorsList: List<Author>): Result<Unit>
 }
