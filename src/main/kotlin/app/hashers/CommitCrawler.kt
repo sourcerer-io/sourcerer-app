@@ -83,21 +83,50 @@ object CommitCrawler {
                     !RawText.isBinary(git.repository.open(id).openStream())
                 }
                 .map { diff ->
-                    val new = getContentByObjectId(git, diff.newId.toObjectId())
-                    val old = getContentByObjectId(git, diff.oldId.toObjectId())
-
-                    val edits = formatter.toFileHeader(diff).toEditList()
-                    val path = when (diff.changeType) {
-                        DiffEntry.ChangeType.DELETE -> diff.oldPath
-                        else -> diff.newPath
+                    // TODO(anatoly): Can produce exception for large object.
+                    // Investigate for size.
+                    val new = try {
+                        getContentByObjectId(git, diff.newId.toObjectId())
+                    } catch (e: Exception) {
+                        Logger.error(e)
+                        null
                     }
-                    DiffFile(path = path,
-                        changeType = diff.changeType,
-                        old = DiffContent(old, edits.map { edit ->
-                            DiffRange(edit.beginA, edit.endA) }),
-                        new = DiffContent(new, edits.map { edit ->
-                            DiffRange(edit.beginB, edit.endB) }))
+                    val old = try {
+                        getContentByObjectId(git, diff.oldId.toObjectId())
+                    } catch (e: Exception) {
+                        Logger.error(e)
+                        null
+                    }
+
+                    val diffFiles = mutableListOf<DiffFile>()
+                    if (new != null && old != null) {
+                        val header = try {
+                            formatter.toFileHeader(diff)
+                        } catch (e: Exception) {
+                            Logger.error(e)
+                            null
+                        }
+
+                        if (header != null) {
+                            val edits = header.toEditList()
+                            val path = when (diff.changeType) {
+                                DiffEntry.ChangeType.DELETE -> diff.oldPath
+                                else -> diff.newPath
+                            }
+                            diffFiles.add(DiffFile(path = path,
+                                changeType = diff.changeType,
+                                old = DiffContent(old, edits.map { edit ->
+                                    DiffRange(edit.beginA, edit.endA)
+                                }),
+                                new = DiffContent(new, edits.map { edit ->
+                                    DiffRange(edit.beginB, edit.endB)
+                                })))
+                        }
+                    }
+
+                    return diffFiles
                 }
+                .flatten()
         }
     }
 
