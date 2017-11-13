@@ -53,7 +53,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 postRepoToServer()
             }
 
-            postAuthorsToServer(filteredEmails)
+            // Send all repo emails for invites.
+            postAuthorsToServer(emails)
 
             // Get repo setup (commits, emails to hash) from server.
             getRepoFromServer()
