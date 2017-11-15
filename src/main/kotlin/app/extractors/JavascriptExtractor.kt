@@ -12,7 +12,9 @@ class JavascriptExtractor : ExtractorInterface {
         val LANGUAGE_NAME = "javascript"
         val FILE_EXTS = listOf("js")
         val LIBRARIES = ExtractorInterface.getLibraries("js")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

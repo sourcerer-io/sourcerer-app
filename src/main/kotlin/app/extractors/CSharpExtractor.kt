@@ -12,7 +12,9 @@ class CSharpExtractor : ExtractorInterface {
         val LANGUAGE_NAME = "csharp"
         val FILE_EXTS = listOf("cs")
         val LIBRARIES = ExtractorInterface.getLibraries("cs")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

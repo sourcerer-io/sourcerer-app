@@ -11,7 +11,9 @@ class GoExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "go"
         val FILE_EXTS = listOf("go")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

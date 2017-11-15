@@ -20,7 +20,9 @@ class JavaExtractor : ExtractorInterface {
             "extends", "int", "short", "try", "char", "final", "interface",
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

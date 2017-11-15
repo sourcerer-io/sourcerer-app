@@ -11,7 +11,9 @@ class PythonExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "python"
         val FILE_EXTS = listOf("py", "py3")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

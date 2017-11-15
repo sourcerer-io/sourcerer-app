@@ -93,7 +93,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 throw HashingException(errors)
             }
 
-            println("Hashing $localRepo complete finished.")
+            println("Hashing $localRepo completed.")
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
                 { "Hashing repo completed" }
         }

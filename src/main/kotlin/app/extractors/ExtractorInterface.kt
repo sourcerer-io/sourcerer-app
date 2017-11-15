@@ -26,11 +26,13 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import java.io.File
 
 interface ExtractorInterface {
     companion object {
         private val librariesCache = hashMapOf<String, Set<String>>()
         private val evaluatorsCache = hashMapOf<String, Evaluator>()
+        private val classifiersCache = hashMapOf<String, Classifier>()
 
         private fun getResource(path: String): InputStream {
             return ExtractorInterface::class.java.classLoader
@@ -47,18 +49,9 @@ interface ExtractorInterface {
             return libraries
         }
 
-        fun unpickleModel(stream: FileInputStream): PMML {
-            val storage = CompressedInputStreamStorage(stream)
-            var pklObject = PickleUtil.unpickle(storage)
-            val pipeline = pklObject as Pipeline
-            pklObject = PMMLPipeline().setSteps(pipeline.getSteps())
-            val pmml = pklObject.encodePMML()
-            return pmml
-        }
-
         private fun downloadModel(name: String, outputDir: String) {
-            val url = BuildConfig.LIBRARY_MODELS_URL + "$name.pkl.z"
-            val outputPath = "$outputDir/$name.pkl.z"
+            val url = BuildConfig.LIBRARY_MODELS_URL + "$name.pb"
+            val outputPath = "$outputDir/$name.pb"
 
             if (Files.notExists(Paths.get(outputDir))) {
                 Files.createDirectories(Paths.get(outputDir))
@@ -84,74 +77,33 @@ interface ExtractorInterface {
             }
         }
 
-        private fun getPickleInputStream(pklPath: String): FileInputStream {
-            val pklStream = try {
-                FileInputStream(pklPath)
-            }
-            catch (e: Exception) {
-                val description = "Failed to load $pklPath"
-                Logger.error(e, description)
-                throw Exception(description)
-            }
-            return pklStream
-        }
-
-        fun getLibrariesModelEvaluator(name: String): Evaluator {
-            if (evaluatorsCache.containsKey(name)) {
-                return evaluatorsCache[name]!!
+        fun getLibraryClassifier(name: String): Classifier {
+            if (classifiersCache.containsKey(name)) {
+                return classifiersCache[name]!!
             }
 
-            val pmmlDir = ".sourcerer/data/pmml"
-            val pmmlPath = "$pmmlDir/$name.pmml"
-            val pklDir = ".sourcerer/data/pkl"
-            val pklPath = "$pklDir/$name.pkl.z"
+            val pbDir = ".sourcerer/data/pb"
+            val pbPath = "$pbDir/$name.pb"
 
-            if (Files.notExists(Paths.get(pklPath))) {
-                Logger.info { "Downloading $name.pkl.z" }
-                downloadModel(name, pklDir)
-                Logger.info { "Downloaded $name.pkl.z" }
+            if (Files.notExists(Paths.get(pbDir))) {
+                Files.createDirectories(Paths.get(pbDir))
             }
 
-            Logger.info { "Loading $name evaluator" }
-
-            if (Files.notExists(Paths.get(pmmlDir))) {
-                Files.createDirectories(Paths.get(pmmlDir))
+            if (Files.notExists(Paths.get(pbPath))) {
+                Logger.info { "Downloading $name.pb" }
+                downloadModel(name, pbDir)
+                Logger.info { "Downloaded $name.pb" }
             }
 
-            if (Files.notExists(Paths.get(pmmlPath))) {
-                val pklStream = getPickleInputStream(pklPath)
-                val pmml = unpickleModel(pklStream)
-                try {
-                    val oStream = FileOutputStream(pmmlPath)
-                    PMMLUtil.marshal(pmml, oStream)
-                }
-                catch(e: Exception) {
-                    Logger.error(e, "Failed to create $name evaluator cache")
-                }
-            }
+            Logger.info {"Loading $name evaluator" }
 
-            val pmml = if (Files.exists(Paths.get(pmmlPath))) {
-                try {
-                    PMMLUtil.unmarshal(FileInputStream(pmmlPath))
-                }
-                catch (e: Exception) {
-                    val description = "Failed to load $name evaluator cache"
-                    Logger.error(e, description)
-                    throw Exception(description)
-                }
-            }
-            else {
-                Logger.warn { "No $name evaluator cache found, building now" }
-                unpickleModel(getPickleInputStream(pklPath))
-            }
-
-            val evaluator = ModelEvaluatorFactory.newInstance()
-                                                 .newModelEvaluator(pmml)
-            evaluatorsCache.put(name, evaluator)
+            val bytesArray = File(pbPath).readBytes()
+            val classifier = Classifier(bytesArray)
+            classifiersCache.put(name, classifier)
 
             Logger.info { "$name evaluator ready" }
 
-            return evaluator
+            return classifier
         }
     }
 
@@ -247,31 +199,16 @@ interface ExtractorInterface {
 
     fun getLineLibraries(line: String,
                          fileLibraries: List<String>,
-                         evaluator: Evaluator,
+                         evaluator: Classifier,
                          languageLabel: String): List<String> {
-        val arguments = LinkedHashMap<FieldName, FieldValue>()
+        val probabilities = evaluator.evaluate(tokenize(line))
+        val libraries = evaluator.getCategories()
 
-        for (inputField in evaluator.inputFields) {
-            val inputFieldName = inputField.name
-            val tokenizedLine = tokenize(line).joinToString(separator = " ")
-            val inputFieldValue = inputField.prepare(tokenizedLine)
-            arguments.put(inputFieldName, inputFieldValue)
-        }
-        val result = evaluator.evaluate(arguments)
-
-        val targetFieldName = evaluator.targetFields[0].name
-        val targetFieldValue = result[targetFieldName]
-            as ProbabilityDistribution
-
-        val categoryValues = targetFieldValue.categoryValues.toList()
-        val probabilities = categoryValues.map {
-            targetFieldValue.getProbability(it)
-        }
         val maxProbability = probabilities.max() as Double
         val maxProbabilityCategory =
-            categoryValues[probabilities.indexOf(maxProbability)]
-        val selectedCategories = categoryValues.filter {
-            targetFieldValue.getProbability(it) >= 0.1 * maxProbability
+                libraries[probabilities.indexOf(maxProbability)]
+        val selectedCategories = libraries.filter {
+            probabilities[libraries.indexOf(it)] >= 0.2 * maxProbability
         }
 
         if (maxProbabilityCategory == languageLabel) {
@@ -283,7 +220,7 @@ interface ExtractorInterface {
         // as not having library.
         // Keep it while the number of libraries is small.
         if (languageLabel == CExtractor.LANGUAGE_NAME &&
-            languageLabel in selectedCategories) {
+                languageLabel in selectedCategories) {
             return emptyList()
         }
 

@@ -11,7 +11,9 @@ class SwiftExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "swift"
         val FILE_EXTS = listOf("swift")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

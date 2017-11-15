@@ -11,7 +11,9 @@ class ObjectiveCExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "objectivec"
         val FILE_EXTS = listOf("m", "mm")
-        val evaluator = ExtractorInterface.getLibrariesModelEvaluator(LANGUAGE_NAME)
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
