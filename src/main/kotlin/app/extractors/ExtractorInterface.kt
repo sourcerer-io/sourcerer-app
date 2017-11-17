@@ -8,19 +8,7 @@ import app.BuildConfig
 import app.Logger
 import app.model.DiffFile
 import app.model.CommitStats
-import org.dmg.pmml.FieldName
-import org.dmg.pmml.PMML
-import org.jpmml.evaluator.Evaluator
-import org.jpmml.evaluator.FieldValue
-import org.jpmml.evaluator.ModelEvaluatorFactory
-import org.jpmml.evaluator.ProbabilityDistribution
-import org.jpmml.model.PMMLUtil
-import org.jpmml.sklearn.PickleUtil
-import sklearn.pipeline.Pipeline
-import sklearn2pmml.PMMLPipeline
 import java.io.InputStream
-import org.jpmml.sklearn.CompressedInputStreamStorage
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -31,7 +19,6 @@ import java.io.File
 interface ExtractorInterface {
     companion object {
         private val librariesCache = hashMapOf<String, Set<String>>()
-        private val evaluatorsCache = hashMapOf<String, Evaluator>()
         private val classifiersCache = hashMapOf<String, Classifier>()
 
         private fun getResource(path: String): InputStream {
@@ -47,6 +34,15 @@ interface ExtractorInterface {
                 .bufferedReader().readLines().toSet()
             librariesCache.put(name, libraries)
             return libraries
+        }
+
+        fun getMultipleImportsToLibraryMap(name: String): Map<String, String> {
+            val importToLibrary = getResource("data/imports/$name.txt")
+                    .bufferedReader().readLines().map {
+                val mapping = it.split(":")
+                Pair(mapping[0], mapping[1])
+            }.toMap()
+            return importToLibrary
         }
 
         private fun downloadModel(name: String, outputDir: String) {
@@ -227,4 +223,5 @@ interface ExtractorInterface {
         val lineLibraries = fileLibraries.filter { it in selectedCategories }
         return lineLibraries
     }
+
 }

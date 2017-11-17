@@ -4,7 +4,6 @@
 package app.extractors
 
 import app.ModelsProtos
-import com.google.common.collect.Lists
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
@@ -20,7 +19,7 @@ class Classifier {
         tokens = proto.tokensList
         libraries = proto.librariesList
         idf = tokens.zip(proto.idfList).toMap()
-        weights = libraries.zip(Lists.partition(proto.weightsList, tokens.size)
+        weights = libraries.zip(proto.weightsList.partition(tokens.size)
             .map {it: List<Float> -> tokens.zip(it).toMap()}).toMap()
         biases = libraries.zip(proto.biasesList).toMap()
     }
@@ -50,5 +49,11 @@ class Classifier {
 
     fun getCategories(): List<String> {
         return libraries
+    }
+
+    private fun <T> List<T>.partition(size: Int): List<List<T>> {
+        return this.withIndex()
+            .groupBy { it.index / size }
+            .map { group -> group.value.map { it.value } }
     }
 }

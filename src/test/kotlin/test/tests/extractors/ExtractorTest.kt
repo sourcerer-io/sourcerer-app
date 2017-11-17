@@ -4,6 +4,7 @@
 package test.tests.extractors
 
 import app.extractors.*
+import junit.framework.TestCase.assertTrue
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
@@ -13,7 +14,7 @@ fun assertExtractsLineLibraries(expectedLibrary: String, actualLine: String,
                                 extractor: ExtractorInterface) {
     val actualLineLibraries =
             extractor.getLineLibraries(actualLine, listOf(expectedLibrary))
-    assert(expectedLibrary in actualLineLibraries)
+    assertTrue(expectedLibrary in actualLineLibraries)
 }
 
 fun assertExtractsNoLibraries(actualLine: String,
@@ -23,7 +24,14 @@ fun assertExtractsNoLibraries(actualLine: String,
     assertEquals(listOf(), actualLineLibraries)
 }
 
+fun assertExtractsImport(expectedImport: String, actualLine: String,
+                         extractor: ExtractorInterface) {
+    val actualLineImport = extractor.extractImports(listOf(actualLine))
+    assertTrue(expectedImport in actualLineImport)
+}
+
 class ExtractorTest : Spek({
+
     given(" code line contains library code" ) {
         it("python extractor extracts the library") {
             val line = "with tf.Session() as sess"
@@ -152,6 +160,22 @@ class ExtractorTest : Spek({
         it("c extractor returns empty list") {
             val line = "int main(int argc, char **argv) {"
             assertExtractsNoLibraries(line, CExtractor())
+        }
+    }
+
+    given("import name.h") {
+        it("imports name") {
+            assertExtractsImport("protobuf", "#include \"protobuf.h\"", CppExtractor())
+        }
+    }
+
+    given("import library with multiple ways to import") {
+        it("imports in both cases") {
+            var lib = "opencv"
+            val line1 = "#include \"opencv/module/header.h\""
+            assertExtractsImport(lib, line1, CppExtractor())
+            val line2 = "#include \"opencv2/module/header.h\""
+            assertExtractsImport(lib, line2, CppExtractor())
         }
     }
 })

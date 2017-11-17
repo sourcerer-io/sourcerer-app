@@ -14,6 +14,8 @@ class CppExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val MULTI_IMPORT_TO_LIB =
+            ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -33,7 +35,8 @@ class CppExtractor : ExtractorInterface {
             }
         }
 
-        return imports.toList()
+        val libraries = imports.map { MULTI_IMPORT_TO_LIB.getOrDefault(it, it) }
+        return libraries
     }
 
     override fun tokenize(line: String): List<String> {
