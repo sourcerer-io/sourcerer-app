@@ -143,7 +143,8 @@ class CodeLineAges : Serializable {
  */
 class CodeLongevity(private val serverRepo: Repo,
                     private val emails: HashSet<String>,
-                    git: Git) {
+                    git: Git,
+                    private val onError: (Throwable) -> Unit) {
     val repo: Repository = git.repository
     val revWalk = RevWalk(repo)
     val head: RevCommit =
@@ -330,7 +331,7 @@ class CodeLongevity(private val serverRepo: Repo,
             }
         }
 
-        getDiffsObservable(tail).blockingSubscribe { (commit, diffs) ->
+        getDiffsObservable(tail).blockingSubscribe( { (commit, diffs) ->
             // A step back in commits history. Update the files map according
             // to the diff. Traverse the diffs backwards to handle double
             // renames properly.
@@ -383,10 +384,17 @@ class CodeLongevity(private val serverRepo: Repo,
                         for (idx in insStart .. insEnd - 1) {
                             val from = RevCommitLine(commit, newId,
                                                      newPath, idx, false)
-                            val to = lines.get(idx)
-                            val cl = CodeLine(repo, from, to)
-                            Logger.trace { "Collected: ${cl}" }
-                            subscriber.onNext(cl)
+                            try {
+                                val to = lines.get(idx)
+                                val cl = CodeLine(repo, from, to)
+                                Logger.trace { "Collected: ${cl}" }
+                                subscriber.onNext(cl)
+                            }
+                            catch(e: IndexOutOfBoundsException) {
+                                Logger.error(e,
+                                    "No line at ${idx}; commit: ${commit.getName()}; '${commit.getShortMessage()}'")
+                                throw e
+                            }
                         }
                         lines.subList(insStart, insEnd).clear()
                     }
@@ -416,7 +424,7 @@ class CodeLongevity(private val serverRepo: Repo,
                     files.set(oldPath, files.remove(newPath)!!)
                 }
             }
-        }
+        }, onError)
 
         // If a tail revision was given then the map has to contain unclaimed
         // code lines, i.e. the lines added before the tail revision. Push

@@ -80,7 +80,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
             // TODO(anatoly): CodeLongevity hash from observable.
             try {
-                CodeLongevity(serverRepo, filteredEmails, git).updateStats(api)
+                CodeLongevity(serverRepo, filteredEmails, git, onError)
+                    .updateStats(api)
             }
             catch (e: Throwable) {
                 onError(e)
