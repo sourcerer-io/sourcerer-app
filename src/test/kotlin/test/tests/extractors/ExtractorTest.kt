@@ -178,4 +178,14 @@ class ExtractorTest : Spek({
             assertExtractsImport(lib, line2, CppExtractor())
         }
     }
+
+    given("import cv2 or cv") {
+        it("imports opencv") {
+            val lib = "opencv"
+            val line1 = "import cv2"
+            assertExtractsImport(lib, line1, PythonExtractor())
+            val line2 = "import cv"
+            assertExtractsImport(lib, line2, PythonExtractor())
+        }
+    }
 })

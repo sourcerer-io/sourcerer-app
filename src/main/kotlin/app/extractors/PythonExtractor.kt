@@ -14,6 +14,8 @@ class PythonExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val MULTI_IMPORT_TO_LIB =
+                ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -35,7 +37,12 @@ class PythonExtractor : ExtractorInterface {
             }
         }
 
-        return imports.toList()
+        var libraries = imports.map { MULTI_IMPORT_TO_LIB.getOrDefault(it, it) }
+            .filter { !it.endsWith("pb")}.toMutableList()
+        if (libraries.size < imports.size) {
+            libraries.add("protobuf")
+        }
+        return libraries
 
     }
 
