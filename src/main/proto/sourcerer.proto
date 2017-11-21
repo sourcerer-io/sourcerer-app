@@ -86,6 +86,15 @@ message AuthorGroup {
 message User {
     // List of known repos containing basic information for indentifying repo.
     repeated Repo repos = 1;
+    // List of known emails.
+    repeated UserEmail emails = 2;
+}
+
+// Email of user with its status information.
+message UserEmail {
+    string email = 1;
+    bool primary = 2;
+    bool verified = 3;
 }
 
 // Repository parameters for hashing.
@@ -96,9 +105,6 @@ message Repo {
 
     // Rehash of first commit in repo. Used for indentifying forks.
     string initial_commit_rehash = 2;
-
-    // Email of app user from git config of repo.
-    string user_email = 3;
 
     // Authors' email filter for hashed commits. If empty list then hash only
     // commits that created by current user.

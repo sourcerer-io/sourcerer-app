@@ -6,6 +6,7 @@ package app.config
 import app.Logger
 import app.model.LocalRepo
 import app.model.Repo
+import app.model.User
 import app.utils.Options
 import app.utils.PasswordHelper
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
@@ -62,7 +63,7 @@ class FileConfigurator : Configurator {
     /**
      * Used to temporarily save list of repos that known by server.
      */
-    private var repos: List<Repo> = listOf()
+    private var user: User = User()
 
     /**
      * User directory path is where persistent config stored.
@@ -143,10 +144,10 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Gets list of temprorary saved repos.
+     * Gets temprorary saved user information.
      */
-    override fun getRepos(): List<Repo> {
-        return repos
+    override fun getUser(): User {
+        return user
     }
 
     /**
@@ -199,10 +200,10 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Temporarily sets list of repos.
+     * Temporarily sets info about user.
      */
-    override fun setRepos(repos: List<Repo>) {
-        this.repos = repos
+    override fun setUser(user: User) {
+        this.user = user
     }
 
     /**

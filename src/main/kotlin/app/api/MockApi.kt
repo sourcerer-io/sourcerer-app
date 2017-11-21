@@ -19,6 +19,8 @@ class MockApi(  // GET requests.
     var receivedAddedCommits: MutableList<Commit> = mutableListOf()
     var receivedFacts: MutableList<Fact> = mutableListOf()
     var receivedAuthors: MutableList<Author> = mutableListOf()
+    var receivedUsers: MutableList<User> = mutableListOf()
+    var receivedComplete: Int = 0
 
     // DELETE requests.
     var receivedDeletedCommits: MutableList<Commit> = mutableListOf()
@@ -33,14 +35,21 @@ class MockApi(  // GET requests.
         return Result(mockUser)
     }
 
-    override fun getRepo(repoRehash: String): Result<Repo> {
-        Logger.debug { "MockApi: getRepo request" }
+    override fun postUser(user: User): Result<Unit> {
+        Logger.debug { "MockApi: postUser request" }
+        receivedUsers.add(user)
+        return Result()
+    }
+
+    override fun postRepo(repo: Repo): Result<Repo> {
+        Logger.debug { "MockApi: postRepo request" }
+        receivedRepos.add(repo)
         return Result(mockRepo)
     }
 
-    override fun postRepo(repo: Repo): Result<Unit> {
-        Logger.debug { "MockApi: postRepo request ($repo)" }
-        receivedRepos.add(repo)
+    override fun postComplete(): Result<Unit> {
+        Logger.debug { "MockApi: postComplete request " }
+        receivedComplete++
         return Result()
     }
 

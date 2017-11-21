@@ -83,12 +83,12 @@ class AuthState constructor(private val context: Context,
             error.ifNotNullThrow()
 
             val user = api.getUser().getOrThrow()
-            configurator.setRepos(user.repos)
+            configurator.setUser(user)
 
             println("You are successfully authenticated. Your profile page is "
                     + BuildConfig.PROFILE_URL + configurator.getUsername())
-            saveCredentialsIfChanged()
 
+            saveCredentialsIfChanged()
             Logger.username = configurator.getUsername()
             Logger.info(Logger.Events.AUTH) { "Auth success" }
 

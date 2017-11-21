@@ -16,8 +16,9 @@ interface Api {
 
     fun authorize(): Result<Unit>
     fun getUser(): Result<User>
-    fun getRepo(repoRehash: String): Result<Repo>
-    fun postRepo(repo: Repo): Result<Unit>
+    fun postUser(user: User): Result<Unit>
+    fun postRepo(repo: Repo): Result<Repo>
+    fun postComplete(): Result<Unit>
     fun postCommits(commitsList: List<Commit>): Result<Unit>
     fun deleteCommits(commitsList: List<Commit>): Result<Unit>
     fun postFacts(factsList: List<Fact>): Result<Unit>

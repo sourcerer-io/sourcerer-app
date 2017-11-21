@@ -32,6 +32,7 @@ class UpdateRepoState constructor(private val context: Context,
             }
         }
 
+        api.postComplete().onErrorThrow()
         println("The repositories have been hashed. See result online on your "
                 + "Sourcerer profile.")
         Logger.info(Logger.Events.HASHING_SUCCESS) { "Hashing success" }

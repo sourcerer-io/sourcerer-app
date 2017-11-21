@@ -4,14 +4,14 @@
 package app.config
 
 import app.model.LocalRepo
-import app.model.Repo
+import app.model.User
 import app.utils.Options
 
 class MockConfigurator(var mockUsername: String = "",
                        var mockPassword: String = "",
                        var mockIsValidCredentials: Boolean = true,
                        var mockIsFirstLaunch: Boolean = true,
-                       var mockRepos: MutableList<Repo> = mutableListOf(),
+                       var mockUser: User = User(),
                        var mockLocalRepos: MutableList<LocalRepo> =
                            mutableListOf(),
                        var uuid: String = "") : Configurator {
@@ -39,8 +39,8 @@ class MockConfigurator(var mockUsername: String = "",
         return mockLocalRepos
     }
 
-    override fun getRepos(): List<Repo> {
-        return mockRepos
+    override fun getUser(): User {
+        return mockUser
     }
 
     override fun setUsernameCurrent(username: String) {
@@ -72,8 +72,8 @@ class MockConfigurator(var mockUsername: String = "",
         mockPersistent.localRepos.remove(localRepo)
     }
 
-    override fun setRepos(repos: List<Repo>) {
-        mockRepos = repos.toMutableList()
+    override fun setUser(user: User) {
+        mockUser = user
     }
 
     override fun isFirstLaunch(): Boolean {

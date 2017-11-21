@@ -76,20 +76,25 @@ class ServerApi (private val configurator: Configurator) : Api {
 
     private fun createRequestGetToken(): Request {
         return post("/auth").authenticate(username, password)
-                   .header(getVersionCodeHeader())
+                            .header(getVersionCodeHeader())
     }
 
     private fun createRequestGetUser(): Request {
         return get("/user")
     }
 
-    private fun createRequestGetRepo(repoRehash: String): Request {
-        return get("/repo/$repoRehash")
+    private fun createRequestPostUser(user: User): Request {
+        return post("/user").header(getContentTypeHeader())
+                            .body(user.serialize())
     }
 
     private fun createRequestPostRepo(repo: Repo): Request {
         return post("/repo").header(getContentTypeHeader())
                             .body(repo.serialize())
+    }
+
+    private fun createRequestPostComplete(): Request {
+        return post("/complete").header(getContentTypeHeader())
     }
 
     private fun createRequestPostCommits(commits: CommitGroup): Request {
@@ -154,18 +159,22 @@ class ServerApi (private val configurator: Configurator) : Api {
                            { body -> User(body) })
     }
 
-    override fun getRepo(repoRehash: String): Result<Repo> {
-        if (repoRehash.isBlank()) {
+    override fun postUser(user: User): Result<Unit> {
+        return makeRequest(createRequestPostUser(user), "postUser", {})
+    }
+
+    override fun postRepo(repo: Repo): Result<Repo> {
+        if (repo.rehash.isBlank()) {
             throw IllegalArgumentException()
         }
 
-        return makeRequest(createRequestGetRepo(repoRehash), "getRepo",
+        return makeRequest(createRequestPostRepo(repo), "getRepo",
                            { body -> Repo(body) })
     }
 
-    override fun postRepo(repo: Repo): Result<Unit> {
-        return makeRequest(createRequestPostRepo(repo),
-                           "postRepo", {})
+    override fun postComplete(): Result<Unit> {
+        return makeRequest(createRequestPostComplete(),
+                           "postComplete", {})
     }
 
     override fun postCommits(commitsList: List<Commit>): Result<Unit> {

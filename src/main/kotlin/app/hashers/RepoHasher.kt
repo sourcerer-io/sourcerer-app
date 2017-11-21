@@ -38,26 +38,18 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             val (rehashes, emails) = fetchRehashesAndEmails(git)
 
             localRepo.parseGitConfig(git.repository.config)
-            if (localRepo.author.email.isBlank()) {
-                throw IllegalStateException("Can't load email from Git config")
-            }
-
             initServerRepo(rehashes.last)
             Logger.debug { "Local repo path: ${localRepo.path}" }
+            Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
             Logger.debug { "Repo rehash: ${serverRepo.rehash}" }
 
-            val filteredEmails = filterEmails(emails)
-
-            if (!isKnownRepo()) {
-                // Notify server about new contributor and his email.
-                postRepoToServer()
-            }
+            // Get repo setup (commits, emails to hash) from server.
+            postRepoFromServer()
 
             // Send all repo emails for invites.
             postAuthorsToServer(emails)
 
-            // Get repo setup (commits, emails to hash) from server.
-            getRepoFromServer()
+            val filteredEmails = filterEmails(emails)
 
             // Common error handling for subscribers.
             // Exceptions can't be thrown out of reactive chain.
@@ -87,9 +79,6 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 onError(e)
             }
 
-            // Confirm hashing completion.
-            postRepoToServer()
-
             if (errors.isNotEmpty()) {
                 throw HashingException(errors)
             }
@@ -116,23 +105,12 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         git.close()
     }
 
-    private fun isKnownRepo(): Boolean {
-        return configurator.getRepos()
-            .find { it.rehash == serverRepo.rehash } != null
-    }
-
-    private fun getRepoFromServer() {
-        val repo = api.getRepo(serverRepo.rehash).getOrThrow()
+    private fun postRepoFromServer() {
+        val repo = api.postRepo(serverRepo).getOrThrow()
         serverRepo.commits = repo.commits
-        Logger.info{
+        Logger.info {
             "Received repo from server with ${serverRepo.commits.size} commits"
         }
-        Logger.debug { serverRepo.toString() }
-    }
-
-    private fun postRepoToServer() {
-        serverRepo.commits = listOf()
-        api.postRepo(serverRepo).onErrorThrow()
         Logger.debug { serverRepo.toString() }
     }
 
@@ -143,10 +121,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     private fun initServerRepo(initCommitRehash: String) {
-        serverRepo = Repo(userEmail = localRepo.author.email)
-        serverRepo.initialCommitRehash = initCommitRehash
-        serverRepo.rehash = RepoHelper.calculateRepoRehash(
-            serverRepo.initialCommitRehash, localRepo)
+        serverRepo = Repo(initialCommitRehash = initCommitRehash,
+                          rehash = RepoHelper.calculateRepoRehash(
+                              initCommitRehash, localRepo))
     }
 
     private fun fetchRehashesAndEmails(git: Git):
@@ -178,8 +155,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         }
 
         val knownEmails = hashSetOf<String>()
-        knownEmails.add(localRepo.author.email)
-        knownEmails.add(serverRepo.userEmail)
+        knownEmails.addAll(configurator.getUser().emails.map { it.email })
         knownEmails.addAll(serverRepo.emails)
 
         return knownEmails.filter { emails.contains(it) }.toHashSet()

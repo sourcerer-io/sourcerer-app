@@ -60,6 +60,8 @@ class CodeLongevityTest : Spek({
         assertEquals(isDeleted, actualLine.isDeleted, "'$lineText' line is deleted")
     }
 
+    Runtime.getRuntime().exec("rm -r ./.sourcerer/longevity").waitFor()
+
     given("'line collecting #1'") {
         val testRepoPath = "../CodeLongevity_lc1"
         val testRepo = TestRepo(testRepoPath)

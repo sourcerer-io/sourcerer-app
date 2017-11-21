@@ -21,8 +21,7 @@ class AddRepoState constructor(private val context: Context,
         if (configurator.getLocalRepos().isNotEmpty()) return
 
         while (true) {
-            println("Type a path to repository, or hit Enter to start "
-                    + "hashing.")
+            println("Type a path to repository, or hit Enter to continue.")
             val pathString = readLine() ?: ""
 
             if (pathString.isEmpty()) {
@@ -52,6 +51,6 @@ class AddRepoState constructor(private val context: Context,
     }
 
     override fun next() {
-        context.changeState(UpdateRepoState(context, api, configurator))
+        context.changeState(EmailState(context, api, configurator))
     }
 }
