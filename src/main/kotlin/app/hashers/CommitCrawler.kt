@@ -124,7 +124,7 @@ object CommitCrawler {
                         }
                     }
 
-                    return diffFiles
+                    diffFiles
                 }
                 .flatten()
         }
