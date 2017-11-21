@@ -64,7 +64,7 @@ class EmailState constructor(private val context: Context,
         }
 
         if (newEmails.isNotEmpty()) {
-            val newUserEmails = newEmails.map { UserEmail(it) }
+            val newUserEmails = newEmails.map { UserEmail(email = it) }
             // We will need new emails during hashing.
             user.emails.addAll(newUserEmails)
 

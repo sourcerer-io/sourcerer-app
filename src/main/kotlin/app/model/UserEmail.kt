@@ -41,7 +41,7 @@ class UserEmail(
 
     override fun toString(): String {
         val primary = if (this.primary) " (Primary)" else ""
-        val verified = if (this.verified) "Verified" else "Unverified"
+        val verified = if (this.verified) "Confirmed" else "Not confirmed"
         return "${this.email}$primary — $verified"
     }
 
