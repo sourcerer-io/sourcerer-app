@@ -19,8 +19,13 @@ class EmailState constructor(private val context: Context,
     override fun doAction() {
         val user = configurator.getUser()
 
-        println("List of your emails:")
-        user.emails.forEach { email -> println(email) }
+        if (user.emails.isNotEmpty()) {
+            println("List of your emails:")
+            user.emails.forEach { email -> println(email) }
+        } else {
+            // Shouldn't really happen. User always have primary email.
+            println("Add at least one email to build your profile.")
+        }
 
         val knownEmails = user.emails.map { it.email }
         val newEmails = hashSetOf<String>()
