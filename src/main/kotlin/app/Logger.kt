@@ -183,7 +183,7 @@ object Logger {
         val javaVendor = System.getProperty("java.vendor", default)
         val javaVersion = System.getProperty("java.version", default)
 
-        sentryContext.addTag("environment", BuildConfig.ENVIRONMENT)
+        sentryContext.addTag("log-level", BuildConfig.LOG_LEVEL)
         sentryContext.addTag("version", BuildConfig.VERSION)
         sentryContext.addTag("version-code", BuildConfig.VERSION_CODE
                                                         .toString())
