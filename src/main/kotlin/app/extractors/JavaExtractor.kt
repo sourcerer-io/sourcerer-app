@@ -26,7 +26,7 @@ class JavaExtractor : ExtractorInterface {
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = GoExtractor.LANGUAGE_NAME }
+        files.map { file -> file.language = LANGUAGE_NAME }
 
         val stats = super.extract(files).toMutableList()
 
