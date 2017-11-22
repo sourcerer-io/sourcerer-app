@@ -13,7 +13,7 @@ podTemplate(label: 'build-pod-sourcerer-app',
 ) {
   node('build-pod-sourcerer-app') {
     def namespace = 'sandbox'
-    def plog = 'debug'
+    def plog = 'info' // TODO: remove after test
 
     if (env.BRANCH_NAME == 'master') {
       namespace = 'production'
