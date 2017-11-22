@@ -80,7 +80,10 @@ object CommitCrawler {
                     } else {
                         it.newId.toObjectId()
                     }
-                    !RawText.isBinary(git.repository.open(id).openStream())
+                    val stream = try {
+                        git.repository.open(id).openStream()
+                    } catch (e: Exception) { null }
+                    stream != null && !RawText.isBinary(stream)
                 }
                 .map { diff ->
                     // TODO(anatoly): Can produce exception for large object.
@@ -133,13 +136,14 @@ object CommitCrawler {
     private fun getContentByObjectId(git: Git,
                                      objectId: ObjectId): List<String> {
         return try {
-            val rawText = RawText(git.repository.open(objectId).bytes)
+            val obj = git.repository.open(objectId)
+            val rawText = RawText(obj.bytes)
             val content = ArrayList<String>(rawText.size())
             for (i in 0..(rawText.size() - 1)) {
                 content.add(rawText.getString(i))
             }
             return content
-        } catch (e: MissingObjectException) {
+        } catch (e: Exception) {
             listOf()
         }
     }
