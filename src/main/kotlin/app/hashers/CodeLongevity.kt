@@ -318,16 +318,20 @@ class CodeLongevity(private val serverRepo: Repo,
 
         // Build a map of file names and their code lines.
         while (headWalk.next()) {
-            val path = headWalk.getPathString()
-            val fileId = headWalk.getObjectId(0)
-            val fileLoader = repo.open(fileId)
-            if (!RawText.isBinary(fileLoader.openStream())) {
-                val fileText = RawText(fileLoader.getBytes())
-                val lines = ArrayList<RevCommitLine>(fileText.size())
-                for (idx in 0 .. fileText.size() - 1) {
-                    lines.add(RevCommitLine(head, fileId, path, idx, false))
+            try {
+                val path = headWalk.getPathString()
+                val fileId = headWalk.getObjectId(0)
+                val fileLoader = repo.open(fileId)
+                if (!RawText.isBinary(fileLoader.openStream())) {
+                    val fileText = RawText(fileLoader.getBytes())
+                    val lines = ArrayList<RevCommitLine>(fileText.size())
+                    for (idx in 0..fileText.size() - 1) {
+                        lines.add(RevCommitLine(head, fileId, path, idx, false))
+                    }
+                    files.put(path, lines)
                 }
-                files.put(path, lines)
+            } catch (e: Exception) {
+                // TODO(anatoly): better fix of exceptions.
             }
         }
 
@@ -345,8 +349,13 @@ class CodeLongevity(private val serverRepo: Repo,
 
                 // Skip binary files.
                 val fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
-                if (RawText.isBinary(repo.open(fileId).openStream())) {
+                try {
+                    if (RawText.isBinary(repo.open(fileId).openStream())) {
+                        continue
+                    }
+                } catch (e: Exception) {
                     continue
+                    //TODO(anatoly): better exception handling.
                 }
 
                 // TODO(alex): does it happen in the wilds?
@@ -368,6 +377,7 @@ class CodeLongevity(private val serverRepo: Repo,
                     oldPath
                 }
                 val lines = files.get(path)!!
+
 
                 // Update the lines array according to diff insertions.
                 // Traverse the edit list backwards to keep indices of
