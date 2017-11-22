@@ -25,9 +25,6 @@ apply plugin: "com.google.protobuf"
 apply plugin: "org.junit.platform.gradle.plugin"
 
 buildConfig {
-    ext.environment = project.hasProperty('env') &&
-        env == 'production' ? 'prod' : 'dev'
-
     clsName = 'BuildConfig'
     packageName = 'app'
 
@@ -36,7 +33,6 @@ buildConfig {
     buildConfigField 'String', 'API_BASE_PATH', apiBasePath
 
     // Common.
-    buildConfigField 'String', 'ENVIRONMENT', ext.environment
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
@@ -44,7 +40,7 @@ buildConfig {
     buildConfigField 'String', 'VERSION', '0.0.1'
 
     // Logging.
-    buildConfigField 'int', 'LOG_LEVEL', '3'
+    buildConfigField 'String', 'LOG_LEVEL', project.hasProperty('log') ? log : 'info'
 
     // Google Analytics.
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'

@@ -29,7 +29,7 @@ object Logger {
      * Current log level. All that higher than this level will not be displayed.
      */
     @kotlin.PublishedApi
-    internal const val LEVEL = BuildConfig.LOG_LEVEL
+    internal val LEVEL : Int
 
     /**
      * Error level.
@@ -89,6 +89,12 @@ object Logger {
         Sentry.init(BuildConfig.SENTRY_DSN)
         sentryContext = Sentry.getContext()
         addTags()
+        LEVEL = configLevelValue()
+    }
+
+    private fun configLevelValue() : Int {
+        val a = mapOf("trace" to TRACE, "debug" to DEBUG, "info" to INFO, "warn" to WARN, "error" to ERROR)
+        return a.getValue(BuildConfig.LOG_LEVEL)
     }
 
     /**

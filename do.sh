@@ -25,7 +25,7 @@ ARGUMENTS=${@}
 
 TAG="${CONTAINER_TAG:-latest}"
 NAMESPACE="${NAMESPACE:-sandbox}"
-ENV="${ENV:-development}"
+LOG="${LOG:-debug}"
 VOLUME="${BUILD_VOLUME:-$PWD}"
 PROJECT=sourcerer-app
 PORT=3182
@@ -47,12 +47,12 @@ build_jar_inside() {
   else
     API="https://sourcerer.io/api/commit"
   fi
-  gradle -Penv=$ENV -Papi=$API build
+  gradle -Plog=$LOG -Papi=$API build
 }
 
 build_jar() {
   docker run -i -v $VOLUME:/home/gradle/app --workdir=/home/gradle/app \
-    -e ENV=$ENV -e NAMESPACE=$NAMESPACE \
+    -e LOG=$LOG -e NAMESPACE=$NAMESPACE \
     gradle:$GRADLE_VERSION \
     ./do.sh build_jar_inside
 }

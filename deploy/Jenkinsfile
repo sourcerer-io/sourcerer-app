@@ -12,12 +12,12 @@ podTemplate(label: 'build-pod-sourcerer-app',
     ]
 ) {
   node('build-pod-sourcerer-app') {
-    def namespace = "sandbox"
-    def benv = 'development'
+    def namespace = 'sandbox'
+    def plog = 'debug'
 
     if (env.BRANCH_NAME == 'master') {
       namespace = 'production'
-      benv = 'production'
+      plog = 'info'
     } else if (env.BRANCH_NAME == 'develop') {
       namespace = 'staging'
     }
@@ -28,7 +28,7 @@ podTemplate(label: 'build-pod-sourcerer-app',
 
     stage('build jar and test') {
       container('gradle') {
-        sh("ENV=${benv} NAMESPACE=${namespace} ./do.sh build_jar_inside")
+        sh("LOG=${plog} NAMESPACE=${namespace} ./do.sh build_jar_inside")
       }
     }
 

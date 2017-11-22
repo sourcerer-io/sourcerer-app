@@ -47,7 +47,7 @@ $ git clone https://github.com/sourcerer-io/sourcerer-app.git
 $ cd sourcerer-app
 
 # Build
-$ gradle build -Penv=production
+$ gradle build
 
 # Run the app
 $ java -jar build/libs/sourcerer-app.jar
