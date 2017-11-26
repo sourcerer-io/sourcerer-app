@@ -9,6 +9,7 @@ import app.api.Api
 import app.model.Author
 import app.model.Repo
 import app.model.Fact
+import app.utils.FileHelper
 import app.utils.RepoHelper
 import io.reactivex.Observable
 import org.eclipse.jgit.diff.DiffFormatter
@@ -152,8 +153,7 @@ class CodeLongevity(private val serverRepo: Repo,
         catch(e: Exception) { throw Exception("No branch") }
 
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
-    val storageDir = ".sourcerer/data/longevity"
-    val storagePath = "$storageDir/${serverRepo.rehash}"
+    val dataPath = FileHelper.getPath(serverRepo.rehash, "longevity")
 
     init {
         df.setRepository(repo)
@@ -221,12 +221,13 @@ class CodeLongevity(private val serverRepo: Repo,
      */
     fun scan() : CodeLineAges? {
         var storedHead: RevCommit? = null
-        var ageData: CodeLineAges = CodeLineAges()
+        var ageData = CodeLineAges()
 
         // Load existing age data if any. Expected format: commit id and
         // CodeLineAges structure following it.
         try {
-            val iStream = ObjectInputStream(FileInputStream(storagePath))
+            val file = dataPath.toFile()
+            val iStream = ObjectInputStream(FileInputStream(file))
             val storedHeadId = iStream.readUTF()
             Logger.debug { "Stored repo head: $storedHeadId" }
             storedHead = revWalk.parseCommit(repo.resolve(storedHeadId))
@@ -267,19 +268,15 @@ class CodeLongevity(private val serverRepo: Repo,
         }
 
         // Store ages for subsequent runs.
-        if (Files.notExists(Paths.get(storageDir))) {
-            Files.createDirectories(Paths.get(storageDir))
-        }
         try {
-            val oStream = ObjectOutputStream(FileOutputStream(storagePath))
+            val file = dataPath.toFile()
+            val oStream = ObjectOutputStream(FileOutputStream(file))
             oStream.writeUTF(head.getName())
             oStream.writeObject(ageData)
         }
         catch(e: Exception) {
-            Logger.error(
-                e,
-                "Failed to save longevity data. CAUTION: data will be recomputed on a next run."
-              )
+            Logger.error(e, "Failed to save longevity data. CAUTION: data " +
+                "will be recomputed on a next run.")
         }
         return ageData
     }
@@ -288,7 +285,7 @@ class CodeLongevity(private val serverRepo: Repo,
      * Clears the stored age data if any.
      */
     fun dropSavedData() {
-        File(storagePath).delete()
+        dataPath.toFile().delete()
     }
 
     /**

@@ -5,7 +5,7 @@ echo "Installing sourcerer app.."
 
 SERVER=$SERVER_EXT
 DOWNLOAD_URL=$SERVER/app/download
-JAR_DIR=/usr/local/lib
+JAR_DIR=/usr/local/lib/sourcerer
 SCRIPT_DIR=/usr/local/bin
 
 if [ -f $SCRIPT_DIR/sourcerer ] ; then
@@ -16,6 +16,7 @@ if [ -f $SCRIPT_DIR/sourcerer ] ; then
   fi
 fi
 
+mkdir -p $JAR_DIR
 curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
 
 cat <<EOF > $SCRIPT_DIR/sourcerer
@@ -28,7 +29,7 @@ if [ "\$1" = "--uninstall" ] ; then
   fi
 
   rm $SCRIPT_DIR/sourcerer
-  rm $JAR_DIR/sourcerer.jar
+  rm -r $JAR_DIR
 
   echo "Done!"
   exit

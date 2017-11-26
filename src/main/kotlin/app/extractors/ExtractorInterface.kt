@@ -8,18 +8,18 @@ import app.BuildConfig
 import app.Logger
 import app.model.DiffFile
 import app.model.CommitStats
+import app.utils.FileHelper
 import java.io.InputStream
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.Paths
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import java.io.File
 
 interface ExtractorInterface {
     companion object {
         private val librariesCache = hashMapOf<String, Set<String>>()
         private val classifiersCache = hashMapOf<String, Classifier>()
+        private val modelsDir = "models"
+        private val pbExt = ".pb"
 
         private fun getResource(path: String): InputStream {
             return ExtractorInterface::class.java.classLoader
@@ -45,21 +45,17 @@ interface ExtractorInterface {
             return importToLibrary
         }
 
-        private fun downloadModel(name: String, outputDir: String) {
+        private fun downloadModel(name: String) {
             val url = BuildConfig.LIBRARY_MODELS_URL + "$name.pb"
-            val outputPath = "$outputDir/$name.pb"
 
-            if (Files.notExists(Paths.get(outputDir))) {
-                Files.createDirectories(Paths.get(outputDir))
-            }
-
+            val file = FileHelper.getFile(name + pbExt, modelsDir)
             val builder = HttpClientBuilder.create()
             val client = builder.build()
             try {
                 client.execute(HttpGet(url)).use { response ->
                     val entity = response.entity
                     if (entity != null) {
-                        FileOutputStream(outputPath).use { outstream ->
+                        FileOutputStream(file).use { outstream ->
                             entity.writeTo(outstream)
                             outstream.flush()
                             outstream.close()
@@ -78,22 +74,16 @@ interface ExtractorInterface {
                 return classifiersCache[name]!!
             }
 
-            val pbDir = ".sourcerer/data/pb"
-            val pbPath = "$pbDir/$name.pb"
-
-            if (Files.notExists(Paths.get(pbDir))) {
-                Files.createDirectories(Paths.get(pbDir))
+            val fileName = name + pbExt
+            if (FileHelper.notExists(fileName, modelsDir)) {
+                Logger.info { "Downloading " + fileName }
+                downloadModel(name)
+                Logger.info { "Downloaded " + fileName }
             }
 
-            if (Files.notExists(Paths.get(pbPath))) {
-                Logger.info { "Downloading $name.pb" }
-                downloadModel(name, pbDir)
-                Logger.info { "Downloaded $name.pb" }
-            }
+            Logger.info { "Loading $name evaluator" }
 
-            Logger.info {"Loading $name evaluator" }
-
-            val bytesArray = File(pbPath).readBytes()
+            val bytesArray = FileHelper.getFile(fileName, modelsDir).readBytes()
             val classifier = Classifier(bytesArray)
             classifiersCache.put(name, classifier)
 

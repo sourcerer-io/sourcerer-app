@@ -5,8 +5,8 @@ package app.config
 
 import app.Logger
 import app.model.LocalRepo
-import app.model.Repo
 import app.model.User
+import app.utils.FileHelper
 import app.utils.Options
 import app.utils.PasswordHelper
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
@@ -20,7 +20,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
 import java.util.UUID
 
 /**
@@ -30,7 +29,7 @@ class FileConfigurator : Configurator {
     /**
      * Persistent configuration file name.
      */
-    private val CONFIG_FILE_NAME = ".sourcerer"
+    private val CONFIG_FILE_NAME = "config.yaml"
 
     // Config levels are presented in priority decreasing order.
 
@@ -40,7 +39,7 @@ class FileConfigurator : Configurator {
     private var current: Config = Config()
 
     /**
-     * Persistent configuration saved in [userDir] in YAML format.
+     * Persistent configuration saved in config file in YAML format.
      */
     private var persistent: Config = Config()
 
@@ -64,17 +63,6 @@ class FileConfigurator : Configurator {
      * Used to temporarily save list of repos that known by server.
      */
     private var user: User = User()
-
-    /**
-     * User directory path is where persistent config stored.
-     */
-    private val userDir = try {
-        System.getProperty("user.home")
-    }
-    catch (e: SecurityException) {
-        Logger.error(e, "Cannot access user directory")
-        null
-    }
 
     /**
      * Jackson's ObjectMapper.
@@ -216,19 +204,15 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Loads [persistent] configuration from config file stored in [userDir].
+     * Loads [persistent] configuration from config file.
      */
     override fun loadFromFile() {
-        if (userDir == null) {
-            return
-        }
-
         // Сonfig initialization in case an exception is thrown.
         var loadConfig = Config()
 
         try {
-            loadConfig = Files.newBufferedReader(Paths.get(userDir,
-                CONFIG_FILE_NAME)).use {
+            loadConfig = Files.newBufferedReader(FileHelper
+                .getPath(CONFIG_FILE_NAME)).use {
                 mapper.readValue(it, Config::class.java)
             }
         } catch (e: IOException) {
@@ -253,11 +237,11 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Saves [persistent] configuration to config file stored in [userDir].
+     * Saves [persistent] configuration to config file.
      */
     override fun saveToFile() {
         try {
-            Files.newBufferedWriter(Paths.get(userDir, CONFIG_FILE_NAME)).use {
+            Files.newBufferedWriter(FileHelper.getPath(CONFIG_FILE_NAME)).use {
                 mapper.writeValue(it, persistent)
             }
         } catch (e: IOException) {
