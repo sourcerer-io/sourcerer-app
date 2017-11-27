@@ -128,7 +128,9 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                         fsLineNum[email].toString(), author))
             fs.add(Fact(serverRepo, FactCodes.LINE_LEN_AVG, 0,
                         fsLineLenAvg[email].toString(), author))
-            addCommitsPerLinesFacts(fs, fsLinesPerCommits[email]!!, author)
+            val linesPerCommits = fsLinesPerCommits[email]!!
+                .sliceArray(IntRange(0, fsCommitNum[email]!! - 1))
+            addCommitsPerLinesFacts(fs, linesPerCommits, author)
         }
         fs.add(Fact(serverRepo, FactCodes.REPO_TEAM_SIZE, 0,
                     emails.size.toString()))
