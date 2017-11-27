@@ -161,6 +161,8 @@ class FactHasher(private val serverRepo: Repo = Repo(),
     private fun addCommitsPerLinesFacts(fs: MutableList<Fact>,
                                         linesPerCommits: Array<Int>,
                                         author: Author) {
+        if (linesPerCommits.isEmpty()) return
+
         var max = linesPerCommits[0]
         var min = linesPerCommits[0]
         for (lines in linesPerCommits) {

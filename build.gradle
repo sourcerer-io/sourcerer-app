@@ -65,6 +65,13 @@ junitPlatform {
     }
 }
 
+task cleanData {
+    delete 'build/libs/data'
+    delete 'build/kotlin/data'
+}
+
+test.dependsOn cleanData
+
 mainClassName = "app.MainKt"
 
 repositories {

@@ -49,7 +49,7 @@ fi
 # Java 9 requires additional parameters.
 version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
 if [[ "$version" > "9." ]]; then  # Version example for Java 9: 9.0.1
-  java --add-modules java.activation -jar $JAR_DIR/sourcerer.jar "\$@"
+  java --add-modules java.activation --add-opens java.base/java.nio=ALL-UNNAMED -jar $JAR_DIR/sourcerer.jar "\$@"
 else
   java -jar $JAR_DIR/sourcerer.jar "\$@"
 fi
