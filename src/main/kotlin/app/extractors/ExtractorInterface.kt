@@ -94,6 +94,17 @@ interface ExtractorInterface {
     }
 
     fun extract(files: List<DiffFile>): List<CommitStats> {
+        val langStats = files.filter { file -> file.language.isNotBlank() }
+            .groupBy { file -> file.language }
+            .map { (language, files) -> CommitStats(
+                numLinesAdded = files.fold(0) { total, file ->
+                    total + file.getAllAdded().size },
+                numLinesDeleted = files.fold(0) { total, file ->
+                    total + file.getAllDeleted().size },
+                type = Extractor.TYPE_LANGUAGE,
+                tech = language)
+            }
+
         files.map { file ->
             file.old.imports = extractImports(file.old.content)
             file.new.imports = extractImports(file.new.content)
@@ -111,9 +122,13 @@ interface ExtractorInterface {
             acc
         }
 
+        // Skip library stats calculation if no imports found.
+        if (oldFilesImports.isEmpty() && newFilesImports.isEmpty()) {
+            return langStats
+        }
+
         oldFilesImports.forEach { oldLibraryToCount[it] = 0}
         newFilesImports.forEach { newLibraryToCount[it] = 0}
-
 
         files.filter { file -> file.language.isNotBlank() }
             .forEach { file ->
@@ -143,23 +158,14 @@ interface ExtractorInterface {
         val allImports = mutableSetOf<String>()
         allImports.addAll(oldFilesImports + newFilesImports)
 
-        val libraryStats = allImports.map {
-            CommitStats(
-                numLinesAdded = newLibraryToCount.getOrDefault(it, 0),
-                numLinesDeleted = oldLibraryToCount.getOrDefault(it, 0),
-                type = Extractor.TYPE_LIBRARY,
-                tech = it)
-        }.filter {it.numLinesAdded > 0 || it.numLinesDeleted > 0}
+        val libraryStats = allImports.map { CommitStats(
+            numLinesAdded = newLibraryToCount.getOrDefault(it, 0),
+            numLinesDeleted = oldLibraryToCount.getOrDefault(it, 0),
+            type = Extractor.TYPE_LIBRARY,
+            tech = it)
+        }.filter { it.numLinesAdded > 0 || it.numLinesDeleted > 0 }
 
-        return files.filter { file -> file.language.isNotBlank() }
-                    .groupBy { file -> file.language }
-                    .map { (language, files) -> CommitStats(
-                        numLinesAdded = files.fold(0) { total, file ->
-                            total + file.getAllAdded().size },
-                        numLinesDeleted = files.fold(0) { total, file ->
-                            total + file.getAllDeleted().size },
-                        type = Extractor.TYPE_LANGUAGE,
-                        tech = language)} + libraryStats
+        return langStats + libraryStats
     }
 
     fun extractImports(fileContent: List<String>): List<String> {

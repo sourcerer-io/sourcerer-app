@@ -28,8 +28,7 @@ class Extractor : ExtractorInterface {
             in GoExtractor.FILE_EXTS -> GoExtractor()
             in ObjectiveCExtractor.FILE_EXTS -> ObjectiveCExtractor()
             in SwiftExtractor.FILE_EXTS -> SwiftExtractor()
-            in KotlinExtractor.FILE_EXTS -> KotlinExtractor()
-            else -> EmptyExtractor()
+            else -> CommonExtractor()
         }
     }
 
