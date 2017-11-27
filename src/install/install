@@ -29,6 +29,7 @@ if [ "\$1" = "--uninstall" ] ; then
     exit
   fi
 
+  rm -f /usr/local/bin/sourcerer
   rm $SCRIPT_DIR/sourcerer
   rm -r $JAR_DIR
 
@@ -60,7 +61,7 @@ chmod +x $SCRIPT_DIR/sourcerer
 
 
 {
-  rm /usr/local/bin/sourcerer 2> /dev/null &&
+  rm -f /usr/local/bin/sourcerer 2> /dev/null &&
   ln -s $SCRIPT_DIR/sourcerer /usr/local/bin/sourcerer 2> /dev/null &&
   echo "Done!" &&
   echo "Run sourcerer to start hashing your repos!"
