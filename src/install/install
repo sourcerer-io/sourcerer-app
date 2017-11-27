@@ -5,8 +5,8 @@ echo "Installing sourcerer app.."
 
 SERVER=$SERVER_EXT
 DOWNLOAD_URL=$SERVER/app/download
-JAR_DIR=/usr/local/lib/sourcerer
-SCRIPT_DIR=/usr/local/bin
+SCRIPT_DIR=$HOME/.sourcerer
+JAR_DIR=$SCRIPT_DIR
 
 if [ -f $SCRIPT_DIR/sourcerer ] ; then
   read -p "Previous version of sourcerer is detected. Reinstall it? [Y/n] " yesno < /dev/tty
@@ -16,6 +16,7 @@ if [ -f $SCRIPT_DIR/sourcerer ] ; then
   fi
 fi
 
+mkdir -p $SCRIPT_DIR
 mkdir -p $JAR_DIR
 curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
 
@@ -57,5 +58,13 @@ EOF
 
 chmod +x $SCRIPT_DIR/sourcerer
 
-echo "Done!"
-echo "Run sourcerer to start hashing your repos!"
+
+{
+  rm /usr/local/bin/sourcerer 2> /dev/null &&
+  ln -s $SCRIPT_DIR/sourcerer /usr/local/bin/sourcerer 2> /dev/null &&
+  echo "Done!" &&
+  echo "Run sourcerer to start hashing your repos!"
+} || {
+  echo 'We installed app to $HOME/.sourcerer/sourcerer.'
+  echo 'You can add it to $PATH or ln it to /usr/local/bin'
+}

@@ -13,13 +13,14 @@ podTemplate(label: 'build-pod-sourcerer-app',
 ) {
   node('build-pod-sourcerer-app') {
     def namespace = 'sandbox'
-    def plog = 'info' // TODO: remove after test
+    def plog = 'debug'
 
     if (env.BRANCH_NAME == 'master') {
       namespace = 'production'
       plog = 'info'
     } else if (env.BRANCH_NAME == 'develop') {
       namespace = 'staging'
+      plog = 'info'
     }
 
     stage('checkout') {
