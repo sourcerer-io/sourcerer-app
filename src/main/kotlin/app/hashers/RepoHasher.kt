@@ -117,7 +117,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
 
     private fun postAuthorsToServer(emails: HashSet<String>) {
         api.postAuthors(emails.map { email ->
-            Author(email=email, repo=serverRepo)
+            Author(email = email, repo = serverRepo)
         }).onErrorThrow()
     }
 
