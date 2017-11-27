@@ -95,12 +95,13 @@ class AuthState constructor(private val context: Context,
             return true
         } catch (e: ApiError) {
             if (e.isAuthError) {
-                if(e.httpBodyMessage.isNotBlank()) {
+                if (e.httpBodyMessage.isNotBlank()) {
                     println(e.httpBodyMessage)
                 } else {
                     println("Authentication error. Try again.")
                 }
             } else {
+                Logger.error(e)
                 println("Connection problems. Try again later.")
                 retry = false
             }
