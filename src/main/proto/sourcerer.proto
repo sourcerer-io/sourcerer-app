@@ -72,10 +72,29 @@ message FactGroup {
     repeated Fact facts = 1;
 }
 
+// Used to authors for invitational procedures.
+message Author {
+    string email = 1;
+    string repo_rehash = 2;
+}
+
+message AuthorGroup {
+    repeated Author authors = 1;
+}
+
 // User properties and indentity information about repos.
 message User {
     // List of known repos containing basic information for indentifying repo.
     repeated Repo repos = 1;
+    // List of known emails.
+    repeated UserEmail emails = 2;
+}
+
+// Email of user with its status information.
+message UserEmail {
+    string email = 1;
+    bool primary = 2;
+    bool verified = 3;
 }
 
 // Repository parameters for hashing.
@@ -87,9 +106,6 @@ message Repo {
     // Rehash of first commit in repo. Used for indentifying forks.
     string initial_commit_rehash = 2;
 
-    // Email of app user from git config of repo.
-    string user_email = 3;
-
     // Authors' email filter for hashed commits. If empty list then hash only
     // commits that created by current user.
     repeated string emails = 4;
@@ -97,4 +113,14 @@ message Repo {
     // Raw commits server history. Used to find overlap of commits. Hashing
     // starts after last commit from the overlap.
     repeated Commit commits = 5;
+}
+
+// Errors from server.
+message Error {
+    uint32 code = 1;
+    string message = 2;
+}
+
+message Errors {
+    repeated Error errors = 1;
 }

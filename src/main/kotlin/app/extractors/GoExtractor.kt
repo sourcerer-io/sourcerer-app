@@ -11,6 +11,9 @@ class GoExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "go"
         val FILE_EXTS = listOf("go")
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -40,5 +43,19 @@ class GoExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^(.*import)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

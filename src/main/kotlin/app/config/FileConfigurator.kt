@@ -5,7 +5,8 @@ package app.config
 
 import app.Logger
 import app.model.LocalRepo
-import app.model.Repo
+import app.model.User
+import app.utils.FileHelper
 import app.utils.Options
 import app.utils.PasswordHelper
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
@@ -16,11 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
 import java.util.UUID
 
 /**
@@ -30,7 +29,7 @@ class FileConfigurator : Configurator {
     /**
      * Persistent configuration file name.
      */
-    private val CONFIG_FILE_NAME = ".sourcerer"
+    private val CONFIG_FILE_NAME = "config.yaml"
 
     // Config levels are presented in priority decreasing order.
 
@@ -40,7 +39,7 @@ class FileConfigurator : Configurator {
     private var current: Config = Config()
 
     /**
-     * Persistent configuration saved in [userDir] in YAML format.
+     * Persistent configuration saved in config file in YAML format.
      */
     private var persistent: Config = Config()
 
@@ -63,18 +62,7 @@ class FileConfigurator : Configurator {
     /**
      * Used to temporarily save list of repos that known by server.
      */
-    private var repos: List<Repo> = listOf()
-
-    /**
-     * User directory path is where persistent config stored.
-     */
-    private val userDir = try {
-        System.getProperty("user.home")
-    }
-    catch (e: SecurityException) {
-        Logger.error("Cannot access user directory", e)
-        null
-    }
+    private var user: User = User()
 
     /**
      * Jackson's ObjectMapper.
@@ -144,10 +132,10 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Gets list of temprorary saved repos.
+     * Gets temprorary saved user information.
      */
-    override fun getRepos(): List<Repo> {
-        return repos
+    override fun getUser(): User {
+        return user
     }
 
     /**
@@ -200,10 +188,10 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Temporarily sets list of repos.
+     * Temporarily sets info about user.
      */
-    override fun setRepos(repos: List<Repo>) {
-        this.repos = repos
+    override fun setUser(user: User) {
+        this.user = user
     }
 
     /**
@@ -216,62 +204,58 @@ class FileConfigurator : Configurator {
     }
 
     /**
-     * Loads [persistent] configuration from config file stored in [userDir].
+     * Loads [persistent] configuration from config file.
      */
     override fun loadFromFile() {
-        if (userDir == null) {
-            return
-        }
-
         // Сonfig initialization in case an exception is thrown.
         var loadConfig = Config()
 
         try {
-            loadConfig = Files.newBufferedReader(Paths.get(userDir,
-                CONFIG_FILE_NAME)).use {
+            loadConfig = Files.newBufferedReader(FileHelper
+                .getPath(CONFIG_FILE_NAME)).use {
                 mapper.readValue(it, Config::class.java)
             }
         } catch (e: IOException) {
-            if(e is NoSuchFileException){
-                Logger.info("No config file found")
+            if (e is NoSuchFileException){
+                Logger.warn { "No config file found" }
             } else {
-                Logger.error("Cannot access config file", e)
+                Logger.error(e, "Cannot access config file")
             }
         } catch (e: SecurityException) {
-            Logger.error("Cannot access config file", e)
+            Logger.error(e, "Cannot access config file")
         } catch (e: InvalidPathException) {
-            Logger.error("Cannot access config file", e)
+            Logger.error(e, "Cannot access config file")
         } catch (e: JsonParseException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: JsonMappingException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: IllegalStateException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         }
 
         persistent = loadConfig
     }
 
     /**
-     * Saves [persistent] configuration to config file stored in [userDir].
+     * Saves [persistent] configuration to config file.
      */
     override fun saveToFile() {
         try {
-            Files.newBufferedWriter(Paths.get(userDir, CONFIG_FILE_NAME)).use {
+            Files.newBufferedWriter(FileHelper.getPath(CONFIG_FILE_NAME)).use {
                 mapper.writeValue(it, persistent)
             }
         } catch (e: IOException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: SecurityException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: InvalidPathException) {
-            Logger.error("Cannot save config file", e)
+            Logger.error(e, "Cannot save config file")
         } catch (e: JsonParseException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: JsonMappingException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         } catch (e: IllegalStateException) {
-            Logger.error("Cannot parse config file", e)
+            Logger.error(e, "Cannot parse config file")
         }
     }
 

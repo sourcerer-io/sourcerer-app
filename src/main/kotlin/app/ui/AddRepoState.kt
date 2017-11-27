@@ -3,7 +3,7 @@
 
 package app.ui
 
-import app.Analytics
+import app.Logger
 import app.api.Api
 import app.config.Configurator
 import app.model.LocalRepo
@@ -21,19 +21,18 @@ class AddRepoState constructor(private val context: Context,
         if (configurator.getLocalRepos().isNotEmpty()) return
 
         while (true) {
-            println("Type a path to repository, or hit Enter to start "
-                    + "hashing.")
+            Logger.print("Type a path to repository, or hit Enter to continue.")
             val pathString = readLine() ?: ""
 
             if (pathString.isEmpty()) {
                 if (configurator.getLocalRepos().isEmpty()) {
-                    println("Add at least one valid repository.")
+                    Logger.print("Add at least one valid repository.")
                 } else {
                     break // User finished to add repos.
                 }
             } else {
                 if (RepoHelper.isValidRepo(pathString)) {
-                    println("Added git repository at $pathString.")
+                    Logger.print("Added git repository at $pathString.")
                     val localRepo = LocalRepo(pathString)
                     localRepo.hashAllContributors = UiHelper.confirm("Do you "
                         + "want to hash commits of all contributors?",
@@ -41,15 +40,18 @@ class AddRepoState constructor(private val context: Context,
                     configurator.addLocalRepoPersistent(localRepo)
                     configurator.saveToFile()
                 } else {
-                    println("No valid git repository found at $pathString.")
+                    Logger.print("Directory should contain a valid git " +
+                        "repository.")
+                    Logger.print("Make sure that master branch with at least " +
+                        "one commit exists.")
                 }
             }
         }
 
-        Analytics.trackConfigSetup()
+        Logger.info(Logger.Events.CONFIG_SETUP) { "Config setup" }
     }
 
     override fun next() {
-        context.changeState(UpdateRepoState(context, api, configurator))
+        context.changeState(EmailState(context, api, configurator))
     }
 }

@@ -16,6 +16,7 @@ import org.jetbrains.spek.api.dsl.it
 import test.utils.TestRepo
 import java.util.*
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class FactHasherTest : Spek({
@@ -33,6 +34,27 @@ class FactHasherTest : Spek({
         // Month in calendar is 0-based.
         cal.set(year, month - 1, day, hour, minute, seconds)
         return cal.time
+    }
+
+    fun getFact(code: Int, key: Int, author: Author, facts: List<Fact>): Fact {
+        val fact = facts.find { fact ->
+            fact.code == code && fact.key == key && fact.author == author
+        }
+        assertNotNull(fact)
+        return fact!!
+    }
+
+    fun assertFactInt(code: Int, key: Int, value: Int, author: Author,
+                      facts: List<Fact>) {
+        val fact = getFact(code, key, author, facts)
+        assertEquals(value, fact.value.toInt())
+    }
+
+    fun assertFactDouble(code: Int, key: Int, value: Double, author: Author,
+                         facts: List<Fact>) {
+        val fact = getFact(code, key, author, facts)
+        assertTrue(Math.abs(value - fact.value.toDouble()) < 0.1,
+            "Expected approximately <$value>, actual <${fact.value}>")
     }
 
     given("commits for date facts") {
@@ -54,13 +76,13 @@ class FactHasherTest : Spek({
 
             val errors = mutableListOf<Throwable>()
             val observable = CommitCrawler.getObservable(testRepo.git, repo)
-            FactHasher(repo, mockApi, emails)
+            FactHasher(repo, mockApi, listOf("r1"), emails)
                 .updateFromObservable(observable, { e -> errors.add(e) })
 
             assertEquals(0, errors.size)
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 13,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_TIME, 13,
                                            "1", author1)))
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 6,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_WEEK, 6,
                                            "1", author1)))
         }
 
@@ -79,17 +101,17 @@ class FactHasherTest : Spek({
 
             val errors = mutableListOf<Throwable>()
             val observable = CommitCrawler.getObservable(testRepo.git, repo)
-            FactHasher(repo, mockApi, emails)
+            FactHasher(repo, mockApi, listOf("r1", "r2"), emails)
                 .updateFromObservable(observable, { e -> errors.add(e) })
 
             assertEquals(0, errors.size)
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 18,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_TIME, 18,
                                            "1", author2)))
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 0,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_WEEK, 0,
                                            "1", author2)))
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_TIME, 13,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_TIME, 13,
                                            "2", author1)))
-            assertTrue(facts.contains(Fact(repo, FactCodes.COMMITS_DAY_WEEK, 0,
+            assertTrue(facts.contains(Fact(repo, FactCodes.COMMIT_DAY_WEEK, 0,
                                            "1", author1)))
         }
 
@@ -154,9 +176,11 @@ class FactHasherTest : Spek({
 
             val errors = mutableListOf<Throwable>()
             val observable = CommitCrawler.getObservable(testRepo.git, repo)
-            FactHasher(repo, mockApi, emails)
+            FactHasher(repo, mockApi,
+                listOf("r1", "r2", "r3", "r4", "r5", "r6"), emails)
                 .updateFromObservable(observable, { e -> errors.add(e) })
 
+            assertEquals(0, errors.size)
             assertTrue(facts.contains(Fact(repo, FactCodes.REPO_DATE_START, 0,
                 (startAuthor1.time/1000).toString(), author1)))
             assertTrue(facts.contains(Fact(repo, FactCodes.REPO_DATE_START, 0,
@@ -169,6 +193,90 @@ class FactHasherTest : Spek({
                 "2")))
         }
 
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
+
+    given("test of commit facts") {
+        val testRepo = TestRepo(repoPath + "commit-facts")
+        val emails = hashSetOf(authorEmail1, authorEmail2)
+        val mockApi = MockApi(mockRepo = repo)
+        val facts = mockApi.receivedFacts
+        val lines = listOf(
+            "All my rap, if shortly, is about the thing that",
+            "For so many years so many cities have been under hoof",
+            "To go uphill when gets lucky. Then downhill when feels sick",
+            "I'm not really a Gulliver, but still the city is under hoof",
+            "City under hoof, city under hoof",
+            "Traffic lights, state duties, charges and customs",
+            "I don't know whether this path is wade or to the bottom",
+            "You live under a thumb, I have a city under my hoof",
+            "All my rap, if shortly, is about the thing that",
+            "For so many years so many cities have been under hoof",
+            "To go uphill when gets lucky. Then downhill when feels sick",
+            "I'm not really a Gulliver, but still the city is under hoof",
+            "City under hoof, city under hoof",
+            "Traffic lights, state duties, charges and customs",
+            "I don't know whether this path is wade or to the bottom",
+            "You live under a thumb, I have a city under my hoof",
+            "All my rap, if shortly, is about the thing that",
+            "For so many years so many cities have been under hoof",
+            "To go uphill when gets lucky. Then downhill when feels sick",
+            "I'm not really a Gulliver, but still the city is under hoof",
+            "City under hoof, city under hoof",
+            "Traffic lights, state duties, charges and customs",
+            "I don't know whether this path is wade or to the bottom",
+            "You live under a thumb, I have a city under my hoof"
+        )
+        val linesLenAvg = lines.fold (0) { acc, s -> acc + s.length } /
+            lines.size.toDouble()
+
+        afterEachTest {
+            facts.clear()
+        }
+
+        it("sends facts") {
+            testRepo.createFile("test1.txt", listOf())
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(0, 3))
+            testRepo.commit(message = "Commit 1", author = author1)
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(3, 6))
+            testRepo.commit(message = "Commit 2", author = author1)
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(6, 9))
+            testRepo.commit(message = "Commit 3", author = author1)
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(9, 12))
+            testRepo.commit(message = "Commit 4", author = author1)
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(12, 16))
+            testRepo.commit(message = "Commit 5", author = author1)
+
+            testRepo.insertLines("test1.txt", 0, lines.subList(16, 24))
+            testRepo.commit(message = "Commit 6", author = author1)
+
+            val errors = mutableListOf<Throwable>()
+            val observable = CommitCrawler.getObservable(testRepo.git, repo)
+            FactHasher(repo, mockApi,
+                listOf("r1", "r2", "r3", "r4", "r5", "r6"), emails)
+                .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+            assertFactInt(FactCodes.COMMIT_NUM, 0, 6, author1, facts)
+            assertFactDouble(FactCodes.COMMIT_LINE_NUM_AVG, 0, 4.0, author1,
+                facts)
+            assertFactInt(FactCodes.LINE_NUM, 0, 24, author1, facts)
+            assertFactDouble(FactCodes.LINE_LEN_AVG, 0, linesLenAvg, author1,
+                facts)
+            assertFactInt(FactCodes.COMMIT_NUM_TO_LINE_NUM, 3, 4, author1,
+                facts)
+            assertFactInt(FactCodes.COMMIT_NUM_TO_LINE_NUM, 4, 1, author1,
+                facts)
+            assertFactInt(FactCodes.COMMIT_NUM_TO_LINE_NUM, 8, 1, author1,
+                facts)
+        }
 
         afterGroup {
             testRepo.destroy()

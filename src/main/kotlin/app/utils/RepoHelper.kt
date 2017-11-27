@@ -32,7 +32,7 @@ object RepoHelper {
             repository = git.repository
             commitId = repository.resolve(MASTER_BRANCH)
         } catch (e: Exception) {
-           Logger.error("Cannot access repository at path $path", e)
+           Logger.error(e, "Cannot access repository at specified path")
             return false
         } finally {
             repository?.close()
@@ -49,13 +49,13 @@ object RepoHelper {
         return try {
             Paths.get(path).toFile().isDirectory
         } catch (e: InvalidPathException) {
-            Logger.error("Invalid path $path", e)
+            Logger.error(e, "Invalid path")
             false
         } catch (e: UnsupportedOperationException) {
-            Logger.error("Invalid path $path", e)
+            Logger.error(e, "Invalid path")
             false
         } catch (e: SecurityException) {
-            Logger.error("Cannot access repository at path $path", e)
+            Logger.error(e, "Cannot access repository at specified path")
             false
         }
     }
@@ -86,23 +86,23 @@ object RepoHelper {
     fun printRepos(localRepos: List<LocalRepo>)
     {
         for (repo in localRepos) {
-            println(repo)
+            Logger.print(repo)
         }
     }
 
     fun printRepos(localRepos: List<LocalRepo>, title: String) {
         if (localRepos.isNotEmpty()) {
-            println(title)
+            Logger.print(title, indentLine = true)
             printRepos(localRepos)
         }
     }
 
     fun printRepos(localRepos: List<LocalRepo>, title: String, empty: String) {
         if (localRepos.isNotEmpty()) {
-            println(title)
+            Logger.print(title, indentLine = true)
             printRepos(localRepos)
         } else {
-            println(empty)
+            Logger.print(empty, indentLine = true)
         }
     }
 }

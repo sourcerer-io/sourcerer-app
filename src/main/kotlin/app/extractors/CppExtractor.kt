@@ -11,6 +11,11 @@ class CppExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "cpp"
         val FILE_EXTS = listOf("cc", "cpp", "cxx", "c++")
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
+        val MULTI_IMPORT_TO_LIB =
+            ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -30,6 +35,21 @@ class CppExtractor : ExtractorInterface {
             }
         }
 
-        return imports.toList()
+        val libraries = imports.map { MULTI_IMPORT_TO_LIB.getOrDefault(it, it) }
+        return libraries
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

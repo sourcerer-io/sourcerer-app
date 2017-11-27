@@ -11,6 +11,11 @@ class PythonExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "python"
         val FILE_EXTS = listOf("py", "py3")
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
+        val MULTI_IMPORT_TO_LIB =
+                ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -32,6 +37,26 @@ class PythonExtractor : ExtractorInterface {
             }
         }
 
-        return imports.toList()
+        var libraries = imports.map { MULTI_IMPORT_TO_LIB.getOrDefault(it, it) }
+            .filter { !it.endsWith("pb")}.toMutableList()
+        if (libraries.size < imports.size) {
+            libraries.add("protobuf")
+        }
+        return libraries
+
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val docImportRegex = Regex("""^([^\n]*#|\s*\"\"\"|\s*import|\s*from)[^\n]*""")
+        val commentRegex = Regex("""^(.*#).*""")
+        var newLine = docImportRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

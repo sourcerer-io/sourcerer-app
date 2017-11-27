@@ -1,10 +1,14 @@
 .DS_Store
 .gradle/
 .idea/
+.sourcerer
 build/
 sourcerer-app.iml
 sourcerer-app.ipr
 sourcerer-app.iws
+app.iml
+app.ipr
+app.iws
 /confluence/target
 /dependencies
 /dist
@@ -17,3 +21,4 @@ sourcerer-app.iws
 /ultimate/ideaSDK
 /ultimate/out
 /ultimate/tmp
+tmp_repo

@@ -3,6 +3,7 @@
 
 package app.ui
 
+import app.Logger
 import app.api.Api
 import app.config.Configurator
 
@@ -15,11 +16,13 @@ class OpenState constructor(private val context: Context,
     : ConsoleState {
     override fun doAction() {
         if (!configurator.isValidCredentials()) {
-            println("Sourcerer hashes your git repositories into intelligent "
-                    + "engineering profiles. If you don't have an account, "
-                    + "please, proceed to http://sourcerer.io/register.")
+            Logger.print("Sourcerer hashes your git repositories into " +
+                "intelligent engineering profiles.")
+            Logger.print("If you don't have an account, please, sign up at " +
+                    "https://sourcerer.io/join")
         } else {
-            println("Sourcerer. Use flag --help to list available commands.")
+            Logger.print("Sourcerer. Use flag --help to list available " +
+                "commands.")
         }
     }
 

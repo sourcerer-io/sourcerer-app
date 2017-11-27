@@ -1,23 +1,21 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 
 buildscript {
-    ext.kotlin_version = '1.1.4-2'
+    ext.kotlin_version = '1.1.51'
     repositories {
         mavenCentral()
         jcenter()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.1"
-        classpath "org.junit.platform:junit-platform-gradle-plugin:1.0.0-RC2"
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.3"
+        classpath "org.junit.platform:junit-platform-gradle-plugin:1.0.1"
     }
 }
 
 plugins {
     id 'de.fuerstenau.buildconfig' version '1.1.8'
 }
-
-
 
 apply plugin: "idea"
 apply plugin: "java"
@@ -27,19 +25,11 @@ apply plugin: "com.google.protobuf"
 apply plugin: "org.junit.platform.gradle.plugin"
 
 buildConfig {
-    ext.environment = project.hasProperty('env') &&
-        env == 'production' ? 'prod' : 'dev'
-
     clsName = 'BuildConfig'
     packageName = 'app'
 
     // API.
-    def apiBasePath = 'https://staging.eng.sourcerer.io/api/commit'
-    if (ext.environment == 'prod') {
-        apiBasePath = 'https://sourcerer.io/api/commit'
-    }
-    apiBasePath = project.hasProperty('api') ? api : apiBasePath
-
+    def apiBasePath = project.hasProperty('api') ? api : 'https://sourcerer.io/api/commit'
     buildConfigField 'String', 'API_BASE_PATH', apiBasePath
 
     // Common.
@@ -49,10 +39,20 @@ buildConfig {
     buildConfigField 'int', 'VERSION_CODE', '1'
     buildConfigField 'String', 'VERSION', '0.0.1'
 
+    // Logging.
+    buildConfigField 'String', 'LOG_LEVEL', project.hasProperty('log') ? log : 'info'
+
     // Google Analytics.
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'
     buildConfigField 'String', 'GA_TRACKING_ID', 'UA-107129190-2'
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
+
+    // Logging.
+    buildConfigField 'String', 'SENTRY_DSN', 'https://0263d6473bd24a9ba40e25aa5fb0a242:c5451dc815074bff8ce3fb9f0851f2f5@sentry.io/233260'
+    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'false'
+
+    // Models storage path.
+    buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v1/'
 
     buildConfig
 }
@@ -65,39 +65,49 @@ junitPlatform {
     }
 }
 
+task cleanData {
+    delete 'build/libs/data'
+    delete 'build/kotlin/data'
+}
+
+test.dependsOn cleanData
+
 mainClassName = "app.MainKt"
 
 repositories {
     mavenCentral()
     jcenter()
     maven { url "http://dl.bintray.com/jetbrains/spek" }
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "com.beust:jcommander:1.72"
-    compile 'com.google.protobuf:protobuf-java:3.0.0'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.5'
+    compile 'com.google.protobuf:protobuf-java:3.4.0'
+    compile 'commons-codec:commons-codec:1.5'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.9'
-    compile "io.reactivex.rxjava2:rxjava:2.1.1"
-    compile 'com.github.kittinunf.fuel:fuel:1.9.0'
-    compile 'com.github.kittinunf.fuel:fuel-rxjava:1.9.0'
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit',
-            version: '4.8.0.201706111038-r'
-    compile "org.slf4j:slf4j-nop:1.7.2"
+    compile 'io.reactivex.rxjava2:rxjava:2.1.6'
+    compile 'com.github.kittinunf.fuel:fuel:1.11.0'
+    compile 'com.github.kittinunf.fuel:fuel-rxjava:1.11.0'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.9.0.201710071750-r'
+    compile 'org.slf4j:slf4j-nop:1.7.2'
+    compile 'io.sentry:sentry:1.6.0'
 
     testCompile 'org.jetbrains.kotlin:kotlin-test'
-    testCompile 'org.jetbrains.spek:spek-api:1.1.4'
-    testCompile 'org.junit.platform:junit-platform-runner:1.0.0-RC2'
-    testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.4'
+    testCompile 'org.jetbrains.spek:spek-api:1.1.5'
+    testCompile 'org.junit.platform:junit-platform-runner:1.0.1'
+    testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.0.0"
+        artifact = "com.google.protobuf:protoc:3.4.0"
     }
 }
 

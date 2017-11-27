@@ -4,7 +4,7 @@
 package app.config
 
 import app.model.LocalRepo
-import app.model.Repo
+import app.model.User
 import app.utils.Options
 
 interface Configurator {
@@ -13,7 +13,7 @@ interface Configurator {
     fun getPassword(): String
     fun isValidCredentials(): Boolean
     fun getLocalRepos(): List<LocalRepo>
-    fun getRepos(): List<Repo>
+    fun getUser(): User
     fun setUsernameCurrent(username: String)
     fun setPasswordCurrent(password: String)
     fun getUuidPersistent(): String
@@ -21,7 +21,7 @@ interface Configurator {
     fun setPasswordPersistent(password: String)
     fun addLocalRepoPersistent(localRepo: LocalRepo)
     fun removeLocalRepoPersistent(localRepo: LocalRepo)
-    fun setRepos(repos: List<Repo>)
+    fun setUser(user: User)
     fun isFirstLaunch(): Boolean
     fun loadFromFile()
     fun saveToFile()

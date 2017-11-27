@@ -19,8 +19,8 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.MissingCommandException
 
 fun main(argv : Array<String>) {
-    Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable? ->
-        Logger.error("Uncaught exception", e)
+    Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable ->
+        Logger.error(e, "Uncaught exception")
     }
     Main(argv)
 }
@@ -30,8 +30,8 @@ class Main(argv: Array<String>) {
     private val api = ServerApi(configurator)
 
     init {
-        Analytics.uuid = configurator.getUuidPersistent()
-        Analytics.trackStart()
+        Logger.uuid = configurator.getUuidPersistent()
+        Logger.info(Logger.Events.START) { "App started" }
 
         val options = Options()
         val commandAdd = CommandAdd()
@@ -64,13 +64,10 @@ class Main(argv: Array<String>) {
                 else -> startUi()
             }
         } catch (e: MissingCommandException) {
-            Logger.error(
-                message = "No such command: ${e.unknownCommand}",
-                code = "no-command"
-            )
+            Logger.warn { "No such command: ${e.unknownCommand}" }
         }
 
-        Analytics.trackExit()
+        Logger.info(Logger.Events.EXIT) { "App finished" }
     }
 
     private fun startUi() {
@@ -84,12 +81,10 @@ class Main(argv: Array<String>) {
             localRepo.hashAllContributors = commandAdd.hashAll
             configurator.addLocalRepoPersistent(localRepo)
             configurator.saveToFile()
-            println("Added git repository at $path.")
-
-            Analytics.trackConfigChanged()
+            Logger.print("Added git repository at $path.")
+            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
-            Logger.error(message = "No valid git repository found at $path.",
-                         code = "repo-invalid")
+            Logger.warn { "No valid git repository found at specified path" }
         }
     }
 
@@ -97,8 +92,7 @@ class Main(argv: Array<String>) {
         val (key, value) = commandOptions.pair
 
         if (!arrayListOf("username", "password").contains(key)) {
-            Logger.error(message = "No such key $key",
-                         code = "invalid-params")
+            Logger.warn { "No such key $key" }
             return
         }
 
@@ -109,7 +103,7 @@ class Main(argv: Array<String>) {
 
         configurator.saveToFile()
 
-        Analytics.trackConfigChanged()
+        Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
     }
 
     private fun doList() {
@@ -124,11 +118,11 @@ class Main(argv: Array<String>) {
         if (path != null) {
             configurator.removeLocalRepoPersistent(LocalRepo(path))
             configurator.saveToFile()
-            println("Repository removed from tracking list.")
+            Logger.print("Repository removed from tracking list.")
 
-            Analytics.trackConfigChanged()
+            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
-            println("Repository not found in tracking list.")
+            Logger.print("Repository not found in tracking list.")
         }
     }
 
@@ -143,10 +137,12 @@ class Main(argv: Array<String>) {
     }
 
     private fun showHelp(jc: JCommander) {
-        println("Sourcerer hashes your git repositories into intelligent "
-            + "engineering profiles. If you don't have an account, "
-            + "please, proceed to http://sourcerer.io/register. More info at "
-            + "http://sourcerer.io.")
+        Logger.print("Sourcerer hashes your git repositories into intelligent "
+            + "engineering profiles.")
+        Logger.print("If you don't have an account, please, proceed to " +
+            "https://sourcerer.io/join")
+        Logger.print("More info at https://sourcerer.io and " +
+            "https://github.com/sourcerer-io")
         jc.usage()  // Will show detailed info about usage based on annotations.
     }
 }

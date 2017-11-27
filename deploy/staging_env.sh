@@ -1,0 +1,1 @@
+export REPLICAS="1"

@@ -5,8 +5,8 @@ echo "Installing sourcerer app.."
 
 SERVER=$SERVER_EXT
 DOWNLOAD_URL=$SERVER/app/download
-JAR_DIR=/usr/local/lib
-SCRIPT_DIR=/usr/local/bin
+SCRIPT_DIR=$HOME/.sourcerer
+JAR_DIR=$SCRIPT_DIR
 
 if [ -f $SCRIPT_DIR/sourcerer ] ; then
   read -p "Previous version of sourcerer is detected. Reinstall it? [Y/n] " yesno < /dev/tty
@@ -16,6 +16,8 @@ if [ -f $SCRIPT_DIR/sourcerer ] ; then
   fi
 fi
 
+mkdir -p $SCRIPT_DIR
+mkdir -p $JAR_DIR
 curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
 
 cat <<EOF > $SCRIPT_DIR/sourcerer
@@ -27,8 +29,9 @@ if [ "\$1" = "--uninstall" ] ; then
     exit
   fi
 
+  rm -f /usr/local/bin/sourcerer
   rm $SCRIPT_DIR/sourcerer
-  rm $JAR_DIR/sourcerer.jar
+  rm -r $JAR_DIR
 
   echo "Done!"
   exit
@@ -45,10 +48,24 @@ if ! which java > /dev/null ; then
   exit 1
 fi
 
-java -jar $JAR_DIR/sourcerer.jar "\$@"
+# Java 9 requires additional parameters.
+version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+if [[ "$version" > "9." ]]; then  # Version example for Java 9: 9.0.1
+  java --add-modules java.activation --add-opens java.base/java.nio=ALL-UNNAMED -jar $JAR_DIR/sourcerer.jar "\$@"
+else
+  java -jar $JAR_DIR/sourcerer.jar "\$@"
+fi
 EOF
 
 chmod +x $SCRIPT_DIR/sourcerer
 
-echo "Done!"
-echo "Run sourcerer to start hashing your repos!"
+
+{
+  rm -f /usr/local/bin/sourcerer 2> /dev/null &&
+  ln -s $SCRIPT_DIR/sourcerer /usr/local/bin/sourcerer 2> /dev/null &&
+  echo "Done!" &&
+  echo "Run sourcerer to start hashing your repos!"
+} || {
+  echo 'We installed app to $HOME/.sourcerer/sourcerer.'
+  echo 'You can add it to $PATH or ln it to /usr/local/bin'
+}

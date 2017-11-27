@@ -24,13 +24,18 @@ class TestRepo(val repoPath: String) {
     val userName = "Contributor"
     val userEmail = "test@sourcerer.com"
 
-    val git = Git.init().setDirectory(File(repoPath)).call()
+    val git = initGit()
 
     init {
         val config = git.repository.config
         config.setString("user", null, "name", userName)
         config.setString("user", null, "email", userEmail)
         config.save()
+    }
+
+    private fun initGit(): Git {
+        destroy()  // Remove repo directory if exists.
+        return Git.init().setDirectory(File(repoPath)).call()
     }
 
     fun createFile(fileName: String, content: List<String>) {

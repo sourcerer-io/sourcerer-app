@@ -3,10 +3,11 @@
 
 package app.hashers
 
-import app.Analytics
+import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
 import app.utils.HashingException
@@ -31,63 +32,61 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     fun update() {
-        println("Hashing $localRepo...")
+        Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
             val (rehashes, emails) = fetchRehashesAndEmails(git)
 
             localRepo.parseGitConfig(git.repository.config)
-            if (localRepo.author.email.isBlank()) {
-                throw IllegalStateException("Can't load email from Git config")
-            }
+            initServerRepo(rehashes.last)
+            Logger.debug { "Local repo path: ${localRepo.path}" }
+            Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
+            Logger.debug { "Repo rehash: ${serverRepo.rehash}" }
+
+            // Get repo setup (commits, emails to hash) from server.
+            postRepoFromServer()
+
+            // Send all repo emails for invites.
+            postAuthorsToServer(emails)
 
             val filteredEmails = filterEmails(emails)
-
-            initServerRepo(rehashes.last)
-
-            if (!isKnownRepo()) {
-                // Notify server about new contributor and his email.
-                postRepoToServer()
-            }
-            // Get repo setup (commits, emails to hash) from server.
-            getRepoFromServer()
 
             // Common error handling for subscribers.
             // Exceptions can't be thrown out of reactive chain.
             val errors = mutableListOf<Throwable>()
             val onError: (Throwable) -> Unit = {
                 e -> errors.add(e)
-                Logger.error("Hashing error", e)
+                Logger.error(e, "Hashing error")
             }
 
             // Hash by all plugins.
-            val observable = CommitCrawler.getObservable(git, serverRepo)
-                                             .publish()
+            val observable = CommitCrawler.getObservable(git, serverRepo,
+                rehashes.size).publish()
             CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
-            FactHasher(serverRepo, api, filteredEmails)
+            FactHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
 
             // Start and synchronously wait until all subscribers complete.
             observable.connect()
 
             // TODO(anatoly): CodeLongevity hash from observable.
+            Logger.print("Code longevity calculation. May take a while...")
             try {
-                CodeLongevity(serverRepo, filteredEmails, git).updateStats(api)
+                CodeLongevity(serverRepo, filteredEmails, git, onError)
+                    .updateStats(api)
             }
             catch (e: Throwable) {
                 onError(e)
             }
-
-            // Confirm hashing completion.
-            postRepoToServer()
+            Logger.print("Finished.")
 
             if (errors.isNotEmpty()) {
                 throw HashingException(errors)
             }
 
-            println("Hashing $localRepo successfully finished.")
-            Analytics.trackHashingRepoSuccess()
+            Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
+                { "Hashing repo completed" }
         }
         finally {
             closeGit(git)
@@ -107,26 +106,25 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         git.close()
     }
 
-    private fun isKnownRepo(): Boolean {
-        return configurator.getRepos()
-            .find { it.rehash == serverRepo.rehash } != null
+    private fun postRepoFromServer() {
+        val repo = api.postRepo(serverRepo).getOrThrow()
+        serverRepo.commits = repo.commits
+        Logger.info {
+            "Received repo from server with ${serverRepo.commits.size} commits"
+        }
+        Logger.debug { serverRepo.toString() }
     }
 
-    private fun getRepoFromServer() {
-        serverRepo = api.getRepo(serverRepo.rehash)
-        Logger.debug("Received repo from server with " +
-            serverRepo.commits.size + " commits")
-    }
-
-    private fun postRepoToServer() {
-        api.postRepo(serverRepo)
+    private fun postAuthorsToServer(emails: HashSet<String>) {
+        api.postAuthors(emails.map { email ->
+            Author(email = email, repo = serverRepo)
+        }).onErrorThrow()
     }
 
     private fun initServerRepo(initCommitRehash: String) {
-        serverRepo = Repo(userEmail = localRepo.author.email)
-        serverRepo.initialCommitRehash = initCommitRehash
-        serverRepo.rehash = RepoHelper.calculateRepoRehash(
-            serverRepo.initialCommitRehash, localRepo)
+        serverRepo = Repo(initialCommitRehash = initCommitRehash,
+                          rehash = RepoHelper.calculateRepoRehash(
+                              initCommitRehash, localRepo))
     }
 
     private fun fetchRehashesAndEmails(git: Git):
@@ -157,8 +155,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             return emails
         }
 
-        val knownEmails = mutableListOf<String>()
-        knownEmails.add(serverRepo.userEmail)
+        val knownEmails = hashSetOf<String>()
+        knownEmails.addAll(configurator.getUser().emails.map { it.email })
         knownEmails.addAll(serverRepo.emails)
 
         return knownEmails.filter { emails.contains(it) }.toHashSet()

@@ -11,12 +11,14 @@ import java.security.InvalidParameterException
  * User information.
  */
 data class User (
-        var repos: MutableList<Repo> = mutableListOf()
+    var repos: MutableList<Repo> = mutableListOf(),
+    var emails: HashSet<UserEmail> = hashSetOf<UserEmail>()
 ) {
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.User) : this() {
         repos = proto.reposList.map { repo -> Repo(repo) }
-                .toMutableList()
+            .toMutableList()
+        emails = proto.emailsList.map { email -> UserEmail(email) }.toHashSet()
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -26,8 +28,9 @@ data class User (
 
     fun getProto(): Protos.User {
         return Protos.User.newBuilder()
-                .addAllRepos(repos.map { repo -> repo.getProto() })
-                .build()
+            .addAllRepos(repos.map { repo -> repo.getProto() })
+            .addAllEmails(emails.map { email -> email.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {

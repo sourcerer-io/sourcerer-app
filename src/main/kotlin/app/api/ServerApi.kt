@@ -6,13 +6,14 @@ package app.api
 import app.BuildConfig
 import app.Logger
 import app.config.Configurator
+import app.model.Author
+import app.model.AuthorGroup
 import app.model.Commit
 import app.model.CommitGroup
 import app.model.Fact
 import app.model.FactGroup
 import app.model.Repo
 import app.model.User
-import app.utils.RequestException
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Method
 import com.github.kittinunf.fuel.core.Request
@@ -41,11 +42,10 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     private fun cookieResponseInterceptor() = { _: Request, res: Response ->
-        val newToken = res.httpResponseHeaders[HEADER_SET_COOKIE]
+        val newToken = res.headers[HEADER_SET_COOKIE]
             ?.find { it.startsWith(KEY_TOKEN) }
         if (newToken != null && newToken.isNotBlank()) {
-            token = newToken.substringAfter(KEY_TOKEN)
-                .substringBefore(';')
+            token = newToken.substringAfter(KEY_TOKEN).substringBefore(';')
         }
         res
     }
@@ -76,20 +76,25 @@ class ServerApi (private val configurator: Configurator) : Api {
 
     private fun createRequestGetToken(): Request {
         return post("/auth").authenticate(username, password)
-                   .header(getVersionCodeHeader())
+                            .header(getVersionCodeHeader())
     }
 
     private fun createRequestGetUser(): Request {
         return get("/user")
     }
 
-    private fun createRequestGetRepo(repoRehash: String): Request {
-        return get("/repo/$repoRehash")
+    private fun createRequestPostUser(user: User): Request {
+        return post("/user").header(getContentTypeHeader())
+                            .body(user.serialize())
     }
 
     private fun createRequestPostRepo(repo: Repo): Request {
         return post("/repo").header(getContentTypeHeader())
                             .body(repo.serialize())
+    }
+
+    private fun createRequestPostComplete(): Request {
+        return post("/complete").header(getContentTypeHeader())
     }
 
     private fun createRequestPostCommits(commits: CommitGroup): Request {
@@ -107,27 +112,34 @@ class ServerApi (private val configurator: Configurator) : Api {
                              .body(facts.serialize())
     }
 
+    private fun createRequestPostAuthors(authors: AuthorGroup): Request {
+        return post("/authors").header(getContentTypeHeader())
+                               .body(authors.serialize())
+    }
+
     private fun <T> makeRequest(request: Request,
                                 requestName: String,
-                                parser: (ByteArray) -> T): T {
+                                parser: (ByteArray) -> T): Result<T> {
+        var error: ApiError? = null
+        var data: T? = null
+
         try {
-            Logger.debug("Request $requestName initialized")
+            Logger.debug { "Request $requestName initialized" }
             val (_, res, result) = request.responseString()
             val (_, e) = result
             if (e == null) {
-                Logger.debug("Request $requestName success")
-                return parser(res.data)
+                Logger.debug { "Request $requestName success" }
+                data = parser(res.data)
             } else {
-                Logger.error("Request $requestName error", e)
-                throw RequestException(e)
+                error = ApiError(e)
             }
         } catch (e: InvalidProtocolBufferException) {
-            Logger.error("Request $requestName error while parsing", e)
-            throw RequestException(e)
+            error = ApiError(e)
         } catch (e: InvalidParameterException) {
-            Logger.error("Request $requestName error while parsing", e)
-            throw RequestException(e)
+            error = ApiError(e)
         }
+
+        return Result(data, error)
     }
 
     private fun getVersionCodeHeader(): Pair<String, String> {
@@ -138,43 +150,52 @@ class ServerApi (private val configurator: Configurator) : Api {
         return Pair(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_PROTO)
     }
 
-    override fun authorize() {
+    override fun authorize(): Result<Unit> {
         return makeRequest(createRequestGetToken(), "getToken", {})
     }
 
-    override fun getUser(): User {
+    override fun getUser(): Result<User> {
         return makeRequest(createRequestGetUser(), "getUser",
                            { body -> User(body) })
     }
 
-    override fun getRepo(repoRehash: String): Repo {
-        if (repoRehash.isBlank()) {
+    override fun postUser(user: User): Result<Unit> {
+        return makeRequest(createRequestPostUser(user), "postUser", {})
+    }
+
+    override fun postRepo(repo: Repo): Result<Repo> {
+        if (repo.rehash.isBlank()) {
             throw IllegalArgumentException()
         }
 
-        return makeRequest(createRequestGetRepo(repoRehash), "getRepo",
+        return makeRequest(createRequestPostRepo(repo), "getRepo",
                            { body -> Repo(body) })
     }
 
-    override fun postRepo(repo: Repo) {
-        makeRequest(createRequestPostRepo(repo),
-                    "postRepo", {})
+    override fun postComplete(): Result<Unit> {
+        return makeRequest(createRequestPostComplete(),
+                           "postComplete", {})
     }
 
-    override fun postCommits(commitsList: List<Commit>) {
+    override fun postCommits(commitsList: List<Commit>): Result<Unit> {
         val commits = CommitGroup(commitsList)
-        makeRequest(createRequestPostCommits(commits),
-                    "postCommits", {})
+        return makeRequest(createRequestPostCommits(commits),
+                           "postCommits", {})
     }
 
-    override fun deleteCommits(commitsList: List<Commit>) {
+    override fun deleteCommits(commitsList: List<Commit>): Result<Unit> {
         val commits = CommitGroup(commitsList)
-        makeRequest(createRequestDeleteCommits(commits),
-                    "deleteCommits", {})
+        return makeRequest(createRequestDeleteCommits(commits),
+                           "deleteCommits", {})
     }
 
-    override fun postFacts(factsList: List<Fact>) {
+    override fun postFacts(factsList: List<Fact>): Result<Unit> {
         val facts = FactGroup(factsList)
-        makeRequest(createRequestPostFacts(facts), "postFacts", {})
+        return makeRequest(createRequestPostFacts(facts), "postFacts", {})
+    }
+
+    override fun postAuthors(authorsList: List<Author>): Result<Unit> {
+        val authors = AuthorGroup(authorsList)
+        return makeRequest(createRequestPostAuthors(authors), "postAuthors", {})
     }
 }

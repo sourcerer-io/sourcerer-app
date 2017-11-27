@@ -20,10 +20,13 @@ class JavaExtractor : ExtractorInterface {
             "extends", "int", "short", "try", "char", "final", "interface",
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = GoExtractor.LANGUAGE_NAME }
+        files.map { file -> file.language = LANGUAGE_NAME }
 
         val stats = super.extract(files).toMutableList()
 
@@ -71,5 +74,19 @@ class JavaExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^(.*import)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

@@ -3,77 +3,236 @@
 
 package app
 
+import io.sentry.Sentry
+import io.sentry.context.Context
+import io.sentry.event.Breadcrumb
+import io.sentry.event.UserBuilder
+import io.sentry.event.BreadcrumbBuilder
+import java.util.*
+
+
 /**
  * Singleton class that logs events of different levels.
  */
 object Logger {
+    object Events {
+        val START = "start"
+        val AUTH = "auth"
+        val CONFIG_SETUP = "config/setup"
+        val CONFIG_CHANGED = "config/changed"
+        val HASHING_REPO_SUCCESS = "hashing/repo/success"
+        val HASHING_SUCCESS = "hashing/success"
+        val EXIT = "exit"
+    }
+
     /**
      * Current log level. All that higher than this level will not be displayed.
      */
-    const val LEVEL = 3
+    @kotlin.PublishedApi
+    internal val LEVEL : Int
 
     /**
      * Error level.
      */
-    const val ERROR = 0
+    @kotlin.PublishedApi
+    internal const val ERROR = 0
 
     /**
      * Warning level.
      */
-    const val WARN = 1
+    @kotlin.PublishedApi
+    internal const val WARN = 1
 
     /**
      * Information level.
      */
-    const val INFO = 2
+    @kotlin.PublishedApi
+    internal const val INFO = 2
 
     /**
      * Debug level.
      */
-    const val DEBUG = 3
+    @kotlin.PublishedApi
+    internal const val DEBUG = 3
+
+    /**
+     * Trace level. For extremely detailed and high volume debug logs.
+     */
+    @kotlin.PublishedApi
+    internal const val TRACE = 4
+
+    /**
+     * Print stack trace on error log.
+     */
+    private const val PRINT_STACK_TRACE = BuildConfig.PRINT_STACK_TRACE
+
+    /**
+     * Context of Sentry error reporting software for adding info.
+     */
+    private val sentryContext: Context
+
+    /**
+     * Username used for error reporting.
+     */
+    var username: String? = null
+        set(value) {
+            sentryContext.user = UserBuilder().setUsername(value).build()
+            Analytics.username = value ?: ""
+        }
+
+    var uuid: String? = null
+        set(value) {
+            Analytics.uuid = value ?: ""
+        }
+
+    init {
+        Sentry.init(BuildConfig.SENTRY_DSN)
+        sentryContext = Sentry.getContext()
+        addTags()
+        LEVEL = configLevelValue()
+    }
+
+    private fun configLevelValue() : Int {
+        val a = mapOf("trace" to TRACE, "debug" to DEBUG, "info" to INFO, "warn" to WARN, "error" to ERROR)
+        return a.getValue(BuildConfig.LOG_LEVEL)
+    }
+
+    /**
+     * Utils.
+     */
+    private fun Double.format(digits: Int, digitsFloating: Int) =
+        java.lang.String.format("%${digits}.${digitsFloating}f", this)
+
+    private fun generateIndent(num: Int): String {
+        return 0.rangeTo(num).fold("") { ind, _ -> ind + " " }
+    }
+
+    /**
+     * CLI messages and pretty printing.
+     */
+    fun print(message: Any, indentLine: Boolean = false) {
+        print(message.toString(), indentLine)
+    }
+
+    fun print(message: String, indentLine: Boolean = false) {
+        if (indentLine) {
+            println()
+        }
+        println(message)
+    }
+
+    fun printCommit(commitMessage: String, commitHash: String,
+                    percents: Double) {
+        val percentsStr = percents.format(6, 2)
+        val hash = commitHash.substring(0, 7)
+        val messageTrim = if (commitMessage.length > 59) {
+            commitMessage.substring(0, 56).plus("...")
+        } else commitMessage
+        println(" [$percentsStr%] * $hash $messageTrim")
+    }
+
+    private val commitDetailIndent = generateIndent(10) + "|" +
+        generateIndent(8)
+    fun printCommitDetail(message: String) {
+        val messageTrim = if (message.length > 59) {
+            message.substring(0, 56).plus("...")
+        } else message
+        println(commitDetailIndent + messageTrim)
+    }
 
     /**
      * Log error message with exception info.
+     * Don't log private information with this method.
      *
-     * @property message the message for user and logs.
      * @property e the exception if presented.
-     * @property code the code of error if exception is not presented.
+     * @property message the message for user and logs.
+     * @property logOnly only log to console, no additional actions.
      */
-    fun error(message: String, e: Throwable? = null, code: String = "",
-              logOnly: Boolean = false) {
+    fun error(e: Throwable, message: String = "", logOnly: Boolean = false) {
+        val finalMessage = if (message.isNotBlank()) { message + ": " }
+        else { "" } + e.message
         if (LEVEL >= ERROR) {
-            println("[e] $message" + if (e != null) ": $e" else "")
+            println("[e] $finalMessage")
+            if (PRINT_STACK_TRACE) {
+                e.printStackTrace()
+            }
         }
         if (!logOnly) {
-            Analytics.trackError(e = e, code = code)
-            //TODO(anatoly): Add error tracking software.
+            Analytics.trackError(e)
+            Sentry.capture(e)
         }
+        addBreadcrumb(finalMessage, Breadcrumb.Level.ERROR)
     }
 
     /**
-     * Log warning message.
+     * Log warning message. Don't log private information with this method.
      */
-    fun warn(message: String) {
+    inline fun warn(message: () -> String) {
+        val msg = message()
         if (LEVEL >= WARN) {
-            println("[w] $message.")
+            println("[w] $msg.")
         }
+        addBreadcrumb(msg, Breadcrumb.Level.WARNING)
     }
 
     /**
-     * Log information message.
+     * Log information message. Don't log private information with this method.
      */
-    fun info(message: String) {
+    inline fun info(event: String = "", message: () -> String) {
+        val msg = message()
         if (LEVEL >= INFO) {
-            println("[i] $message.")
+            println("[i] $msg.")
         }
+        if (event.isNotBlank()) {
+            Analytics.trackEvent(event)
+        }
+        addBreadcrumb(msg, Breadcrumb.Level.INFO)
     }
 
     /**
      * Log debug message.
      */
-    fun debug(message: String) {
+    inline fun debug(message: () -> String) {
         if (LEVEL >= DEBUG) {
-            println("[d] $message.")
+            println("[d] ${message()}.")
         }
+    }
+
+    /**
+     * Log trace message.
+     */
+    inline fun trace(message: () -> String) {
+        if (LEVEL >= TRACE) {
+            println("[t] ${message()}.")
+        }
+    }
+
+    val isDebug: Boolean
+        inline get() = LEVEL >= DEBUG
+
+    @kotlin.PublishedApi
+    internal fun addBreadcrumb(message: String, level: Breadcrumb.Level) {
+        sentryContext.recordBreadcrumb(BreadcrumbBuilder()
+            .setMessage(message)
+            .setLevel(level)
+            .setTimestamp(Date())
+            .build())
+    }
+
+    private fun addTags() {
+        val default = "unavailable"
+        val osName = System.getProperty("os.name", default)
+        val osVersion = System.getProperty("os.version", default)
+        val javaVendor = System.getProperty("java.vendor", default)
+        val javaVersion = System.getProperty("java.version", default)
+
+        sentryContext.addTag("log-level", BuildConfig.LOG_LEVEL)
+        sentryContext.addTag("version", BuildConfig.VERSION)
+        sentryContext.addTag("version-code", BuildConfig.VERSION_CODE
+                                                        .toString())
+        sentryContext.addTag("os-name", osName)
+        sentryContext.addTag("os-version", osVersion)
+        sentryContext.addTag("java-vendor", javaVendor)
+        sentryContext.addTag("java-version", javaVersion)
     }
 }

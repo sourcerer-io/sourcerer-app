@@ -11,6 +11,9 @@ class PhpExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "php"
         val FILE_EXTS = listOf("php", "phtml", "php4", "php3", "php5", "phps")
+        val evaluator by lazy {
+            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
+        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -33,5 +36,19 @@ class PhpExtractor : ExtractorInterface {
         }
 
         return imports.toList()
+    }
+
+    override fun tokenize(line: String): List<String> {
+        val importRegex = Regex("""^(.*require|require_once|include|include_once|use)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        var newLine = importRegex.replace(line, "")
+        newLine = commentRegex.replace(newLine, "")
+        return super.tokenize(newLine)
+    }
+
+    override fun getLineLibraries(line: String,
+                                  fileLibraries: List<String>): List<String> {
+
+        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
     }
 }

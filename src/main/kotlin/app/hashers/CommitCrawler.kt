@@ -22,34 +22,52 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
 object CommitCrawler {
-    fun getObservable(git: Git, repo: Repo): Observable<Commit> = Observable
-        .create<Commit> { subscriber ->
-            try {
-                val revWalk = RevWalk(git.repository)
-                val commitId = git.repository.resolve(RepoHelper.MASTER_BRANCH)
-                revWalk.markStart(revWalk.parseCommit(commitId))
-                for (revCommit in revWalk) {
-                    subscriber.onNext(Commit(revCommit))
+    fun getObservable(git: Git, repo: Repo,
+                      numCommits: Int = 0): Observable<Commit> {
+        var curNumCommits = 0
+        return Observable
+            .create<Commit> { subscriber ->
+                try {
+                    val revWalk = RevWalk(git.repository)
+                    val commitId = git.repository.resolve(RepoHelper.MASTER_BRANCH)
+                    revWalk.markStart(revWalk.parseCommit(commitId))
+                    for (revCommit in revWalk) {
+                        subscriber.onNext(Commit(revCommit))
+                    }
+                    // Commits are combined in pairs, an empty commit concatenated
+                    // to calculate the diff of the initial commit.
+                    subscriber.onNext(Commit())
+                } catch (e: Exception) {
+                    Logger.error(e, "Commit producing error")
+                    subscriber.onError(e)
                 }
-                // Commits are combined in pairs, an empty commit concatenated
-                // to calculate the diff of the initial commit.
-                subscriber.onNext(Commit())
-            } catch (e: Exception) {
-                Logger.error("Commit producing error", e)
-                subscriber.onError(e)
+                subscriber.onComplete()
+            }  // TODO(anatoly): Rewrite diff calculation in non-weird way.
+            .pairWithNext()  // Pair commits to get diff.
+            .map { (new, old) ->
+                curNumCommits++
+                // Mapping and stats extraction.
+                val message = new.raw?.shortMessage ?: ""
+                val hash = new.raw?.name ?: ""
+                val perc = if (numCommits != 0) {
+                    (curNumCommits.toDouble() / numCommits) * 100
+                } else 0.0
+                Logger.printCommit(message, hash, perc)
+                new.diffs = getDiffFiles(git, new, old)
+                Logger.debug { "Diff: ${new.diffs.size} entries" }
+                // Count lines on all non-binary files. This is additional
+                // statistics to CommitStats because not all file extensions
+                // may be supported.
+                new.numLinesAdded = new.diffs.fold(0) { total, file ->
+                    total + file.getAllAdded().size
+                }
+                new.numLinesDeleted = new.diffs.fold(0) { total, file ->
+                    total + file.getAllDeleted().size
+                }
+                new.repo = repo
+                new
             }
-            subscriber.onComplete()
-        }  // TODO(anatoly): Rewrite diff calculation in non-weird way.
-        .pairWithNext()  // Pair commits to get diff.
-        .map { (new, old) ->
-            // Mapping and stats extraction.
-            Logger.debug("Commit: ${new.raw?.name ?: ""}: "
-                + new.raw?.shortMessage)
-            new.diffs = getDiffFiles(git, new, old)
-            Logger.debug("Diff: ${new.diffs.size} entries")
-            new.repo = repo
-            new
-        }
+    }
 
     private fun getDiffFiles(git: Git,
                              commitNew: Commit,
@@ -70,37 +88,70 @@ object CommitCrawler {
                     } else {
                         it.newId.toObjectId()
                     }
-                    !RawText.isBinary(git.repository.open(id).openStream())
+                    val stream = try {
+                        git.repository.open(id).openStream()
+                    } catch (e: Exception) { null }
+                    stream != null && !RawText.isBinary(stream)
                 }
                 .map { diff ->
-                    val new = getContentByObjectId(git, diff.newId.toObjectId())
-                    val old = getContentByObjectId(git, diff.oldId.toObjectId())
-
-                    val edits = formatter.toFileHeader(diff).toEditList()
-                    val path = when (diff.changeType) {
-                        DiffEntry.ChangeType.DELETE -> diff.oldPath
-                        else -> diff.newPath
+                    // TODO(anatoly): Can produce exception for large object.
+                    // Investigate for size.
+                    val new = try {
+                        getContentByObjectId(git, diff.newId.toObjectId())
+                    } catch (e: Exception) {
+                        Logger.error(e)
+                        null
                     }
-                    DiffFile(path = path,
-                        changeType = diff.changeType,
-                        old = DiffContent(old, edits.map { edit ->
-                            DiffRange(edit.beginA, edit.endA) }),
-                        new = DiffContent(new, edits.map { edit ->
-                            DiffRange(edit.beginB, edit.endB) }))
+                    val old = try {
+                        getContentByObjectId(git, diff.oldId.toObjectId())
+                    } catch (e: Exception) {
+                        Logger.error(e)
+                        null
+                    }
+
+                    val diffFiles = mutableListOf<DiffFile>()
+                    if (new != null && old != null) {
+                        val header = try {
+                            formatter.toFileHeader(diff)
+                        } catch (e: Exception) {
+                            Logger.error(e)
+                            null
+                        }
+
+                        if (header != null) {
+                            val edits = header.toEditList()
+                            val path = when (diff.changeType) {
+                                DiffEntry.ChangeType.DELETE -> diff.oldPath
+                                else -> diff.newPath
+                            }
+                            diffFiles.add(DiffFile(path = path,
+                                changeType = diff.changeType,
+                                old = DiffContent(old, edits.map { edit ->
+                                    DiffRange(edit.beginA, edit.endA)
+                                }),
+                                new = DiffContent(new, edits.map { edit ->
+                                    DiffRange(edit.beginB, edit.endB)
+                                })))
+                        }
+                    }
+
+                    diffFiles
                 }
+                .flatten()
         }
     }
 
     private fun getContentByObjectId(git: Git,
                                      objectId: ObjectId): List<String> {
         return try {
-            val rawText = RawText(git.repository.open(objectId).bytes)
+            val obj = git.repository.open(objectId)
+            val rawText = RawText(obj.bytes)
             val content = ArrayList<String>(rawText.size())
             for (i in 0..(rawText.size() - 1)) {
                 content.add(rawText.getString(i))
             }
             return content
-        } catch (e: MissingObjectException) {
+        } catch (e: Exception) {
             listOf()
         }
     }

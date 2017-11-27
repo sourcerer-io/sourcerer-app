@@ -3,17 +3,24 @@
 
 package app.api
 
+import app.model.Author
 import app.model.Commit
 import app.model.Fact
 import app.model.Repo
 import app.model.User
 
 interface Api {
-    fun authorize()
-    fun getUser(): User
-    fun getRepo(repoRehash: String): Repo
-    fun postRepo(repo: Repo)
-    fun postCommits(commitsList: List<Commit>)
-    fun deleteCommits(commitsList: List<Commit>)
-    fun postFacts(factsList: List<Fact>)
+    companion object {
+        val OUT_OF_DATE = 1
+    }
+
+    fun authorize(): Result<Unit>
+    fun getUser(): Result<User>
+    fun postUser(user: User): Result<Unit>
+    fun postRepo(repo: Repo): Result<Repo>
+    fun postComplete(): Result<Unit>
+    fun postCommits(commitsList: List<Commit>): Result<Unit>
+    fun deleteCommits(commitsList: List<Commit>): Result<Unit>
+    fun postFacts(factsList: List<Fact>): Result<Unit>
+    fun postAuthors(authorsList: List<Author>): Result<Unit>
 }

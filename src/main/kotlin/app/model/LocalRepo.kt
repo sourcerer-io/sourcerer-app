@@ -18,4 +18,8 @@ data class LocalRepo(var path: String = "") {
             email = config.getString("user", null, "email") ?: "")
         remoteOrigin = config.getString("remote", "origin", "url") ?: ""
     }
+
+    override fun toString(): String {
+        return path
+    }
 }

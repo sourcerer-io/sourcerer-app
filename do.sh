@@ -4,6 +4,8 @@
 #----- Helpers -----#
 #-------------------#
 
+set -x
+
 usage() {
     echo "$0 [COMMAND] [ARGUMENTS]"
     echo "  Commands:"
@@ -22,8 +24,8 @@ shift
 ARGUMENTS=${@}
 
 TAG="${CONTAINER_TAG:-latest}"
-NAMESPACE="${NAMESPACE:-staging}"
-ENV="${ENV:-development}"
+NAMESPACE="${NAMESPACE:-sandbox}"
+LOG="${LOG:-debug}"
 VOLUME="${BUILD_VOLUME:-$PWD}"
 PROJECT=sourcerer-app
 PORT=3182
@@ -36,12 +38,22 @@ GRADLE_VERSION=4.2.0
 
 # run only inside build container
 build_jar_inside() {
-  gradle -Penv=$ENV build
+  if [ "$NAMESPACE" == "sandbox" ]; then
+    API="https://sandbox.eng.sourcerer.io/api/commit"
+  elif [ "$NAMESPACE" == "staging" ]; then
+    API="https://staging.eng.sourcerer.io/api/commit"
+  elif [ "$NAMESPACE" == "local" ]; then
+    API="http://localhost:3181"
+  else
+    API="https://sourcerer.io/api/commit"
+  fi
+  gradle -Plog=$LOG -Papi=$API build
 }
 
 build_jar() {
-  docker run -i -v $VOLUME:/home/gradle/app --workdir=/home/gradle/app -e ENV=$ENV \
-  gradle:$GRADLE_VERSION \
+  docker run -i -v $VOLUME:/home/gradle/app --workdir=/home/gradle/app \
+    -e LOG=$LOG -e NAMESPACE=$NAMESPACE \
+    gradle:$GRADLE_VERSION \
     ./do.sh build_jar_inside
 }
 
@@ -50,7 +62,8 @@ build_prod_inside() {
 }
 
 deploy() {
-  sed "s#CONTAINER_TAG#$TAG#" ./deploy/sourcerer-app-$NAMESPACE.yaml > /tmp/deploy.yaml
+  source ./deploy/${NAMESPACE}_env.sh
+  envsubst < ./deploy/sourcerer-app.yaml > /tmp/deploy.yaml
   kubectl --namespace=$NAMESPACE apply -f /tmp/deploy.yaml
 }
 

@@ -1,0 +1,21 @@
+// Copyright 2017 Sourcerer Inc. All Rights Reserved.
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
+
+syntax = "proto3";
+
+// Java compiler settings.
+package app;
+option java_package = "app";
+option java_outer_classname = "ModelsProtos";
+
+message Classifier {
+    repeated string tokens = 1;
+
+    repeated string libraries = 2;
+
+    repeated float idf = 3;
+
+    repeated float weights = 4;
+
+    repeated float biases = 5;
+}

@@ -21,8 +21,8 @@ class RequestException(exception: Exception) : Exception(exception.message) {
     var isParseError = false
 
     constructor(fuelError: FuelError) : this(fuelError as Exception) {
-        httpStatusCode = fuelError.response.httpStatusCode
-        httpResponseMessage = fuelError.response.httpResponseMessage
+        httpStatusCode = fuelError.response.statusCode
+        httpResponseMessage = fuelError.response.responseMessage
         httpBodyMessage = fuelError.response.data
             .toString(Charset.defaultCharset())
     }

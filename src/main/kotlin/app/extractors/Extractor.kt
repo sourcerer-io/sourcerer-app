@@ -10,7 +10,8 @@ import app.model.DiffFile
 class Extractor : ExtractorInterface {
     companion object {
         val TYPE_LANGUAGE = 1
-        val TYPE_KEYWORD = 2
+        val TYPE_LIBRARY = 2
+        val TYPE_KEYWORD = 3
         val SEPARATOR = ">"
     }
 
@@ -27,7 +28,7 @@ class Extractor : ExtractorInterface {
             in GoExtractor.FILE_EXTS -> GoExtractor()
             in ObjectiveCExtractor.FILE_EXTS -> ObjectiveCExtractor()
             in SwiftExtractor.FILE_EXTS -> SwiftExtractor()
-            else -> EmptyExtractor()
+            else -> CommonExtractor()
         }
     }
 

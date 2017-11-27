@@ -51,7 +51,7 @@ object Analytics {
      * - t: Hit Type - type of event
      * - dp: Document Path - virtual url
      */
-    private fun trackEvent(event: String, params: List<Param> = listOf()) {
+    fun trackEvent(event: String, params: List<Param> = listOf()) {
         if (!IS_ENABLED || (username.isEmpty() && uuid.isEmpty())) {
             return
         }
@@ -75,42 +75,14 @@ object Analytics {
             post(params + defaultParams.filter { !params.contains(it) }
                 + idParams).responseString()
         } catch (e: Throwable) {
-            Logger.error("Error while sending error report", e, logOnly = true)
+            Logger.error(e, "Error while sending GA report", logOnly = true)
         }
     }
 
-    fun trackStart() {
-        trackEvent("start")
-    }
-
-    fun trackAuth() {
-        trackEvent("auth")
-    }
-
-    fun trackConfigSetup() {
-        trackEvent("config/setup")
-    }
-
-    fun trackConfigChanged() {
-        trackEvent("config/changed")
-    }
-
-    fun trackHashingRepoSuccess() {
-        trackEvent("hashing/repo/success")
-    }
-
-    fun trackHashingSuccess() {
-        trackEvent("hashing/success")
-    }
-
-    fun trackError(e: Throwable? = null, code: String = "") {
-        val url = if (e != null) getErrorUrl(e) else code
+    fun trackError(e: Throwable? = null) {
+        val url = if (e != null) getErrorUrl(e) else ""
         val separator = if (url.isNotEmpty()) "/" else ""
         trackEvent("error" + separator + url, listOf("t" to HIT_EXCEPTION))
-    }
-
-    fun trackExit() {
-        trackEvent("exit")
     }
 
     private fun getErrorUrl(e: Throwable): String {
