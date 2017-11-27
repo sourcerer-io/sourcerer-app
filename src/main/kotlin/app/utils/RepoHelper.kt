@@ -86,23 +86,23 @@ object RepoHelper {
     fun printRepos(localRepos: List<LocalRepo>)
     {
         for (repo in localRepos) {
-            println(repo)
+            Logger.print(repo)
         }
     }
 
     fun printRepos(localRepos: List<LocalRepo>, title: String) {
         if (localRepos.isNotEmpty()) {
-            println(title)
+            Logger.print(title, indentLine = true)
             printRepos(localRepos)
         }
     }
 
     fun printRepos(localRepos: List<LocalRepo>, title: String, empty: String) {
         if (localRepos.isNotEmpty()) {
-            println(title)
+            Logger.print(title, indentLine = true)
             printRepos(localRepos)
         } else {
-            println(empty)
+            Logger.print(empty, indentLine = true)
         }
     }
 }

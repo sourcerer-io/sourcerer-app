@@ -81,8 +81,7 @@ class Main(argv: Array<String>) {
             localRepo.hashAllContributors = commandAdd.hashAll
             configurator.addLocalRepoPersistent(localRepo)
             configurator.saveToFile()
-            println("Added git repository at $path.")
-
+            Logger.print("Added git repository at $path.")
             Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
             Logger.warn { "No valid git repository found at specified path" }
@@ -119,11 +118,11 @@ class Main(argv: Array<String>) {
         if (path != null) {
             configurator.removeLocalRepoPersistent(LocalRepo(path))
             configurator.saveToFile()
-            println("Repository removed from tracking list.")
+            Logger.print("Repository removed from tracking list.")
 
             Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
         } else {
-            println("Repository not found in tracking list.")
+            Logger.print("Repository not found in tracking list.")
         }
     }
 
@@ -138,10 +137,12 @@ class Main(argv: Array<String>) {
     }
 
     private fun showHelp(jc: JCommander) {
-        println("Sourcerer hashes your git repositories into intelligent "
-            + "engineering profiles. If you don't have an account, "
-            + "please, proceed to http://sourcerer.io/register. More info at "
-            + "http://sourcerer.io.")
+        Logger.print("Sourcerer hashes your git repositories into intelligent "
+            + "engineering profiles.")
+        Logger.print("If you don't have an account, please, proceed to " +
+            "https://sourcerer.io/join")
+        Logger.print("More info at https://sourcerer.io and " +
+            "https://github.com/sourcerer-io")
         jc.usage()  // Will show detailed info about usage based on annotations.
     }
 }

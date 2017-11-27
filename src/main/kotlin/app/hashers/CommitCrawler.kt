@@ -22,44 +22,52 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
 object CommitCrawler {
-    fun getObservable(git: Git, repo: Repo): Observable<Commit> = Observable
-        .create<Commit> { subscriber ->
-            try {
-                val revWalk = RevWalk(git.repository)
-                val commitId = git.repository.resolve(RepoHelper.MASTER_BRANCH)
-                revWalk.markStart(revWalk.parseCommit(commitId))
-                for (revCommit in revWalk) {
-                    subscriber.onNext(Commit(revCommit))
+    fun getObservable(git: Git, repo: Repo,
+                      numCommits: Int = 0): Observable<Commit> {
+        var curNumCommits = 0
+        return Observable
+            .create<Commit> { subscriber ->
+                try {
+                    val revWalk = RevWalk(git.repository)
+                    val commitId = git.repository.resolve(RepoHelper.MASTER_BRANCH)
+                    revWalk.markStart(revWalk.parseCommit(commitId))
+                    for (revCommit in revWalk) {
+                        subscriber.onNext(Commit(revCommit))
+                    }
+                    // Commits are combined in pairs, an empty commit concatenated
+                    // to calculate the diff of the initial commit.
+                    subscriber.onNext(Commit())
+                } catch (e: Exception) {
+                    Logger.error(e, "Commit producing error")
+                    subscriber.onError(e)
                 }
-                // Commits are combined in pairs, an empty commit concatenated
-                // to calculate the diff of the initial commit.
-                subscriber.onNext(Commit())
-            } catch (e: Exception) {
-                Logger.error(e, "Commit producing error")
-                subscriber.onError(e)
+                subscriber.onComplete()
+            }  // TODO(anatoly): Rewrite diff calculation in non-weird way.
+            .pairWithNext()  // Pair commits to get diff.
+            .map { (new, old) ->
+                curNumCommits++
+                // Mapping and stats extraction.
+                val message = new.raw?.shortMessage ?: ""
+                val hash = new.raw?.name ?: ""
+                val perc = if (numCommits != 0) {
+                    (curNumCommits.toDouble() / numCommits) * 100
+                } else 0.0
+                Logger.printCommit(message, hash, perc)
+                new.diffs = getDiffFiles(git, new, old)
+                Logger.debug { "Diff: ${new.diffs.size} entries" }
+                // Count lines on all non-binary files. This is additional
+                // statistics to CommitStats because not all file extensions
+                // may be supported.
+                new.numLinesAdded = new.diffs.fold(0) { total, file ->
+                    total + file.getAllAdded().size
+                }
+                new.numLinesDeleted = new.diffs.fold(0) { total, file ->
+                    total + file.getAllDeleted().size
+                }
+                new.repo = repo
+                new
             }
-            subscriber.onComplete()
-        }  // TODO(anatoly): Rewrite diff calculation in non-weird way.
-        .pairWithNext()  // Pair commits to get diff.
-        .map { (new, old) ->
-            // Mapping and stats extraction.
-            Logger.debug {
-                "Commit: ${new.raw?.name ?: ""}: ${new.raw?.shortMessage}"
-            }
-            new.diffs = getDiffFiles(git, new, old)
-            Logger.debug { "Diff: ${new.diffs.size} entries" }
-            // Count lines on all non-binary files. This is additional
-            // statistics to CommitStats because not all file extensions
-            // may be supported.
-            new.numLinesAdded = new.diffs.fold(0) { total, file ->
-                total + file.getAllAdded().size
-            }
-            new.numLinesDeleted = new.diffs.fold(0) { total, file ->
-                total + file.getAllDeleted().size
-            }
-            new.repo = repo
-            new
-        }
+    }
 
     private fun getDiffFiles(git: Git,
                              commitNew: Commit,

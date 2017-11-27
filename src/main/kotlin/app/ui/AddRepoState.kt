@@ -21,18 +21,18 @@ class AddRepoState constructor(private val context: Context,
         if (configurator.getLocalRepos().isNotEmpty()) return
 
         while (true) {
-            println("Type a path to repository, or hit Enter to continue.")
+            Logger.print("Type a path to repository, or hit Enter to continue.")
             val pathString = readLine() ?: ""
 
             if (pathString.isEmpty()) {
                 if (configurator.getLocalRepos().isEmpty()) {
-                    println("Add at least one valid repository.")
+                    Logger.print("Add at least one valid repository.")
                 } else {
                     break // User finished to add repos.
                 }
             } else {
                 if (RepoHelper.isValidRepo(pathString)) {
-                    println("Added git repository at $pathString.")
+                    Logger.print("Added git repository at $pathString.")
                     val localRepo = LocalRepo(pathString)
                     localRepo.hashAllContributors = UiHelper.confirm("Do you "
                         + "want to hash commits of all contributors?",
@@ -40,9 +40,10 @@ class AddRepoState constructor(private val context: Context,
                     configurator.addLocalRepoPersistent(localRepo)
                     configurator.saveToFile()
                 } else {
-                    println("Directory should contain valid git repository.")
-                    println("Make sure that master branch with at least one " +
-                        "commit exists.")
+                    Logger.print("Directory should contain a valid git " +
+                        "repository.")
+                    Logger.print("Make sure that master branch with at least " +
+                        "one commit exists.")
                 }
             }
         }

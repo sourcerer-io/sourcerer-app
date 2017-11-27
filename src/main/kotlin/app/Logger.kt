@@ -98,6 +98,49 @@ object Logger {
     }
 
     /**
+     * Utils.
+     */
+    private fun Double.format(digits: Int, digitsFloating: Int) =
+        java.lang.String.format("%${digits}.${digitsFloating}f", this)
+
+    private fun generateIndent(num: Int): String {
+        return 0.rangeTo(num).fold("") { ind, _ -> ind + " " }
+    }
+
+    /**
+     * CLI messages and pretty printing.
+     */
+    fun print(message: Any, indentLine: Boolean = false) {
+        print(message.toString(), indentLine)
+    }
+
+    fun print(message: String, indentLine: Boolean = false) {
+        if (indentLine) {
+            println()
+        }
+        println(message)
+    }
+
+    fun printCommit(commitMessage: String, commitHash: String,
+                    percents: Double) {
+        val percentsStr = percents.format(6, 2)
+        val hash = commitHash.substring(0, 7)
+        val messageTrim = if (commitMessage.length > 59) {
+            commitMessage.substring(0, 56).plus("...")
+        } else commitMessage
+        println(" [$percentsStr%] * $hash $messageTrim")
+    }
+
+    private val commitDetailIndent = generateIndent(10) + "|" +
+        generateIndent(8)
+    fun printCommitDetail(message: String) {
+        val messageTrim = if (message.length > 59) {
+            message.substring(0, 56).plus("...")
+        } else message
+        println(commitDetailIndent + messageTrim)
+    }
+
+    /**
      * Log error message with exception info.
      * Don't log private information with this method.
      *

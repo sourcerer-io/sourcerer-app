@@ -49,7 +49,7 @@ buildConfig {
 
     // Logging.
     buildConfigField 'String', 'SENTRY_DSN', 'https://0263d6473bd24a9ba40e25aa5fb0a242:c5451dc815074bff8ce3fb9f0851f2f5@sentry.io/233260'
-    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'true'
+    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'false'
 
     // Models storage path.
     buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v1/'

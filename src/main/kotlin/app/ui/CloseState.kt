@@ -3,17 +3,19 @@
 
 package app.ui
 
+import app.Logger
+
 /**
  * On application close console UI state.
  */
 class CloseState : ConsoleState {
     override fun doAction() {
-        println("You could use console commands to control repositories. To "
-                + "setup again run application with flag --setup. For more "
-                + "info run application with flag --help.")
+        Logger.print("You could use console commands to control repositories.",
+            indentLine = true)
+        Logger.print("For more info run application with flag --help.")
         // TODO(anatoly): Check for problems for display support message.
-        println("Feel free to contact us on any problem by "
-                + "support@sourcerer.io.")
+        Logger.print("Feel free to contact us on any problem by " +
+            "support@sourcerer.io.")
     }
 
     override fun next() {

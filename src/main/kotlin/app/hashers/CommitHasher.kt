@@ -48,7 +48,10 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
 
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
-                Logger.info { "Stats: ${commit.stats.size} entries" }
+                if (commit.stats.isNotEmpty()) {
+                    Logger.printCommitDetail("${commit.stats.size} " +
+                        "technology stats found")
+                }
                 Logger.debug { commit.stats.toString() }
 
                 commit

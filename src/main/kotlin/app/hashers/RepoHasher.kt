@@ -3,6 +3,7 @@
 
 package app.hashers
 
+import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -31,7 +32,6 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
     }
 
     fun update() {
-        println("Hashing $localRepo...")
         Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
@@ -60,8 +60,8 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             }
 
             // Hash by all plugins.
-            val observable = CommitCrawler.getObservable(git, serverRepo)
-                                          .publish()
+            val observable = CommitCrawler.getObservable(git, serverRepo,
+                rehashes.size).publish()
             CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
             FactHasher(serverRepo, api, rehashes, filteredEmails)
@@ -71,6 +71,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             observable.connect()
 
             // TODO(anatoly): CodeLongevity hash from observable.
+            Logger.print("Code longevity calculation. May take a while...")
             try {
                 CodeLongevity(serverRepo, filteredEmails, git, onError)
                     .updateStats(api)
@@ -78,12 +79,12 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             catch (e: Throwable) {
                 onError(e)
             }
+            Logger.print("Finished.")
 
             if (errors.isNotEmpty()) {
                 throw HashingException(errors)
             }
 
-            println("Hashing $localRepo completed.")
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
                 { "Hashing repo completed" }
         }

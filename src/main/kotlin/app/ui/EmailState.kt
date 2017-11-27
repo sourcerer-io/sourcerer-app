@@ -20,11 +20,12 @@ class EmailState constructor(private val context: Context,
         val user = configurator.getUser()
 
         if (user.emails.isNotEmpty()) {
-            println("List of your emails:")
+            Logger.print("List of your emails:", indentLine = true)
             user.emails.forEach { email -> println(email) }
         } else {
             // Shouldn't really happen. User always have primary email.
-            println("Add at least one email to build your profile.")
+            Logger.print("Add at least one email to build your profile.",
+                indentLine = true)
         }
 
         val knownEmails = user.emails.map { it.email }
@@ -49,7 +50,7 @@ class EmailState constructor(private val context: Context,
         }
 
         if (configEmails.isNotEmpty()) {
-            println("Your git config contains untracked emails:")
+            Logger.print("Your git config contains untracked emails:")
             configEmails.forEach { email -> println(email) }
             if (UiHelper.confirm("Do you want to add this emails to your " +
                 "account?", defaultIsYes = true)) {
@@ -61,7 +62,7 @@ class EmailState constructor(private val context: Context,
         if (UiHelper.confirm("Do you want to specify additional emails " +
             "that you use in repositories?", defaultIsYes = false)) {
             while (true) {
-                println("Type a email, or hit Enter to continue.")
+                Logger.print("Type a email, or hit Enter to continue.")
                 val email = readLine() ?: ""
                 if (email.isBlank()) break
                 if (!knownEmails.contains(email)) newEmails.add(email)
@@ -81,7 +82,7 @@ class EmailState constructor(private val context: Context,
         // Warn user about need of confirmation.
         if (user.emails.filter { email -> !email.verified }.isNotEmpty() ||
             newEmails.isNotEmpty()) {
-            println("Confirm your emails to show all statistics in " +
+            Logger.print("Confirm your emails to show all statistics in " +
                 "profile.")
         }
     }

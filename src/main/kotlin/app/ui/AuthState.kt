@@ -46,13 +46,13 @@ class AuthState constructor(private val context: Context,
     }
 
     fun getUsername() {
-        println("Enter username:")
+        Logger.print("Enter username:")
         username = readLine() ?: ""
         configurator.setUsernameCurrent(username)
     }
 
     fun getPassword() {
-        println("Enter password:")
+        Logger.print("Enter password:")
         password = PasswordHelper.readPassword()
         configurator.setPasswordCurrent(password)
     }
@@ -71,11 +71,11 @@ class AuthState constructor(private val context: Context,
 
     fun tryAuth(): Boolean {
         try {
-            println("Authenticating...")
+            Logger.print("Signing in...")
             val (_, error) = api.authorize()
             if (error.isWithServerCode(Api.OUT_OF_DATE)) {
-                println("App is out of date. Please get new version at " +
-                        "https://sourcerer.io")
+                Logger.print("App is out of date. Please get new version at " +
+                    "https://sourcerer.io")
                 retry = false
                 return false
             }
@@ -85,8 +85,8 @@ class AuthState constructor(private val context: Context,
             val user = api.getUser().getOrThrow()
             configurator.setUser(user)
 
-            println("You are successfully authenticated. Your profile page is "
-                    + BuildConfig.PROFILE_URL + configurator.getUsername())
+            Logger.print("Signed in successfully. Your profile page is " +
+                BuildConfig.PROFILE_URL + configurator.getUsername())
 
             saveCredentialsIfChanged()
             Logger.username = configurator.getUsername()
@@ -95,14 +95,14 @@ class AuthState constructor(private val context: Context,
             return true
         } catch (e: ApiError) {
             if (e.isAuthError) {
-                if (e.httpBodyMessage.isNotBlank()) {
-                    println(e.httpBodyMessage)
+                if(e.httpBodyMessage.isNotBlank()) {
+                    Logger.print(e.httpBodyMessage)
                 } else {
-                    println("Authentication error. Try again.")
+                    Logger.print("Authentication error. Try again.")
                 }
             } else {
+                Logger.print("Connection problems. Try again later.")
                 Logger.error(e)
-                println("Connection problems. Try again later.")
                 retry = false
             }
         }
