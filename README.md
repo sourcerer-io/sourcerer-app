@@ -26,7 +26,7 @@ Install/uninstall
 To install sourcerer run the following command:
 
 ```
-curl -s https://sourcerer.io/install | bash
+curl -s https://sourcerer.io/app/install | bash
 ```
 
 To remove sourcerer from your machine:
