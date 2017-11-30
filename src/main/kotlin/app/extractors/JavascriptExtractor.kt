@@ -10,7 +10,7 @@ import app.model.DiffFile
 class JavascriptExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "javascript"
-        val FILE_EXTS = listOf("js")
+        val FILE_EXTS = listOf("js", "jsx")
         val LIBRARIES = ExtractorInterface.getLibraries("js")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
