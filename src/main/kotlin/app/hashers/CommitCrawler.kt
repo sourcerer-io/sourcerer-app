@@ -79,8 +79,6 @@ object CommitCrawler {
             formatter.setRepository(git.repository)
             formatter.setDetectRenames(true)
             formatter.scan(revCommitOld?.tree, revCommitNew?.tree)
-                // RENAME change type doesn't change file content.
-                .filter { it.changeType != DiffEntry.ChangeType.RENAME }
                 // Skip binary files.
                 .filter {
                     val id = if (it.changeType == DiffEntry.ChangeType.DELETE) {
