@@ -47,7 +47,7 @@ build_jar_inside() {
   else
     API="https://sourcerer.io/api/commit"
   fi
-  gradle -Plog=$LOG -Papi=$API build
+  gradle -Penv=$NAMESPACE -Plog=$LOG -Papi=$API build
 }
 
 build_jar() {
