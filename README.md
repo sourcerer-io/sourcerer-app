@@ -53,3 +53,8 @@ $ gradle build
 # Run the app
 $ java -jar build/libs/sourcerer-app.jar
 ```
+
+Contribution
+============
+
+We welcome contributions to Sourcerer App by the community. Check the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md)) for more information.
