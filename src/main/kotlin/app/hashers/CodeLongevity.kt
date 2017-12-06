@@ -10,7 +10,6 @@ import app.model.Author
 import app.model.Repo
 import app.model.Fact
 import app.utils.FileHelper
-import app.utils.RepoHelper
 import io.reactivex.Observable
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
@@ -23,15 +22,12 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
-import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.io.ObjectInputStream
 import java.io.Serializable
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -149,7 +145,7 @@ class CodeLongevity(private val serverRepo: Repo,
     val repo: Repository = git.repository
     val revWalk = RevWalk(repo)
     val head: RevCommit =
-        try { revWalk.parseCommit(repo.resolve(RepoHelper.MASTER_BRANCH)) }
+        try { revWalk.parseCommit(CommitCrawler.getDefaultBranchHead(git)) }
         catch(e: Exception) { throw Exception("No branch") }
 
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)

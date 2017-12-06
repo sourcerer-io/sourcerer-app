@@ -3,7 +3,6 @@
 
 package app.hashers
 
-import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -12,13 +11,9 @@ import app.model.LocalRepo
 import app.model.Repo
 import app.utils.HashingException
 import app.utils.RepoHelper
-import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevWalk
 import java.io.File
 import java.io.IOException
-import java.util.*
 import kotlin.collections.HashSet
 
 class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
@@ -35,7 +30,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
-            val (rehashes, emails) = fetchRehashesAndEmails(git)
+            val (rehashes, emails) = CommitCrawler.fetchRehashesAndEmails(git)
 
             localRepo.parseGitConfig(git.repository.config)
             initServerRepo(rehashes.last)
@@ -125,29 +120,6 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         serverRepo = Repo(initialCommitRehash = initCommitRehash,
                           rehash = RepoHelper.calculateRepoRehash(
                               initCommitRehash, localRepo))
-    }
-
-    private fun fetchRehashesAndEmails(git: Git):
-        Pair<LinkedList<String>, HashSet<String>> {
-        val head: RevCommit = RevWalk(git.repository)
-            .parseCommit(git.repository.resolve(RepoHelper.MASTER_BRANCH))
-
-        val revWalk = RevWalk(git.repository)
-        revWalk.markStart(head)
-
-        val commitsRehashes = LinkedList<String>()
-        val emails = hashSetOf<String>()
-
-        var commit: RevCommit? = revWalk.next()
-        while (commit != null) {
-            commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
-            emails.add(commit.authorIdent.emailAddress)
-            commit.disposeBody()
-            commit = revWalk.next()
-        }
-        revWalk.dispose()
-
-        return Pair(commitsRehashes, emails)
     }
 
     private fun filterEmails(emails: HashSet<String>): HashSet<String> {

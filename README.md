@@ -17,7 +17,7 @@ Prerequirements
 
 * Sourcerer alpha/beta access
 * Linux or macOS
-* Java Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
+* Java 8+ Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
 * Git repositories with master branch with at least one commit
 
 Install/uninstall
@@ -26,7 +26,7 @@ Install/uninstall
 To install sourcerer run the following command:
 
 ```
-curl -s https://sourcerer.io/install | bash
+curl -s https://sourcerer.io/app/install | bash
 ```
 
 To remove sourcerer from your machine:
@@ -53,3 +53,8 @@ $ gradle build -Penv=production
 # Run the app
 $ java -jar build/libs/sourcerer-app.jar
 ```
+
+Contribution
+============
+
+We welcome contributions to Sourcerer App by the community. Check the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md)) for more information.

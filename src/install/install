@@ -1,8 +1,8 @@
 # Copyright 2017 Sourcerer, Inc. All Rights Reserved.
-#
+# License: MIT, https://github.com/sourcerer-io/sourcerer-app/blob/master/LICENSE.md
+# Source code: https://github.com/sourcerer-io
 
 echo "Installing sourcerer app.."
-
 SERVER=$SERVER_EXT
 DOWNLOAD_URL=$SERVER/app/download
 SCRIPT_DIR=$HOME/.sourcerer
@@ -21,6 +21,9 @@ mkdir -p $JAR_DIR
 curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
 
 cat <<EOF > $SCRIPT_DIR/sourcerer
+# Copyright 2017 Sourcerer, Inc. All Rights Reserved.
+# License: MIT, https://github.com/sourcerer-io/sourcerer-app/blob/master/LICENSE.md
+# Source code: https://github.com/sourcerer-io
 
 if [ "\$1" = "--uninstall" ] ; then
   read -p "The script will uninstall sourcerer app. Proceed? [Y/n] " yesno < /dev/tty
@@ -37,20 +40,31 @@ if [ "\$1" = "--uninstall" ] ; then
   exit
 fi
 
-if ! which java > /dev/null ; then
+VERSION=0
+if which java > /dev/null ; then
+	VERSION_STR=\$(java -version 2>&1 | awk -F '"' '/version/ {print \$2}')
+	if [[ "\$VERSION_STR" > "9." ]]; then  # Format: 9.0.1
+	    VERSION=9
+	elif [[ "\$VERSION_STR" > "1.8." ]]; then  # Format: 1.8.1
+	    VERSION=8
+	else
+	    echo "Installed version of Java is not supported."
+	fi
+fi
+
+if [ \$VERSION = 0 ] ; then
   if [ `uname` = "Darwin" ] ; then
-    echo "Sourcerer requires JDK installed on the system. You can download it from here:"
+    echo "Sourcerer requires JDK 8+ installed on the system. You can download it from:"
     echo "http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html"
   else
-    echo "Sourcerer requires JRE installed on the system. You can download it from here:"
+    echo "Sourcerer requires JRE 8+ installed on the system. You can download it from:"
     echo "http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html"
   fi
   exit 1
 fi
 
 # Java 9 requires additional parameters.
-version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-if [[ "$version" > "9." ]]; then  # Version example for Java 9: 9.0.1
+if [ \$VERSION = 9 ] ; then
   java --add-modules java.activation --add-opens java.base/java.nio=ALL-UNNAMED -jar $JAR_DIR/sourcerer.jar "\$@"
 else
   java -jar $JAR_DIR/sourcerer.jar "\$@"
@@ -59,13 +73,14 @@ EOF
 
 chmod +x $SCRIPT_DIR/sourcerer
 
-
 {
   rm -f /usr/local/bin/sourcerer 2> /dev/null &&
   ln -s $SCRIPT_DIR/sourcerer /usr/local/bin/sourcerer 2> /dev/null &&
-  echo "Done!" &&
-  echo "Run sourcerer to start hashing your repos!"
+  echo 'Done!' &&
+  echo 'Run sourcerer to start hashing your repos!'
 } || {
-  echo 'We installed app to $HOME/.sourcerer/sourcerer.'
-  echo 'You can add it to $PATH or ln it to /usr/local/bin'
+  echo 'We installed app to ~/.sourcerer/sourcerer.'
+  echo 'You can add it to $PATH or run specified command to finish installation:'
+  echo "sudo ln -s $SCRIPT_DIR/sourcerer /usr/local/bin/sourcerer"
+  echo 'Then run sourcerer to start hashing your repos!'
 }

@@ -4,6 +4,7 @@
 package app.utils
 
 import app.Logger
+import app.hashers.CommitCrawler
 import app.model.LocalRepo
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
@@ -17,8 +18,6 @@ import java.nio.file.Paths
  * Class for utility functions on repos.
  */
 object RepoHelper {
-    val MASTER_BRANCH = "refs/heads/master"
-
     fun isValidRepo(path: String): Boolean {
         if (!isDirectory(path)) {
             return false
@@ -30,7 +29,7 @@ object RepoHelper {
         try {
             git = Git.open(File(path))
             repository = git.repository
-            commitId = repository.resolve(MASTER_BRANCH)
+            commitId = CommitCrawler.getDefaultBranchHead(git)
         } catch (e: Exception) {
            Logger.error(e, "Cannot access repository at specified path")
             return false
