@@ -9,19 +9,61 @@ import app.model.DiffContent
 import app.model.DiffFile
 import app.model.DiffRange
 import app.model.Repo
-import app.utils.RepoHelper
 import io.reactivex.Observable
+import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.RawText
-import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
+import java.util.LinkedList
 
 object CommitCrawler {
+    private val MASTER_BRANCH = "refs/heads/master"
+    private val REMOTE_HEAD = "refs/remotes/origin/HEAD"
+
+    fun getDefaultBranchHead(git: Git): ObjectId {
+        val remoteHead = git.branchList()?.repository?.allRefs?.filter {
+            it.key.contains(REMOTE_HEAD)
+        }?.entries?.firstOrNull()?.value?.target?.objectId
+        if (remoteHead != null) {
+            Logger.debug { "Hashing from remote default branch" }
+            return remoteHead
+        }
+        val masterBranch = git.repository.resolve(MASTER_BRANCH)
+        if (masterBranch != null) {
+            Logger.debug { "Hashing from local master branch" }
+            return masterBranch
+        }
+        throw Exception("No remote default or local master branch found")
+    }
+
+    fun fetchRehashesAndEmails(git: Git):
+        Pair<LinkedList<String>, HashSet<String>> {
+        val head: RevCommit = RevWalk(git.repository)
+            .parseCommit(getDefaultBranchHead(git))
+
+        val revWalk = RevWalk(git.repository)
+        revWalk.markStart(head)
+
+        val commitsRehashes = LinkedList<String>()
+        val emails = hashSetOf<String>()
+
+        var commit: RevCommit? = revWalk.next()
+        while (commit != null) {
+            commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
+            emails.add(commit.authorIdent.emailAddress)
+            commit.disposeBody()
+            commit = revWalk.next()
+        }
+        revWalk.dispose()
+
+        return Pair(commitsRehashes, emails)
+    }
+
     fun getObservable(git: Git, repo: Repo,
                       numCommits: Int = 0): Observable<Commit> {
         var curNumCommits = 0
@@ -29,7 +71,7 @@ object CommitCrawler {
             .create<Commit> { subscriber ->
                 try {
                     val revWalk = RevWalk(git.repository)
-                    val commitId = git.repository.resolve(RepoHelper.MASTER_BRANCH)
+                    val commitId = getDefaultBranchHead(git)
                     revWalk.markStart(revWalk.parseCommit(commitId))
                     for (revCommit in revWalk) {
                         subscriber.onNext(Commit(revCommit))

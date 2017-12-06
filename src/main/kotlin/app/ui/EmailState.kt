@@ -6,6 +6,8 @@ package app.ui
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.hashers.CommitCrawler
+import app.model.LocalRepo
 import app.model.User
 import app.model.UserEmail
 import app.utils.UiHelper
@@ -39,16 +41,26 @@ class EmailState constructor(private val context: Context,
         // TODO(anatoly): Add user config parsing.
 
         // Add emails from git configs.
+        val reposEmails = hashMapOf<LocalRepo, HashSet<String>>()
         for (repo in configurator.getLocalRepos()) {
+            var git: Git? = null
             try {
-                val git = Git.open(File(repo.path))
+                git = Git.open(File(repo.path))
                 val email = git.repository
                                .config.getString("user", null, "email") ?: ""
                 if (!knownEmails.contains(email)) {
                     configEmails.add(email)
                 }
+                // Fetch and save emails from repo for "no-email" warning.
+                val (_, emails) = CommitCrawler.fetchRehashesAndEmails(git)
+                reposEmails.put(repo, emails)
             } catch (e: Exception) {
-                Logger.error(e, "Error while parsing git config")
+                Logger.error(e, "Error while parsing repo")
+            } finally {
+                if (git != null) {
+                    git.repository?.close()
+                    git.close()
+                }
             }
         }
 
@@ -58,6 +70,35 @@ class EmailState constructor(private val context: Context,
             if (UiHelper.confirm("Do you want to add this emails to your " +
                 "account?", defaultIsYes = true)) {
                 newEmails.addAll(configEmails)
+            }
+        }
+
+        // Show warning if no commits
+        val reposUserMissing = mutableListOf<LocalRepo>()
+        for (repo in configurator.getLocalRepos()) {
+            val presentedEmails = reposEmails.get(repo)
+            val updatedEmails = knownEmails + newEmails
+            if (presentedEmails != null) {
+                var userMissing = true
+                for (email in presentedEmails) {
+                    if (updatedEmails.contains(email)) {
+                        userMissing = false
+                        break
+                    }
+                }
+                if (userMissing) {
+                    reposUserMissing.add(repo)
+                }
+            }
+        }
+        if (reposUserMissing.isNotEmpty()) {
+            if (reposUserMissing.size == 1) {
+                Logger.print("${reposUserMissing.first()} repo does not " +
+                    "contains commits from emails you've specified")
+            } else {
+                Logger.print("Following repos do not contain commits from " +
+                    "emails you've specified:")
+                reposUserMissing.forEach { Logger.print(it) }
             }
         }
 
