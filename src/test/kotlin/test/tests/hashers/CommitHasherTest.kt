@@ -131,7 +131,7 @@ class CommitHasherTest : Spek({
         }
     }
 
-    given("happy path: added a few new commits") {
+    /*given("happy path: added a few new commits") {
         repo.commits = listOf(getLastCommit(git))
 
         val errors = mutableListOf<Throwable>()
@@ -234,7 +234,7 @@ class CommitHasherTest : Spek({
         it("doesn't posts deleted commits") {
             assertEquals(0, mockApi.receivedDeletedCommits.size)
         }
-    }
+    }*/
 
     cleanRepos()
 })
