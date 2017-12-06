@@ -36,9 +36,6 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
         val knownCommits = serverRepo.commits.toHashSet()
 
         observable
-            .takeWhile { new ->  // Hash until last known commit.
-                new.rehash != lastKnownCommit?.rehash
-            }
             // Don't hash known to server commits.
             .filter { commit -> !knownCommits.contains(commit) }
             // Hash only commits made by authors with specified emails.
