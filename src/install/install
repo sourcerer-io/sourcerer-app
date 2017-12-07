@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright 2017 Sourcerer, Inc. All Rights Reserved.
 # License: MIT, https://github.com/sourcerer-io/sourcerer-app/blob/master/LICENSE.md
 # Source code: https://github.com/sourcerer-io
@@ -21,6 +22,7 @@ mkdir -p $JAR_DIR
 curl -s $DOWNLOAD_URL > $JAR_DIR/sourcerer.jar
 
 cat <<EOF > $SCRIPT_DIR/sourcerer
+#!/usr/bin/env bash
 # Copyright 2017 Sourcerer, Inc. All Rights Reserved.
 # License: MIT, https://github.com/sourcerer-io/sourcerer-app/blob/master/LICENSE.md
 # Source code: https://github.com/sourcerer-io
