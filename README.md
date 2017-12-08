@@ -7,10 +7,30 @@
 </h1>
 
 <h3 align="center">
-  Sourcerer app creates an intelligent profile for software engineers.<br/>
-  Get early access on <a href="https://sourcerer.io">Sourcerer</a>.
+  Sourcerer app creates an intelligent profile for software engineers
 </h3>
 <br>
+
+What is it?
+===========
+
+Once you feed it some git repos, you will get a beautiful profile that will help
+you learn things about yourself, connect to others, and become a better
+engineer. Example profiles: <https://sourcerer.io/sergey>,
+<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>.
+
+Profile is the first step. Some of the things on our roadmap:
+news that is relevant to your code, engineers to follow and learn from,
+technology and libraries you should know about, projects
+that could use your help.
+
+Both open source and closed source repos are fine. Sourcerer app does not upload
+source code anywhere, and it never will. The app looks at repos locally on your
+machine, and then sends stats to sourcerer.io. The best way to verify is to
+look at the code. [src/main/proto/sourcerer.proto](https://github.com/sourcerer-io/sourcerer-app/blob/develop/src/main/proto/sourcerer.proto)
+is a good start as it describes the client-server protocol.
+
+You will need an account, sign up on <https://sourcerer.io/>
 
 Prerequirements
 =================
