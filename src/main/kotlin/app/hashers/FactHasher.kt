@@ -1,11 +1,13 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
 package app.hashers
 
 import app.FactCodes
 import app.Logger
 import app.api.Api
+import app.extractors.Extractor
 import app.model.Author
 import app.model.Commit
 import app.model.Fact
@@ -30,6 +32,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
     private val fsLineLenAvg = hashMapOf<String, Double>()
     private val fsLineNum = hashMapOf<String, Long>()
     private val fsLinesPerCommits = hashMapOf<String, Array<Int>>()
+    private val fsVariableNaming = hashMapOf<String, Array<Int>>()
 
     init {
         for (author in emails) {
@@ -43,6 +46,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
             fsLineNum.put(author, 0)
             // TODO(anatoly): Do the bin computations on the go.
             fsLinesPerCommits.put(author, Array(rehashes.size) {0})
+            fsVariableNaming.put(author, Array(3) { 0 })
         }
     }
 
@@ -102,6 +106,21 @@ class FactHasher(private val serverRepo: Repo = Repo(),
         fsLineNum[email] = fsLineNum[email]!! + lines.size
 
         fsLinesPerCommits[email]!![numCommits - 1] += lines.size
+
+        lines.forEach { line ->
+            val tokens = Extractor().tokenize(line)
+            val underscores = tokens.count { it.contains('_') }
+            val camelCases = tokens.count {
+                !it.contains('_') && it.contains(Regex("[a-z][A-Z]"))
+            }
+            val others = tokens.size - underscores - camelCases
+            fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_SNAKE_CASE] +=
+                underscores
+            fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_CAMEL_CASE] +=
+                camelCases
+            fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_OTHER] +=
+                others
+        }
     }
 
     private fun createFacts(): List<Fact> {
@@ -116,6 +135,11 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                 fs.add(Fact(serverRepo, FactCodes.COMMIT_DAY_WEEK, day,
                             count.toString(), author))
             }}
+            fsVariableNaming[email]?.forEachIndexed { naming, count -> if (count > 0) {
+                fs.add(Fact(serverRepo, FactCodes.VARIABLE_NAMING, naming,
+                        count.toString(), author))
+            }}
+
             fs.add(Fact(serverRepo, FactCodes.REPO_DATE_START, 0,
                         fsRepoDateStart[email].toString(), author))
             fs.add(Fact(serverRepo, FactCodes.REPO_DATE_END, 0,
