@@ -154,7 +154,7 @@ class CommitHasherTest : Spek({
         val observable = CommitCrawler.getObservable(gitHasher, repo)
         CommitHasher(repo, mockApi, repo.commits.map {it.rehash}, emails)
             .updateFromObservable(observable, { e -> errors.add(e) })
-      
+
         it ("has no errors") {
             assertEquals(0, errors.size)
         }

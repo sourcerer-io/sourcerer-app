@@ -86,7 +86,7 @@ class CodeLine(val repo: Repository,
      * Email address of the line's author.
      */
     val email : String
-        get() = to.commit.authorIdent.emailAddress
+        get() = from.commit.authorIdent.emailAddress
 
     /**
      * True if the line is deleted.
@@ -103,9 +103,11 @@ class CodeLine(val repo: Repository,
         val td = df.format(Date(to.commit.getCommitTime().toLong() * 1000))
         val fc = "${from.commit.getName()} '${from.commit.getShortMessage()}'"
         val tc = "${to.commit.getName()} '${to.commit.getShortMessage()}'"
-        val state = if (isDeleted) "deleted in" else "last known as"
+        val revState = if (isDeleted) "deleted in" else "last known as"
+        val state = if (isDeleted) "deleted" else "alive"
         return "Line '$text' - '${from.file}:${from.line}' added in $fc $fd\n" +
-            "  ${state} '${to.file}:${to.line}' in $tc $td"
+            "  ${revState} '${to.file}:${to.line}' in $tc $td,\n" +
+            "  age: ${age} ms - $state"
     }
 }
 

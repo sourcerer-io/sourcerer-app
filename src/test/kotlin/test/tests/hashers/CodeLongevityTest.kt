@@ -486,4 +486,60 @@ class CodeLongevityTest : Spek({
             testRepo.destroy()
         }
     }
+
+    given("'longevity stats #2'") {
+        val testRepoPath = "../CodeLongevity_lngstats2"
+        val testRepo = TestRepo(testRepoPath)
+        val testRehash = "rehash_lngstats1"
+        val fileName = "test1.txt"
+        val author1 = Author(testRepo.userName, testRepo.userEmail)
+        val author2 = Author("Vasya Pupkin", "vasya@pupkin.me")
+        val emails = hashSetOf(author1.email, author2.email)
+
+        var serverRepo = Repo(rehash = testRehash)
+        val mockApi = MockApi(mockRepo = serverRepo)
+
+        testRepo.createFile(fileName, listOf("line1", "line2"))
+        testRepo.commit(message = "initial commit",
+                        author = author1,
+                        date = Calendar.Builder().setTimeOfDay(0, 0, 0).build().time)
+
+        testRepo.deleteLines(fileName, 1, 1)
+        testRepo.commit(message = "delete line",
+                        author = author2,
+                        date = Calendar.Builder().setTimeOfDay(0, 1, 0).build().time)
+
+        CodeLongevity(serverRepo, emails, testRepo.git,
+                      { _ -> fail("exception") }).updateStats(mockApi)
+
+        it("'t1'") {
+          println(mockApi.receivedFacts)
+            assertTrue(mockApi.receivedFacts.contains(
+                Fact(repo = serverRepo,
+                     code = FactCodes.LINE_LONGEVITY_REPO,
+                     value = (60).toString())
+            ))
+
+            assertTrue(mockApi.receivedFacts.contains(
+                Fact(repo = serverRepo,
+                     code = FactCodes.LINE_LONGEVITY,
+                     author = author1,
+                     value = (60).toString())
+            ))
+
+            assertTrue(mockApi.receivedFacts.contains(
+                Fact(repo = serverRepo,
+                     code = FactCodes.LINE_LONGEVITY,
+                     author = author2,
+                     value = (0).toString())
+            ))
+        }
+
+        afterGroup {
+            CodeLongevity(
+                Repo(rehash = testRehash), emails, testRepo.git,
+                { _ -> fail("exception") }).dropSavedData()
+            testRepo.destroy()
+        }
+    }
 })

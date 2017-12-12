@@ -188,4 +188,36 @@ class ExtractorTest : Spek({
             assertExtractsImport(lib, line2, PythonExtractor())
         }
     }
+
+    given("one line import in go file") {
+        it("extracts library name") {
+            val lib = "macagon"
+            val line = "import \"macagon\""
+            assertExtractsImport(lib, line, GoExtractor())
+        }
+    }
+
+    given("multiline import in go file") {
+        it("extracts library name") {
+            val lib = "macagon"
+            val lines = listOf("import (",
+                               "\"macagon\"",
+                               "\"github.com/astaxie/beego\"",
+                               ")")
+            val actualLineImports = GoExtractor().extractImports(lines)
+            assertTrue(lib in actualLineImports)
+        }
+    }
+
+    given("github  url as import in go file") {
+        it("extracts library name") {
+            val lib = "beego"
+            val lines = listOf("import (",
+                    "\"macagon\"",
+                    "\"github.com/astaxie/beego\"",
+                    ")")
+            val actualLineImports = GoExtractor().extractImports(lines)
+            assertTrue(lib in actualLineImports)
+        }
+    }
 })
