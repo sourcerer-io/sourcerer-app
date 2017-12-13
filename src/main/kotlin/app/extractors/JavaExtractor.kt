@@ -79,8 +79,10 @@ class JavaExtractor : ExtractorInterface {
     override fun tokenize(line: String): List<String> {
         val importRegex = Regex("""^(.*import)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val packageRegex = Regex("""^(.*package)\s[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
+        newLine = packageRegex.replace(newLine, "")
         return super.tokenize(newLine)
     }
 

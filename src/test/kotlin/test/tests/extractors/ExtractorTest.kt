@@ -104,6 +104,12 @@ class ExtractorTest : Spek({
             assertExtractsLineLibraries("grpc",
                     line, CExtractor())
         }
+
+        it("kotlin extractor extracts the library") {
+            val line = "FuelManager.instance.apply {"
+            assertExtractsLineLibraries("com.github.kittinunf.fuel",
+                    line, KotlinExtractor())
+        }
     }
 
     given("code line doesn't use libraries" ) {
@@ -161,6 +167,11 @@ class ExtractorTest : Spek({
             val line = "int main(int argc, char **argv) {"
             assertExtractsNoLibraries(line, CExtractor())
         }
+
+        it("kotlin extractor returns empty list") {
+            val line = "val password = \"P@\$\\\$vv0|2|)\""
+            assertExtractsNoLibraries(line, KotlinExtractor())
+        }
     }
 
     given("import name.h") {
@@ -178,6 +189,12 @@ class ExtractorTest : Spek({
             assertExtractsImport(lib, line2, CppExtractor())
         }
     }
+
+    given("line contains import") {
+        it("kotlin extractor extracts import") {
+            val line = "import kategory.optics.*"
+            val lib = "kategory"
+            assertExtractsImport(lib, line, KotlinExtractor())
 
     given("import cv2 or cv") {
         it("imports opencv") {
