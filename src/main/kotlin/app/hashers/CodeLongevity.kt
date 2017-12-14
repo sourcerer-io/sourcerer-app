@@ -151,7 +151,7 @@ class CodeLongevity(private val serverRepo: Repo,
         catch(e: Exception) { throw Exception("No branch") }
 
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
-    val dataPath = FileHelper.getPath(serverRepo.rehash, "longevity")
+    val dataPath = FileHelper.toPath(serverRepo.rehash, "longevity")
 
     init {
         df.setRepository(repo)

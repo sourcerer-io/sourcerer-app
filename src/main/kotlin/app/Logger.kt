@@ -93,7 +93,8 @@ object Logger {
     }
 
     private fun configLevelValue() : Int {
-        val a = mapOf("trace" to TRACE, "debug" to DEBUG, "info" to INFO, "warn" to WARN, "error" to ERROR)
+        val a = mapOf("trace" to TRACE, "debug" to DEBUG, "info" to INFO,
+            "warn" to WARN, "error" to ERROR)
         return a.getValue(BuildConfig.LOG_LEVEL)
     }
 

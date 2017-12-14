@@ -9,6 +9,7 @@ import app.config.Configurator
 import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
+import app.utils.FileHelper.toPath
 import app.utils.HashingException
 import app.utils.RepoHelper
 import org.eclipse.jgit.api.Git
@@ -17,11 +18,11 @@ import java.io.IOException
 import kotlin.collections.HashSet
 
 class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
-                 private  val configurator: Configurator) {
+                 private val configurator: Configurator) {
     var serverRepo: Repo = Repo()
 
     init {
-        if (!RepoHelper.isValidRepo(localRepo.path)) {
+        if (!RepoHelper.isValidRepo(localRepo.path.toPath())) {
             throw IllegalArgumentException("Invalid repo $localRepo")
         }
     }
