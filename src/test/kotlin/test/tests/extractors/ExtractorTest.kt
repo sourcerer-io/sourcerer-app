@@ -195,6 +195,8 @@ class ExtractorTest : Spek({
             val line = "import kategory.optics.*"
             val lib = "kategory"
             assertExtractsImport(lib, line, KotlinExtractor())
+        }
+    }
 
     given("import cv2 or cv") {
         it("imports opencv") {
