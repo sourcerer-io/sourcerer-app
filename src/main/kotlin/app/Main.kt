@@ -11,6 +11,7 @@ import app.utils.CommandConfig
 import app.utils.CommandAdd
 import app.utils.CommandList
 import app.utils.CommandRemove
+import app.utils.FileHelper.toPath
 import app.utils.Options
 import app.utils.PasswordHelper
 import app.utils.RepoHelper
@@ -75,9 +76,9 @@ class Main(argv: Array<String>) {
     }
 
     private fun doAdd(commandAdd: CommandAdd) {
-        val path = commandAdd.path
+        val path = commandAdd.path?.toPath()
         if (path != null && RepoHelper.isValidRepo(path)) {
-            val localRepo = LocalRepo(path)
+            val localRepo = LocalRepo(path.toString())
             localRepo.hashAllContributors = commandAdd.hashAll
             configurator.addLocalRepoPersistent(localRepo)
             configurator.saveToFile()

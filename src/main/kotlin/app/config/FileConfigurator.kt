@@ -212,7 +212,7 @@ class FileConfigurator : Configurator {
 
         try {
             loadConfig = Files.newBufferedReader(FileHelper
-                .getPath(CONFIG_FILE_NAME)).use {
+                .toPath(CONFIG_FILE_NAME)).use {
                 mapper.readValue(it, Config::class.java)
             }
         } catch (e: IOException) {
@@ -241,7 +241,7 @@ class FileConfigurator : Configurator {
      */
     override fun saveToFile() {
         try {
-            Files.newBufferedWriter(FileHelper.getPath(CONFIG_FILE_NAME)).use {
+            Files.newBufferedWriter(FileHelper.toPath(CONFIG_FILE_NAME)).use {
                 mapper.writeValue(it, persistent)
             }
         } catch (e: IOException) {
