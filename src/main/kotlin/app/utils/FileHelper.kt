@@ -3,7 +3,6 @@
 
 package app.utils
 
-import app.Logger
 import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
@@ -18,7 +17,7 @@ object FileHelper {
     private val jarPath = getJarPath()
     private val settingsPath = jarPath.resolve(dirName)
 
-    fun toPath(name: String, vararg parts: String): Path {
+    fun getPath(name: String, vararg parts: String): Path {
         val path = settingsPath.resolve(Paths.get("", *parts))
         if (Files.notExists(path)) {
             Files.createDirectories(path)
@@ -27,11 +26,11 @@ object FileHelper {
     }
 
     fun getFile(name: String, vararg parts: String): File {
-        return toPath(name, *parts).toFile()
+        return getPath(name, *parts).toFile()
     }
 
     fun notExists(name:String, vararg parts: String): Boolean {
-        return Files.notExists(toPath(name, *parts))
+        return Files.notExists(getPath(name, *parts))
     }
 
     fun getFileExtension(path: String): String {
@@ -53,8 +52,6 @@ object FileHelper {
         val substitutePath = if (this.startsWith("~" + File.separator)) {
             System.getProperty("user.home") + this.substring(1)
         } else { this }
-        val pathTemp = Paths.get(substitutePath).toAbsolutePath().normalize()
-        println(pathTemp.toString())
-        return pathTemp
+        return Paths.get(substitutePath).toAbsolutePath().normalize()
     }
 }
