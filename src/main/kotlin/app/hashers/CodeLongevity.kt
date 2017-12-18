@@ -73,8 +73,14 @@ class CodeLine(val repo: Repository,
     /**
      * The code line's age in seconds.
      */
-    val age : Long
-        get() = (to.commit.commitTime - from.commit.commitTime).toLong()
+    var age : Long = 0
+        get() {
+            if (field == 0L) {
+                field = (to.commit.commitTime - from.commit.commitTime).toLong()
+            }
+            return field
+        }
+        set(v) { field = v }
 
     /**
      * The code line text.
@@ -85,8 +91,20 @@ class CodeLine(val repo: Repository,
     /**
      * Email address of the line's author.
      */
-    val email : String
+    val authorEmail : String
         get() = from.commit.authorIdent.emailAddress
+
+    /**
+     * Email address of the line's changer.
+     */
+    val editorEmail : String?
+      get() = if (isDeleted) to.commit.authorIdent.emailAddress else null
+
+    /**
+     * A date when the line was changed.
+     */
+    val editDate : Date
+        get() = Date(to.commit.getCommitTime().toLong() * 1000)
 
     /**
      * True if the line is deleted.
@@ -107,7 +125,71 @@ class CodeLine(val repo: Repository,
         val state = if (isDeleted) "deleted" else "alive"
         return "Line '$text' - '${from.file}:${from.line}' added in $fc $fd\n" +
             "  ${revState} '${to.file}:${to.line}' in $tc $td,\n" +
-            "  age: ${age} ms - $state"
+            "  age: ${age} s - $state"
+    }
+}
+
+/**
+ * Detects colleagues and their 'work vicinity' from commits.
+ */
+class Colleagues {
+    // A map of <colleague_email1, colleague_email2> pairs to pairs of
+    // <month, time>, which indicates to a minimum time in ms between all line
+    // changes for these two colleagues in a given month (yyyy-mm).
+    private val map: HashMap<Pair<String, String>,
+                             HashMap<String, Long>> = hashMapOf()
+
+    fun collect(line: CodeLine) {
+        // TODO(alex): ignore same user emails
+        val authorEmail = line.authorEmail
+        val editorEmail = line.editorEmail
+        if (editorEmail == null || authorEmail == editorEmail) {
+            return
+        }
+        val emails =
+            if (editorEmail < authorEmail) Pair(editorEmail, authorEmail)
+            else Pair(authorEmail, editorEmail)
+
+        val dates = map.getOrPut(emails, { hashMapOf() })
+        val month = SimpleDateFormat("yyyy-MM").format(line.editDate)
+
+        Logger.trace { "collected colleague, age: ${line.age}" }
+        var vicinity = dates.getOrPut(month, { line.age })
+        if (vicinity > line.age) {
+            dates.put(month, line.age)
+        }
+    }
+
+    fun updateStats() {
+        // TODO(alex): report the stats to the server
+        if (Logger.isDebug) {
+            map.forEach( { (email1, email2), dates ->
+                Logger.debug { "<$email1> <$email2>" }
+                dates.forEach { month, vicinity ->
+                    Logger.debug { "  $month: $vicinity ms" }
+                }
+            } )
+        }
+    }
+
+    /**
+     * Return colleagues in a form of <email, month, time> for the given
+     * email, where time indicates a minimal time in ms between all line edits
+     * by these colleagues in a given month (yyyy-mm).
+     */
+    fun get(email: String) : List<Triple<String, String, Long>> {
+        return map
+        .filter { (pair, _) -> pair.first == email || pair.second == email }
+        .flatMap { (pair, dates) ->
+            val colleagueEmail =
+                if (email == pair.first) pair.second else pair.first
+
+            var list = mutableListOf<Triple<String, String, Long>>()
+            dates.forEach { month, vicinity ->
+                list.add(Triple(colleagueEmail, month, vicinity))
+            }
+            return list
+        }
     }
 }
 
@@ -152,6 +234,7 @@ class CodeLongevity(private val serverRepo: Repo,
 
     val df = DiffFormatter(DisabledOutputStream.INSTANCE)
     val dataPath = FileHelper.getPath(serverRepo.rehash, "longevity")
+    val colleagues = Colleagues()
 
     init {
         df.setRepository(repo)
@@ -212,6 +295,8 @@ class CodeLongevity(private val serverRepo: Repo,
             api.postFacts(stats).onErrorThrow()
             Logger.info { "Sent ${stats.size} facts to server" }
         }
+
+        colleagues.updateStats();
     }
 
     /**
@@ -244,24 +329,23 @@ class CodeLongevity(private val serverRepo: Repo,
 
         // Update ages.
         getLinesObservable(storedHead).blockingSubscribe { line ->
-            Logger.trace { "Scanning: ${line}" }
-            if (line.to.isDeleted) {
-                var age = line.age
+            if (line.isDeleted) {
                 if (ageData.lastingLines.contains(line.oldId)) {
-                    age += ageData.lastingLines.remove(line.oldId)!!.age
+                    line.age += ageData.lastingLines.remove(line.oldId)!!.age
                 }
-                val aggrAge = ageData.aggrAges.getOrPut(line.email,
+                val aggrAge = ageData.aggrAges.getOrPut(line.authorEmail,
                         { CodeLineAges.AggrAge() } )
-                aggrAge.sum += age
+                aggrAge.sum += line.age
                 aggrAge.count += 1
 
+                colleagues.collect(line);
             } else {
                 var age = line.age
                 if (ageData.lastingLines.contains(line.oldId)) {
                     age += ageData.lastingLines.remove(line.oldId)!!.age
                 }
                 ageData.lastingLines.put(line.newId,
-                                         CodeLineAges.LineInfo(age, line.email))
+                                         CodeLineAges.LineInfo(age, line.authorEmail))
             }
         }
 
