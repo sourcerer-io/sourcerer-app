@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Alexander Surkov (alex@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 package app.hashers
 
@@ -11,7 +12,6 @@ import app.model.Repo
 import app.model.Fact
 import app.utils.FileHelper
 import io.reactivex.Observable
-import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.api.Git
@@ -20,7 +20,6 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.util.io.DisabledOutputStream
 
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -154,7 +153,7 @@ class Colleagues {
         val month = SimpleDateFormat("yyyy-MM").format(line.editDate)
 
         Logger.trace { "collected colleague, age: ${line.age}" }
-        var vicinity = dates.getOrPut(month, { line.age })
+        val vicinity = dates.getOrPut(month, { line.age })
         if (vicinity > line.age) {
             dates.put(month, line.age)
         }
@@ -184,7 +183,7 @@ class Colleagues {
             val colleagueEmail =
                 if (email == pair.first) pair.second else pair.first
 
-            var list = mutableListOf<Triple<String, String, Long>>()
+            val list = mutableListOf<Triple<String, String, Long>>()
             dates.forEach { month, vicinity ->
                 list.add(Triple(colleagueEmail, month, vicinity))
             }
@@ -196,9 +195,10 @@ class Colleagues {
 /**
  * A data class used to store line age information.
  */
-class CodeLineAges : Serializable {
+class CodeLineAges : Serializable, Cloneable {
     /**
-     * A pair of (line age sum, line count) representing an aggregated line ages.
+     * A pair of (line age sum, line count) representing an aggregated line
+     * ages.
      */
     data class AggrAge(var sum: Long = 0L, var count: Int = 0) : Serializable
 
@@ -217,37 +217,38 @@ class CodeLineAges : Serializable {
      * A map of existing code lines ids to their ages at the revision.
      */
     var lastingLines: HashMap<String, LineInfo> = hashMapOf()
+
+    override public fun clone(): CodeLineAges {
+        val clone = CodeLineAges()
+        aggrAges.forEach { (email, age) ->
+            clone.aggrAges[email] = age.copy() }
+        lastingLines.forEach { (email, line) ->
+            clone.lastingLines[email] = line.copy() }
+        return clone
+    }
 }
 
 /**
  * Used to compute age of code lines in the repo.
  */
-class CodeLongevity(private val serverRepo: Repo,
-                    private val emails: HashSet<String>,
-                    git: Git,
-                    private val onError: (Throwable) -> Unit) {
+class CodeLongevity(
+    private val serverRepo: Repo,
+    private val emails: HashSet<String>,
+    private val git: Git) {
+
     val repo: Repository = git.repository
     val revWalk = RevWalk(repo)
     val head: RevCommit =
         try { revWalk.parseCommit(CommitCrawler.getDefaultBranchHead(git)) }
         catch(e: Exception) { throw Exception("No branch") }
 
-    val df = DiffFormatter(DisabledOutputStream.INSTANCE)
     val dataPath = FileHelper.getPath(serverRepo.rehash, "longevity")
     val colleagues = Colleagues()
 
-    init {
-        df.setRepository(repo)
-        df.setDetectRenames(true)
-    }
-
     /**
-     * Update code line age statistics on the server.
+     * Updates code line age statistics on the server.
      */
-    fun updateStats(api: Api) {
-        // If no changes, then nothing to update, return early.
-        val ages = scan() ?: return
-
+    private fun calculateAndSendFacts(ages: CodeLineAges, api: Api) {
         var repoTotal = 0
         var repoSum: Long = 0
         val aggrAges : HashMap<String, CodeLineAges.AggrAge> = hashMapOf()
@@ -277,9 +278,8 @@ class CodeLongevity(private val serverRepo: Repo,
                        code = FactCodes.LINE_LONGEVITY_REPO,
                        value = repoAvg.toString()))
         val repoAvgDays = repoAvg / secondsInDay
-        Logger.info {
-            "Repo average code line age is $repoAvgDays days, lines total: $repoTotal"
-        }
+        Logger.info { "Repo average code line age is $repoAvgDays days, " +
+            "lines total: $repoTotal" }
 
         for (email in emails) {
             val aggrAge = aggrAges[email] ?: CodeLineAges.AggrAge()
@@ -296,13 +296,17 @@ class CodeLongevity(private val serverRepo: Repo,
             Logger.info { "Sent ${stats.size} facts to server" }
         }
 
-        colleagues.updateStats();
+        colleagues.updateStats()
     }
 
     /**
      * Scans the repo to extract code line ages.
      */
-    fun scan() : CodeLineAges? {
+    fun updateFromObservable(diffObservable: Observable<JgitPair> =
+                                CommitCrawler.getJGitObservable(git),
+                             onError: (Throwable) -> Unit = {},
+                             api: Api,
+                             onDataComplete: (CodeLineAges) -> Unit = {}) {
         var storedHead: RevCommit? = null
         var ageData = CodeLineAges()
 
@@ -315,20 +319,18 @@ class CodeLongevity(private val serverRepo: Repo,
             Logger.debug { "Stored repo head: $storedHeadId" }
             storedHead = revWalk.parseCommit(repo.resolve(storedHeadId))
             if (storedHead == head) {
-                return null
+                return  // TODO(anatoly): Send saved stats in such case.
             }
             ageData = (iStream.readObject() ?: CodeLineAges()) as CodeLineAges
         }
         catch(e: FileNotFoundException) { }
-        catch(e: Exception) {
-            Logger.error(
-                e,
-                "Failed to read longevity data. CAUTION: data will be recomputed."
-              )
-        }
+        catch(e: Exception) { Logger.error(e, "Failed to read longevity " +
+            "data. CAUTION: data will be recomputed.") }
 
         // Update ages.
-        getLinesObservable(storedHead).blockingSubscribe { line ->
+        getLinesObservable(storedHead, diffObservable, onError).subscribe({
+            line ->
+            Logger.trace { "Scanning: ${line}" }
             if (line.isDeleted) {
                 if (ageData.lastingLines.contains(line.oldId)) {
                     line.age += ageData.lastingLines.remove(line.oldId)!!.age
@@ -338,29 +340,30 @@ class CodeLongevity(private val serverRepo: Repo,
                 aggrAge.sum += line.age
                 aggrAge.count += 1
 
-                colleagues.collect(line);
+                colleagues.collect(line)
             } else {
                 var age = line.age
                 if (ageData.lastingLines.contains(line.oldId)) {
                     age += ageData.lastingLines.remove(line.oldId)!!.age
                 }
-                ageData.lastingLines.put(line.newId,
-                                         CodeLineAges.LineInfo(age, line.authorEmail))
+                ageData.lastingLines.put(line.newId, CodeLineAges.LineInfo(age,
+                    line.authorEmail))
             }
-        }
-
-        // Store ages for subsequent runs.
-        try {
-            val file = dataPath.toFile()
-            val oStream = ObjectOutputStream(FileOutputStream(file))
-            oStream.writeUTF(head.getName())
-            oStream.writeObject(ageData)
-        }
-        catch(e: Exception) {
-            Logger.error(e, "Failed to save longevity data. CAUTION: data " +
-                "will be recomputed on a next run.")
-        }
-        return ageData
+        }, onError, {
+            // Store ages for subsequent runs.
+            try {
+                val file = dataPath.toFile()
+                val oStream = ObjectOutputStream(FileOutputStream(file))
+                oStream.writeUTF(head.getName())
+                oStream.writeObject(ageData)
+            }
+            catch(e: Exception) {
+                Logger.error(e, "Failed to save longevity data. " +
+                    "CAUTION: data will be recomputed on a next run.")
+            }
+            onDataComplete(ageData)
+            calculateAndSendFacts(ageData, api)
+        })
     }
 
     /**
@@ -374,10 +377,13 @@ class CodeLongevity(private val serverRepo: Repo,
      * Returns a list of code lines, both alive and deleted, between
      * the revisions of the repo.
      */
-    fun getLinesList(tail : RevCommit? = null) : List<CodeLine> {
+    fun getLinesList(tail : RevCommit? = null,
+                     diffObservable: Observable<JgitPair> =
+                        CommitCrawler.getJGitObservable(git),
+                     onError: (Throwable) -> Unit = {}) : List<CodeLine> {
         val codeLines: MutableList<CodeLine> = mutableListOf()
-        getLinesObservable(tail).blockingSubscribe { line ->
-            codeLines.add(line)
+        getLinesObservable(tail, diffObservable, onError).blockingSubscribe {
+            line -> codeLines.add(line)
         }
         return codeLines
     }
@@ -386,7 +392,10 @@ class CodeLongevity(private val serverRepo: Repo,
      * Returns an observable for for code lines, both alive and deleted, between
      * the revisions of the repo.
      */
-    fun getLinesObservable(tail : RevCommit? = null) : Observable<CodeLine> =
+    fun getLinesObservable(tail : RevCommit? = null,
+                           diffObservable: Observable<JgitPair>,
+                           onError: (Throwable) -> Unit)
+        : Observable<CodeLine> =
         Observable.create { subscriber ->
 
         val headWalk = TreeWalk(repo)
@@ -414,12 +423,14 @@ class CodeLongevity(private val serverRepo: Repo,
             }
         }
 
-        getDiffsObservable(tail).blockingSubscribe( { (commit, diffs) ->
+        diffObservable
+        .takeWhile { (commit, _) -> commit != tail }
+        .subscribe( { (commit, diffs) ->
             // A step back in commits history. Update the files map according
             // to the diff. Traverse the diffs backwards to handle double
             // renames properly.
             // TODO(alex): cover file renames by tests (see APP-132 issue).
-            for (diff in diffs.asReversed()) {
+            for ((diff, editList) in diffs.asReversed()) {
                 val oldPath = diff.getOldPath()
                 val oldId = diff.getOldId().toObjectId()
                 val newPath = diff.getNewPath()
@@ -461,7 +472,6 @@ class CodeLongevity(private val serverRepo: Repo,
                 // Update the lines array according to diff insertions.
                 // Traverse the edit list backwards to keep indices of
                 // the edit list and the lines array in sync.
-                val editList = df.toFileHeader(diff).toEditList()
                 for (edit in editList.asReversed()) {
                     // Insertion case: track the lines.
                     val insCount = edit.getLengthB()
@@ -480,8 +490,9 @@ class CodeLongevity(private val serverRepo: Repo,
                                 subscriber.onNext(cl)
                             }
                             catch(e: IndexOutOfBoundsException) {
-                                Logger.error(e,
-                                    "No line at ${idx}; commit: ${commit.getName()}; '${commit.getShortMessage()}'")
+                                Logger.error(e, "No line at ${idx}; commit: " +
+                                    "${commit.getName()}; " +
+                                    "'${commit.getShortMessage()}'")
                                 throw e
                             }
                         }
@@ -513,71 +524,32 @@ class CodeLongevity(private val serverRepo: Repo,
                     files.set(oldPath, files.remove(newPath)!!)
                 }
             }
-        }, onError)
+        }, onError, {
+            // If a tail revision was given then the map has to contain
+            // unclaimed code lines, i.e. the lines added before the tail
+            // revision. Push them all into the result lines list, so the
+            // caller can update their ages properly.
+            if (tail != null) {
+                val tailWalk = TreeWalk(repo)
+                tailWalk.setRecursive(true)
+                tailWalk.addTree(tail.getTree())
 
-        // If a tail revision was given then the map has to contain unclaimed
-        // code lines, i.e. the lines added before the tail revision. Push
-        // them all into the result lines list, so the caller can update their
-        // ages properly.
-        if (tail != null) {
-            val tailWalk = TreeWalk(repo)
-            tailWalk.setRecursive(true)
-            tailWalk.addTree(tail.getTree())
-
-            while (tailWalk.next()) {
-                val filePath = tailWalk.getPathString()
-                val lines = files.get(filePath)
-                if (lines != null) {
-                    val fileId = tailWalk.getObjectId(0)
-                    for (idx in 0 .. lines.size - 1) {
-                        val from = RevCommitLine(tail, fileId,
-                                                 filePath, idx, false)
-                        val cl = CodeLine(repo, from, lines[idx])
-                        Logger.trace { "Collected (tail): $cl" }
-                        subscriber.onNext(cl)
+                while (tailWalk.next()) {
+                    val filePath = tailWalk.getPathString()
+                    val lines = files.get(filePath)
+                    if (lines != null) {
+                        val fileId = tailWalk.getObjectId(0)
+                        for (idx in 0 .. lines.size - 1) {
+                            val from = RevCommitLine(tail, fileId,
+                                filePath, idx, false)
+                            val cl = CodeLine(repo, from, lines[idx])
+                            Logger.trace { "Collected (tail): $cl" }
+                            subscriber.onNext(cl)
+                        }
                     }
                 }
             }
-        }
-
-        subscriber.onComplete()
-    }
-
-    /**
-     * Iterates over the diffs between commits in the repo's history.
-     */
-    private fun getDiffsObservable(tail : RevCommit?) :
-        Observable<Pair<RevCommit, List<DiffEntry>>> =
-        Observable.create { subscriber ->
-
-        revWalk.markStart(head)
-        var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
-        while (commit != null && commit != tail) {
-            val parentCommit: RevCommit? = revWalk.next()
-
-            // Smart casts are not yet supported for a mutable variable captured
-            // in an inline lambda, see
-            // https://youtrack.jetbrains.com/issue/KT-7186.
-            if (Logger.isDebug) {
-                val commitName = commit.getName()
-                val commitMsg = commit.getShortMessage()
-                Logger.debug { "commit: $commitName; '$commitMsg'" }
-                if (parentCommit != null) {
-                    val parentCommitName = parentCommit.getName()
-                    val parentCommitMsg = parentCommit.getShortMessage()
-                    Logger.debug {
-                        "parent commit: ${parentCommitName}; '${parentCommitMsg}'"
-                    }
-                }
-                else {
-                    Logger.debug { "parent commit: null" }
-                }
-            }
-
-            subscriber.onNext(Pair(commit, df.scan(parentCommit, commit)))
-            commit = parentCommit
-        }
-
-        subscriber.onComplete()
+            subscriber.onComplete()
+        })
     }
 }

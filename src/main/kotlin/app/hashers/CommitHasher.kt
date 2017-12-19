@@ -32,7 +32,6 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
     // Hash added and missing server commits and send them to server.
     fun updateFromObservable(observable: Observable<Commit>,
                              onError: (Throwable) -> Unit) {
-        val lastKnownCommit = serverRepo.commits.lastOrNull()
         val knownCommits = serverRepo.commits.toHashSet()
 
         observable
@@ -41,14 +40,15 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             // Hash only commits made by authors with specified emails.
             .filter { commit -> emails.contains(commit.author.email) }
             .map { commit ->
-                Logger.info { "Extracting stats" }
+                Logger.printCommitDetail("Extracting stats")
 
                 // Mapping and stats extraction.
                 commit.stats = Extractor().extract(commit.diffs)
-                if (commit.stats.isNotEmpty()) {
-                    Logger.printCommitDetail("${commit.stats.size} " +
-                        "technology stats found")
-                }
+                val statsNumStr = if (commit.stats.isNotEmpty()) {
+                    commit.stats.size.toString()
+                } else "No"
+
+                Logger.printCommitDetail("$statsNumStr technology stats found")
                 Logger.debug { commit.stats.toString() }
 
                 commit
