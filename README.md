@@ -15,7 +15,7 @@ What is it?
 Once you feed it some git repos, you will get a beautiful profile that will help
 you learn things about yourself, connect to others, and become a better
 engineer. Example profiles: <https://sourcerer.io/sergey>,
-<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>.
+<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>, <https://sourcerer.io/wemmer>.
 
 Profile is the first step. Some of the things on our roadmap:
 news that is relevant to your code, engineers to follow and learn from,
@@ -30,13 +30,13 @@ is a good start as it describes the client-server protocol.
 
 You will need an account, sign up on <https://sourcerer.io/>
 
-Prerequirements
-=================
+Requirements
+============
 
-* Sourcerer alpha/beta access
 * Linux or macOS
 * Java 8+ Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
 * Git repositories with master branch with at least one commit
+* Account on <https://sourcerer.io/>
 
 Install/uninstall
 =================
