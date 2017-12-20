@@ -327,4 +327,46 @@ class FactHasherTest : Spek({
             testRepo.destroy()
         }
     }
+
+    given("commits for indentation facts") {
+        val testRepo = TestRepo(repoPath + "indentation-facts")
+        val emails = hashSetOf(authorEmail1)
+        val mockApi = MockApi(mockRepo = repo)
+        val facts = mockApi.receivedFacts
+
+        afterEachTest {
+            facts.clear()
+        }
+
+        val lines = listOf("\tdef test()", "\t\tdef fn()", "a b c d", "    ", "    def fn()")
+
+        it("sends facts") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.txt"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author1)
+            }
+
+            val errors = mutableListOf<Throwable>()
+            val observable = CommitCrawler.getObservable(testRepo.git, repo)
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            FactHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+            if (errors.size > 0) {
+                println(errors[0].message)
+            }
+            assertEquals(0, errors.size)
+
+            assertFactInt(FactCodes.INDENTATION,
+                    FactCodes.INDENTATION_TABS, 2, author1, facts)
+            assertFactInt(FactCodes.INDENTATION,
+                    FactCodes.INDENTATION_SPACES, 1, author1, facts)
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
 })

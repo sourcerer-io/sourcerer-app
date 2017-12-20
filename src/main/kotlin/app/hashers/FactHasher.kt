@@ -33,6 +33,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
     private val fsLineNum = hashMapOf<String, Long>()
     private val fsLinesPerCommits = hashMapOf<String, Array<Int>>()
     private val fsVariableNaming = hashMapOf<String, Array<Int>>()
+    private val fsIndentation = hashMapOf<String, Array<Int>>()
 
     init {
         for (author in emails) {
@@ -47,6 +48,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
             // TODO(anatoly): Do the bin computations on the go.
             fsLinesPerCommits.put(author, Array(rehashes.size) {0})
             fsVariableNaming.put(author, Array(3) { 0 })
+            fsIndentation.put(author, Array(2) { 0 })
         }
     }
 
@@ -121,6 +123,11 @@ class FactHasher(private val serverRepo: Repo = Repo(),
             fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_OTHER] +=
                 others
         }
+
+        fsIndentation[email]!![FactCodes.INDENTATION_SPACES] +=
+            lines.count { it.isNotBlank()  &&  it.startsWith(" ") && !it.contains("\t")}
+        fsIndentation[email]!![FactCodes.INDENTATION_TABS] +=
+            lines.count { it.startsWith("\t") }
     }
 
     private fun createFacts(): List<Fact> {
@@ -139,6 +146,12 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                 fs.add(Fact(serverRepo, FactCodes.VARIABLE_NAMING, naming,
                         count.toString(), author))
             }}
+            fsIndentation[email]?.forEachIndexed { indentation, count ->
+                if (count > 0) {
+                    fs.add(Fact(serverRepo, FactCodes.INDENTATION, indentation,
+                            count.toString(), author))
+                }
+            }
 
             fs.add(Fact(serverRepo, FactCodes.REPO_DATE_START, 0,
                         fsRepoDateStart[email].toString(), author))
