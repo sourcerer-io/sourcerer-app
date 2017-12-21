@@ -4,6 +4,7 @@
 package app.hashers
 
 import app.Logger
+import app.model.Author
 import app.model.Commit
 import app.model.DiffContent
 import app.model.DiffFile
@@ -49,8 +50,8 @@ object CommitCrawler {
         throw Exception("No remote default or local master branch found")
     }
 
-    fun fetchRehashesAndEmails(git: Git):
-        Pair<LinkedList<String>, HashSet<String>> {
+    fun fetchRehashesAndAuthors(git: Git):
+        Pair<LinkedList<String>, HashSet<Author>> {
         val head: RevCommit = RevWalk(git.repository)
             .parseCommit(getDefaultBranchHead(git))
 
@@ -59,17 +60,31 @@ object CommitCrawler {
 
         val commitsRehashes = LinkedList<String>()
         val emails = hashSetOf<String>()
+        val names = hashMapOf<String, String>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
             commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
-            emails.add(commit.authorIdent.emailAddress)
+            val email = commit.authorIdent.emailAddress
+            val name = commit.authorIdent.name
+            if (!emails.contains(email)) {
+                emails.add(email)
+                names.put(email, name)
+            } else {
+                if (name.length > names[email]!!.length) {
+                    names[email] = name
+                }
+            }
+
             commit.disposeBody()
             commit = revWalk.next()
         }
         revWalk.dispose()
 
-        return Pair(commitsRehashes, emails)
+        val authors = emails.map { email -> Author(names[email]!!, email) }
+            .toHashSet()
+
+        return Pair(commitsRehashes, authors)
     }
 
     fun getJGitObservable(git: Git,

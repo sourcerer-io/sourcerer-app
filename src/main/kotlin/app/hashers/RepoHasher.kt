@@ -31,7 +31,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
-            val (rehashes, emails) = CommitCrawler.fetchRehashesAndEmails(git)
+            val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
 
             localRepo.parseGitConfig(git.repository.config)
             initServerRepo(rehashes.last)
@@ -43,8 +43,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             postRepoFromServer()
 
             // Send all repo emails for invites.
-            postAuthorsToServer(emails)
+            postAuthorsToServer(authors)
 
+            val emails = authors.map { author -> author.email }.toHashSet()
             val filteredEmails = filterEmails(emails)
 
             // Common error handling for subscribers.
@@ -106,9 +107,10 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.debug { serverRepo.toString() }
     }
 
-    private fun postAuthorsToServer(emails: HashSet<String>) {
-        api.postAuthors(emails.map { email ->
-            Author(email = email, repo = serverRepo)
+    private fun postAuthorsToServer(authors: HashSet<Author>) {
+        api.postAuthors(authors.map { author ->
+            author.repo = serverRepo
+            author
         }).onErrorThrow()
     }
 
