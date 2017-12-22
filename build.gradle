@@ -36,7 +36,7 @@ buildConfig {
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
-    buildConfigField 'int', 'VERSION_CODE', '4'
+    buildConfigField 'int', 'VERSION_CODE', '5'
     buildConfigField 'String', 'VERSION', '0.1.2'
 
     // Logging.
