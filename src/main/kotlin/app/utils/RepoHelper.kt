@@ -12,13 +12,14 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
  * Class for utility functions on repos.
  */
 object RepoHelper {
-    fun isValidRepo(path: String): Boolean {
+    fun isValidRepo(path: Path): Boolean {
         if (!isDirectory(path)) {
             return false
         }
@@ -27,7 +28,7 @@ object RepoHelper {
         var repository: Repository? = null
         val commitId: ObjectId?
         try {
-            git = Git.open(File(path))
+            git = Git.open(path.toFile())
             repository = git.repository
             commitId = CommitCrawler.getDefaultBranchHead(git)
         } catch (e: Exception) {
@@ -44,9 +45,9 @@ object RepoHelper {
         return false
     }
 
-    fun isDirectory(path: String): Boolean {
+    fun isDirectory(path: Path): Boolean {
         return try {
-            Paths.get(path).toFile().isDirectory
+            path.toFile().isDirectory
         } catch (e: InvalidPathException) {
             Logger.error(e, "Invalid path")
             false

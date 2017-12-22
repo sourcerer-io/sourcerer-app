@@ -1,11 +1,13 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Alexander Surkov (alex@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 package test.tests.hashers
 
 import app.api.MockApi
 import app.FactCodes
 import app.hashers.CodeLine
+import app.hashers.CodeLineAges
 import app.hashers.CodeLongevity
 import app.hashers.RevCommitLine
 import app.model.*
@@ -23,6 +25,7 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 
 import java.util.Calendar
+import kotlin.test.assertNotNull
 
 /**
  * Testing class.
@@ -47,9 +50,9 @@ class CodeLongevityTest : Spek({
      * Assert function to test CodeLine object.
      */
     fun assertCodeLine(lineText: String, isDeleted: Boolean,
-                       fromCommit: RevCommit, fromFile: String, fromLineNum: Int,
-                       toCommit: RevCommit, toFile: String, toLineNum: Int,
-                       actualLine: CodeLine) {
+                       fromCommit: RevCommit, fromFile: String,
+                       fromLineNum: Int, toCommit: RevCommit, toFile: String,
+                       toLineNum: Int, actualLine: CodeLine) {
 
         assertRevCommitLine(fromCommit, fromFile, fromLineNum, actualLine.from,
                             "'$lineText' from_commit")
@@ -57,7 +60,8 @@ class CodeLongevityTest : Spek({
                             "'$lineText' to_commit")
 
         assertEquals(lineText, actualLine.text, "line text")
-        assertEquals(isDeleted, actualLine.isDeleted, "'$lineText' line is deleted")
+        assertEquals(isDeleted, actualLine.isDeleted, "'$lineText' " +
+            "line is deleted")
     }
 
     Runtime.getRuntime().exec("rm -r ./.sourcerer/longevity").waitFor()
@@ -71,8 +75,8 @@ class CodeLongevityTest : Spek({
         // t1: initial insertion
         testRepo.createFile(fileName, listOf("line1", "line2"))
         val rev1 = testRepo.commit("initial commit")
-        val lines1 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines1 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t1: initial insertion'") {
             assertEquals(2, lines1.size)
@@ -89,8 +93,8 @@ class CodeLongevityTest : Spek({
         // t2: subsequent insertion
         testRepo.insertLines(fileName, 1, listOf("line in the middle"))
         val rev2 = testRepo.commit("insert line")
-        val lines2 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines2 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t2: subsequent insertion'") {
             assertEquals(3, lines2.size)
@@ -111,8 +115,8 @@ class CodeLongevityTest : Spek({
         // t3: subsequent deletion
         testRepo.deleteLines(fileName, 2, 2)
         val rev3 = testRepo.commit("delete line")
-        val lines3 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines3 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t3: subsequent deletion'") {
             assertEquals(3, lines3.size)
@@ -133,8 +137,8 @@ class CodeLongevityTest : Spek({
         // t4: file deletion
         testRepo.deleteFile(fileName)
         val rev4 = testRepo.commit("delete file")
-        val lines4 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines4 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t4: file deletion'") {
             assertEquals(3, lines4.size)
@@ -188,8 +192,8 @@ class CodeLongevityTest : Spek({
         )
         testRepo.createFile(fileName, fileContent)
         val rev1 = testRepo.commit("initial commit")
-        val lines1 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines1 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t2.1: initial insertion'") {
             assertEquals(fileContent.size, lines1.size)
@@ -235,8 +239,8 @@ class CodeLongevityTest : Spek({
         testRepo.insertLines(fileName, 11, listOf("Proof addition 3"))
         val rev2 = testRepo.commit("insert+delete")
 
-        val lines2 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines2 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
 
         it("'t2.2: ins+del'") {
             assertEquals(22, lines2.size)
@@ -308,8 +312,8 @@ class CodeLongevityTest : Spek({
         testRepo.deleteLines(fileName, 2, 2)
         val rev3 = testRepo.commit("delete line2")
 
-        val lines1 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList()
+        val lines1 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(onError = { _ -> fail("exception") })
         val lines1_line15 = lines1[0]
         val lines1_line1 = lines1[1]
         val lines1_line2 = lines1[2]
@@ -333,8 +337,8 @@ class CodeLongevityTest : Spek({
         testRepo.deleteLines(fileName, 0, 0)
         val rev4 = testRepo.commit("delete line1")
 
-        val lines2 = CodeLongevity(Repo(), emails, testRepo.git,
-                                   { _ -> fail("exception") }).getLinesList(rev3)
+        val lines2 = CodeLongevity(Repo(), emails, testRepo.git)
+            .getLinesList(rev3, onError = { _ -> fail("exception") })
         val lines2_line1 = lines2[0]
         val lines2_line15 = lines2[1]
 
@@ -368,63 +372,67 @@ class CodeLongevityTest : Spek({
         val fileName = "test1.txt"
         val email = testRepo.userEmail
         val emails = hashSetOf(email)
+        val api = MockApi()
 
         testRepo.createFile(fileName, listOf("line1", "line2"))
         testRepo.commit(message = "initial commit",
-                        date = Calendar.Builder().setTimeOfDay(0, 0, 0).build().time)
-
+            date = Calendar.Builder().setTimeOfDay(0, 0, 0).build().time)
         testRepo.insertLines(fileName, 1, listOf("line15"))
-        val t1_rev = testRepo.commit(message = "insert line",
-                                     date = Calendar.Builder().setTimeOfDay(0, 1, 0).build().time)
+        testRepo.commit(message = "insert line",
+            date = Calendar.Builder().setTimeOfDay(0, 1, 0).build().time)
 
-        val t1_ages = CodeLongevity(
-            Repo(rehash = testRehash), emails, testRepo.git,
-            { _ -> fail("exception") }).scan()!!
-        val t1_lines = CodeLongevity(
-            Repo(rehash = testRehash), emails, testRepo.git,
-            { _ -> fail("exception") }).getLinesList()
+        var t1Ages: CodeLineAges? = null
+        CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+            .updateFromObservable(onError = { _ -> fail("exception") },
+                                  onDataComplete = { t1Ages = it.clone() },
+                                  api = api)
+        val t1Lines = CodeLongevity(Repo(rehash = testRehash), emails,
+            testRepo.git).getLinesList(onError = { _ -> fail("exception") })
 
         it("'t1'") {
-            assertTrue(t1_ages.aggrAges.isEmpty(),
-                       "t1_ages: aggr ages is empty")
-            assertEquals(3, t1_ages.lastingLines.count(),
-                         "t1_ages: lasting lines count")
-            for (line in t1_lines) {
-              assertEquals(t1_ages.lastingLines[line.newId]!!.age, line.age,
-                           "t1_ages: line age at '${line.newId}'")
+            assertNotNull(t1Ages)
+            assertTrue(t1Ages!!.aggrAges.isEmpty(),
+                "t1_ages: aggr ages is empty")
+            assertEquals(3, t1Ages!!.lastingLines.count(),
+                "t1_ages: lasting lines count")
+            for (line in t1Lines) {
+                assertEquals(t1Ages!!.lastingLines[line.newId]!!.age, line.age,
+                    "t1_ages: line age at '${line.newId}'")
             }
         }
 
         testRepo.deleteLines(fileName, 2, 2)
         testRepo.commit(message = "delete line2",
-                        date = Calendar.Builder().setTimeOfDay(0, 3, 0).build().time)
+            date = Calendar.Builder().setTimeOfDay(0, 3, 0).build().time)
 
-        val t2_ages = CodeLongevity(
-            Repo(rehash = testRehash), emails, testRepo.git,
-            { _ -> fail("exception") }).scan()!!
-        val t2_lines = CodeLongevity(
-            Repo(rehash = testRehash), emails, testRepo.git,
-            { _ -> fail("exception") }).getLinesList(t1_rev)
+        var t2Ages: CodeLineAges? = null
+        CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+            .updateFromObservable(onError = { _ -> fail("exception") },
+                                  onDataComplete = { t2Ages = it.clone() },
+                                  api = api)
+        val t2Lines = CodeLongevity(Repo(rehash = testRehash), emails,
+            testRepo.git).getLinesList(onError = { _ -> fail("exception") })
 
         it("'t2'") {
-            assertEquals(1, t2_ages.aggrAges[email]!!.count,
-                         "t2_ages: aggr ages count")
-            assertEquals(180, t2_ages.aggrAges[email]!!.sum,
-                         "t2_ages: aggr ages sum") // line2
+            assertNotNull(t2Ages)
+            assertEquals(1, t2Ages!!.aggrAges[email]!!.count,
+                "t2_ages: aggr ages count")
+            assertEquals(180, t2Ages!!.aggrAges[email]!!.sum,
+                "t2_ages: aggr ages sum") // line2
+            assertEquals(2, t2Ages!!.lastingLines.count(),
+                "t2_ages: lasting lines count")
 
-            assertEquals(2, t2_ages.lastingLines.count(),
-                         "t2_ages: lasting lines count")
-
-            assertEquals(t2_ages.lastingLines[t2_lines[0].newId]!!.age, 180,
-                             "t2_ages: 'line0' line age")
-            assertEquals(t2_ages.lastingLines[t2_lines[1].newId]!!.age, 120,
-                             "t2_ages: 'line15' line age")
+            val line1 = t2Lines.find { line -> line.text == "line1" }!!
+            val line15 = t2Lines.find { line -> line.text == "line15" }!!
+            assertEquals(180, t2Ages!!.lastingLines[line1.newId]!!.age,
+                "t2_ages: 'line1' line age")
+            assertEquals(120, t2Ages!!.lastingLines[line15.newId]!!.age,
+                "t2_ages: 'line15' line age")
         }
 
         afterGroup {
-            CodeLongevity(
-                Repo(rehash = testRehash), emails, testRepo.git,
-                { _ -> fail("exception") }).dropSavedData()
+            CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+                .dropSavedData()
             testRepo.destroy()
         }
     }
@@ -438,40 +446,44 @@ class CodeLongevityTest : Spek({
         val author2 = Author("Vasya Pupkin", "vasya@pupkin.me")
         val emails = hashSetOf(testRepo.userEmail)
 
-        var serverRepo = Repo(rehash = testRehash)
-        val mockApi = MockApi(mockRepo = serverRepo)
+        val serverRepo = Repo(rehash = testRehash)
+        val api = MockApi(mockRepo = serverRepo)
 
         testRepo.createFile(fileName, listOf("line1", "line2"))
         testRepo.commit(message = "initial commit",
                         author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 0, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 0, 0)
+                            .build().time)
 
         testRepo.insertLines(fileName, 1, listOf("line15"))
         testRepo.commit(message = "insert line",
                         author = author2,
-                        date = Calendar.Builder().setTimeOfDay(0, 1, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                            .build().time)
 
         testRepo.insertLines(fileName, 2, listOf("line17"))
         testRepo.commit(message = "insert line2",
                         author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 3, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 3, 0)
+                            .build().time)
 
         testRepo.deleteLines(fileName, 2, 2)
         testRepo.commit(message = "delete line",
                         author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 4, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 4, 0)
+                            .build().time)
 
-        CodeLongevity(serverRepo, emails, testRepo.git,
-                      { _ -> fail("exception") }).updateStats(mockApi)
+        CodeLongevity(serverRepo, emails, testRepo.git).updateFromObservable(
+            onError = { _ -> fail("exception") }, api = api)
 
         it("'t1'") {
-            assertTrue(mockApi.receivedFacts.contains(
+            assertTrue(api.receivedFacts.contains(
                 Fact(repo = serverRepo,
                      code = FactCodes.LINE_LONGEVITY_REPO,
                      value = (720 / 4).toString())
             ))
 
-            assertTrue(mockApi.receivedFacts.contains(
+            assertTrue(api.receivedFacts.contains(
                 Fact(repo = serverRepo,
                      code = FactCodes.LINE_LONGEVITY,
                      author = author1,
@@ -480,9 +492,8 @@ class CodeLongevityTest : Spek({
         }
 
         afterGroup {
-            CodeLongevity(
-                Repo(rehash = testRehash), emails, testRepo.git,
-                { _ -> fail("exception") }).dropSavedData()
+            CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+                .dropSavedData()
             testRepo.destroy()
         }
     }
@@ -490,27 +501,30 @@ class CodeLongevityTest : Spek({
     given("'longevity stats #2'") {
         val testRepoPath = "../CodeLongevity_lngstats2"
         val testRepo = TestRepo(testRepoPath)
-        val testRehash = "rehash_lngstats1"
+        val testRehash = "rehash_lngstats2"
         val fileName = "test1.txt"
         val author1 = Author(testRepo.userName, testRepo.userEmail)
         val author2 = Author("Vasya Pupkin", "vasya@pupkin.me")
         val emails = hashSetOf(author1.email, author2.email)
 
-        var serverRepo = Repo(rehash = testRehash)
+        val serverRepo = Repo(rehash = testRehash)
         val mockApi = MockApi(mockRepo = serverRepo)
 
         testRepo.createFile(fileName, listOf("line1", "line2"))
         testRepo.commit(message = "initial commit",
                         author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 0, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 0, 0)
+                            .build().time)
 
         testRepo.deleteLines(fileName, 1, 1)
         testRepo.commit(message = "delete line",
                         author = author2,
-                        date = Calendar.Builder().setTimeOfDay(0, 1, 0).build().time)
+                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                            .build().time)
 
-        CodeLongevity(serverRepo, emails, testRepo.git,
-                      { _ -> fail("exception") }).updateStats(mockApi)
+        CodeLongevity(serverRepo, emails, testRepo.git)
+            .updateFromObservable(onError = { _ -> fail("exception") },
+                                  api = mockApi)
 
         it("'t1'") {
           println(mockApi.receivedFacts)
@@ -536,9 +550,63 @@ class CodeLongevityTest : Spek({
         }
 
         afterGroup {
-            CodeLongevity(
-                Repo(rehash = testRehash), emails, testRepo.git,
-                { _ -> fail("exception") }).dropSavedData()
+            CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+                .dropSavedData()
+            testRepo.destroy()
+        }
+    }
+
+    given("'colleagues #1'") {
+        val testRepoPath = "../CodeLongevity_colleagues1"
+        val testRepo = TestRepo(testRepoPath)
+        val testRehash = "rehash_colleagues1"
+        val fileName = "test1.txt"
+        val author1 = Author(testRepo.userName, testRepo.userEmail)
+        val author2 = Author("Vasya Pupkin", "vasya@pupkin.me")
+        val emails = hashSetOf(author1.email, author2.email)
+
+        val serverRepo = Repo(rehash = testRehash)
+        val mockApi = MockApi(mockRepo = serverRepo)
+
+        testRepo.createFile(fileName, listOf("line1", "line2"))
+        testRepo.commit(message = "initial commit",
+                        author = author1,
+                        date = Calendar.Builder().setTimeOfDay(0, 0, 0)
+                            .build().time)
+
+        testRepo.deleteLines(fileName, 1, 1)
+        testRepo.commit(message = "delete line",
+                        author = author1,
+                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                            .build().time)
+
+        testRepo.deleteLines(fileName, 0, 0)
+        testRepo.commit(message = "delete line #2",
+                        author = author2,
+                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                            .build().time)
+
+        val cl = CodeLongevity(serverRepo, emails, testRepo.git)
+        cl.updateFromObservable(onError = { _ -> fail("exception") },
+                                api = mockApi)
+
+        it("'t1'") {
+            val triple1 = cl.colleagues.get(author1.email)[0]
+            assertEquals(triple1.first, author2.email,
+                "Wrong colleague email #1")
+            assertEquals(triple1.second, "1970-01", "Wrong colleague month #1")
+            assertEquals(triple1.third, 60, "Wrong colleague vicinity #1")
+
+            val triple2 = cl.colleagues.get(author2.email)[0]
+            assertEquals(triple2.first, author1.email,
+                "Wrong colleague email #1")
+            assertEquals(triple2.second, "1970-01", "Wrong colleague month #1")
+            assertEquals(triple2.third, 60, "Wrong colleague vicinity #1")
+        }
+
+        afterGroup {
+            CodeLongevity(Repo(rehash = testRehash), emails, testRepo.git)
+                .dropSavedData()
             testRepo.destroy()
         }
     }

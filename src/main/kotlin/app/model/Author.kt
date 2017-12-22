@@ -18,6 +18,7 @@ data class Author(
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.Author) : this() {
         email = proto.email
+        name = proto.name
         repo = Repo(proto.repoRehash)
     }
 
@@ -29,6 +30,7 @@ data class Author(
     fun getProto(): Protos.Author {
         return Protos.Author.newBuilder()
             .setEmail(email)
+            .setName(name)
             .setRepoRehash(repo.rehash)
             .build()
     }

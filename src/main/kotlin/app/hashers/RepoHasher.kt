@@ -9,6 +9,7 @@ import app.config.Configurator
 import app.model.Author
 import app.model.LocalRepo
 import app.model.Repo
+import app.utils.FileHelper.toPath
 import app.utils.HashingException
 import app.utils.RepoHelper
 import org.eclipse.jgit.api.Git
@@ -17,11 +18,11 @@ import java.io.IOException
 import kotlin.collections.HashSet
 
 class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
-                 private  val configurator: Configurator) {
+                 private val configurator: Configurator) {
     var serverRepo: Repo = Repo()
 
     init {
-        if (!RepoHelper.isValidRepo(localRepo.path)) {
+        if (!RepoHelper.isValidRepo(localRepo.path.toPath())) {
             throw IllegalArgumentException("Invalid repo $localRepo")
         }
     }
@@ -30,7 +31,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
-            val (rehashes, emails) = CommitCrawler.fetchRehashesAndEmails(git)
+            val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
 
             localRepo.parseGitConfig(git.repository.config)
             initServerRepo(rehashes.last)
@@ -42,8 +43,9 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             postRepoFromServer()
 
             // Send all repo emails for invites.
-            postAuthorsToServer(emails)
+            postAuthorsToServer(authors)
 
+            val emails = authors.map { author -> author.email }.toHashSet()
             val filteredEmails = filterEmails(emails)
 
             // Common error handling for subscribers.
@@ -55,26 +57,21 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             }
 
             // Hash by all plugins.
-            val observable = CommitCrawler.getObservable(git, serverRepo,
-                rehashes.size).publish()
+            val jgitObservable =
+                CommitCrawler.getJGitObservable(git, rehashes.size).publish()
+            val observable =
+                CommitCrawler.getObservable(git, jgitObservable, serverRepo)
+
             CommitHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
             FactHasher(serverRepo, api, rehashes, filteredEmails)
                 .updateFromObservable(observable, onError)
+            CodeLongevity(serverRepo, filteredEmails, git)
+                .updateFromObservable(jgitObservable, onError, api)
 
             // Start and synchronously wait until all subscribers complete.
-            observable.connect()
-
-            // TODO(anatoly): CodeLongevity hash from observable.
-            Logger.print("Code longevity calculation. May take a while...")
-            try {
-                CodeLongevity(serverRepo, filteredEmails, git, onError)
-                    .updateStats(api)
-            }
-            catch (e: Throwable) {
-                onError(e)
-            }
-            Logger.print("Finished.")
+            Logger.print("Stats computation. May take a while...")
+            jgitObservable.connect()
 
             if (errors.isNotEmpty()) {
                 throw HashingException(errors)
@@ -110,9 +107,10 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.debug { serverRepo.toString() }
     }
 
-    private fun postAuthorsToServer(emails: HashSet<String>) {
-        api.postAuthors(emails.map { email ->
-            Author(email = email, repo = serverRepo)
+    private fun postAuthorsToServer(authors: HashSet<Author>) {
+        api.postAuthors(authors.map { author ->
+            author.repo = serverRepo
+            author
         }).onErrorThrow()
     }
 

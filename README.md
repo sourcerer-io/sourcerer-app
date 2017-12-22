@@ -1,23 +1,21 @@
-<h1 align="center">
-  <br>
-  <a href="https://sourcerer.io"><img src="https://user-images.githubusercontent.com/29913247/31576516-0ce3e9ae-b105-11e7-9a8b-89f96bd44a3d.png" alt="Sourcerer" width="200"></a>
-  <br>
-  Sourcerer App
-  <br>
-</h1>
 
-<h3 align="center">
-  Sourcerer app creates an intelligent profile for software engineers
-</h3>
+<h1 style="font-weight:normal">
+  <a href="https://sourcerer.io"><img src=https://user-images.githubusercontent.com/20287615/34189346-d426d4c2-e4ef-11e7-9da4-cc76a1ed111d.png alt="Sourcerer Logo", width=50></a>
+    sourcerer.io
+</h1>
+  An intelligent profile for software engineers
 <br>
 
 What is it?
 ===========
 
+![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/34188912-b3aaf8ba-e4ed-11e7-861c-2adf13a921ac.png)
+<br>
+
 Once you feed it some git repos, you will get a beautiful profile that will help
 you learn things about yourself, connect to others, and become a better
 engineer. Example profiles: <https://sourcerer.io/sergey>,
-<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>.
+<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>, <https://sourcerer.io/wemmer>.
 
 Profile is the first step. Some of the things on our roadmap:
 news that is relevant to your code, engineers to follow and learn from,
@@ -32,13 +30,13 @@ is a good start as it describes the client-server protocol.
 
 You will need an account, sign up on <https://sourcerer.io/>
 
-Prerequirements
-=================
+Requirements
+============
 
-* Sourcerer alpha/beta access
 * Linux or macOS
 * Java 8+ Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
 * Git repositories with master branch with at least one commit
+* Account on <https://sourcerer.io/>
 
 Install/uninstall
 =================

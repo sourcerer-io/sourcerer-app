@@ -39,9 +39,9 @@ GRADLE_VERSION=4.2.0
 # run only inside build container
 build_jar_inside() {
   if [ "$NAMESPACE" == "sandbox" ]; then
-    API="https://sandbox.eng.sourcerer.io/api/commit"
+    API="http://sandbox.sourcerer/api/commit"
   elif [ "$NAMESPACE" == "staging" ]; then
-    API="https://staging.eng.sourcerer.io/api/commit"
+    API="http://staging.sourcerer/api/commit"
   elif [ "$NAMESPACE" == "local" ]; then
     API="http://localhost:3181"
   else

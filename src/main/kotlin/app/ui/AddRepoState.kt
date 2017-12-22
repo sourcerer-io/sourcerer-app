@@ -7,6 +7,7 @@ import app.Logger
 import app.api.Api
 import app.config.Configurator
 import app.model.LocalRepo
+import app.utils.FileHelper.toPath
 import app.utils.RepoHelper
 import app.utils.UiHelper
 
@@ -28,12 +29,13 @@ class AddRepoState constructor(private val context: Context,
                 if (configurator.getLocalRepos().isEmpty()) {
                     Logger.print("Add at least one valid repository.")
                 } else {
-                    break // User finished to add repos.
+                    break  // User finished to add repos.
                 }
             } else {
-                if (RepoHelper.isValidRepo(pathString)) {
-                    Logger.print("Added git repository at $pathString.")
-                    val localRepo = LocalRepo(pathString)
+                val path = pathString.toPath()
+                if (RepoHelper.isValidRepo(path)) {
+                    Logger.print("Added git repository at $path.")
+                    val localRepo = LocalRepo(path.toString())
                     localRepo.hashAllContributors = UiHelper.confirm("Do you "
                         + "want to hash commits of all contributors?",
                         defaultIsYes = true)

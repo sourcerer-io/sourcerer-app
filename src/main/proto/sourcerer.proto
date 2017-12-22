@@ -75,6 +75,7 @@ message FactGroup {
 // Used to authors for invitational procedures.
 message Author {
     string email = 1;
+    string name = 3;
     string repo_rehash = 2;
 }
 

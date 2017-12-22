@@ -47,4 +47,11 @@ object FileHelper {
         // Removing jar filename.
         return root.resolve(fullPath.subpath(0, fullPath.nameCount - 1))
     }
+
+    fun String.toPath(): Path {
+        val substitutePath = if (this.startsWith("~" + File.separator)) {
+            System.getProperty("user.home") + this.substring(1)
+        } else { this }
+        return Paths.get(substitutePath).toAbsolutePath().normalize()
+    }
 }

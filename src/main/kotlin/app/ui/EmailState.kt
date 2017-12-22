@@ -52,8 +52,8 @@ class EmailState constructor(private val context: Context,
                     configEmails.add(email)
                 }
                 // Fetch and save emails from repo for "no-email" warning.
-                val (_, emails) = CommitCrawler.fetchRehashesAndEmails(git)
-                reposEmails.put(repo, emails)
+                val (_, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
+                reposEmails.put(repo, authors.map { it.email }.toHashSet())
             } catch (e: Exception) {
                 Logger.error(e, "Error while parsing repo")
             } finally {
