@@ -31,7 +31,7 @@ class ServerApi (private val configurator: Configurator) : Api {
         private val KEY_TOKEN = "Token="
     }
 
-    private val fuelManager = FuelManager()
+    val fuelManager = FuelManager()
     private var token = ""
 
     private fun cookieRequestInterceptor() = { req: Request ->
