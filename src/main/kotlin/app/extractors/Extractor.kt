@@ -12,6 +12,7 @@ class Extractor : ExtractorInterface {
         val TYPE_LANGUAGE = 1
         val TYPE_LIBRARY = 2
         val TYPE_KEYWORD = 3
+        val TYPE_SYNTAX = 4
         val SEPARATOR = ">"
     }
 

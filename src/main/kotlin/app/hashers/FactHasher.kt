@@ -8,6 +8,7 @@ import app.FactCodes
 import app.Logger
 import app.api.Api
 import app.extractors.Extractor
+import app.extractors.PythonExtractor
 import app.model.Author
 import app.model.Commit
 import app.model.Fact
@@ -109,6 +110,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
 
         fsLinesPerCommits[email]!![numCommits - 1] += lines.size
 
+        // Variable naming.
         lines.forEach { line ->
             val tokens = Extractor().tokenize(line)
             val underscores = tokens.count { it.contains('_') }
@@ -124,6 +126,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                 others
         }
 
+        // Indentation.
         fsIndentation[email]!![FactCodes.INDENTATION_SPACES] +=
             lines.count { it.isNotBlank()  &&  it.startsWith(" ") && !it.contains("\t")}
         fsIndentation[email]!![FactCodes.INDENTATION_TABS] +=
