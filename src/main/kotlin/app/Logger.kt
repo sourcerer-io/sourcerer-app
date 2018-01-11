@@ -61,6 +61,8 @@ object Logger {
     @kotlin.PublishedApi
     internal const val TRACE = 4
 
+    const val SILENT = BuildConfig.SILENT_USER_OUTPUT
+
     /**
      * Print stack trace on error log.
      */
@@ -112,24 +114,30 @@ object Logger {
      * CLI messages and pretty printing.
      */
     fun print(message: Any, indentLine: Boolean = false) {
-        print(message.toString(), indentLine)
+        if (!SILENT) {
+            print(message.toString(), indentLine)
+        }
     }
 
     fun print(message: String, indentLine: Boolean = false) {
-        if (indentLine) {
-            println()
+        if (!SILENT) {
+            if (indentLine) {
+                println()
+            }
+            println(message)
         }
-        println(message)
     }
 
     fun printCommit(commitMessage: String, commitHash: String,
                     percents: Double) {
-        val percentsStr = percents.format(6, 2)
-        val hash = commitHash.substring(0, 7)
-        val messageTrim = if (commitMessage.length > 59) {
-            commitMessage.substring(0, 56).plus("...")
-        } else commitMessage
-        println(" [$percentsStr%] * $hash $messageTrim")
+        if (!SILENT) {
+            val percentsStr = percents.format(6, 2)
+            val hash = commitHash.substring(0, 7)
+            val messageTrim = if (commitMessage.length > 59) {
+                commitMessage.substring(0, 56).plus("...")
+            } else commitMessage
+            println(" [$percentsStr%] * $hash $messageTrim")
+        }
     }
 
     private val commitDetailIndent = generateIndent(10) + "|" +

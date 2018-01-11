@@ -42,15 +42,14 @@ buildConfig {
     // Logging.
     buildConfigField 'String', 'ENV', project.hasProperty('env') ? env : 'production'
     buildConfigField 'String', 'LOG_LEVEL', project.hasProperty('log') ? log : 'info'
+    buildConfigField 'boolean', 'SILENT_USER_OUTPUT', project.hasProperty('silent') ? silent : 'false'
+    buildConfigField 'String', 'SENTRY_DSN', 'https://0263d6473bd24a9ba40e25aa5fb0a242:c5451dc815074bff8ce3fb9f0851f2f5@sentry.io/233260'
+    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'false'
 
     // Google Analytics.
     buildConfigField 'String', 'GA_BASE_PATH', 'http://www.google-analytics.com'
     buildConfigField 'String', 'GA_TRACKING_ID', 'UA-107129190-2'
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
-
-    // Logging.
-    buildConfigField 'String', 'SENTRY_DSN', 'https://0263d6473bd24a9ba40e25aa5fb0a242:c5451dc815074bff8ce3fb9f0851f2f5@sentry.io/233260'
-    buildConfigField 'boolean', 'PRINT_STACK_TRACE', 'false'
 
     // Models storage path.
     buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v1/'
