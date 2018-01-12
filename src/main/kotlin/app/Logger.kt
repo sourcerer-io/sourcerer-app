@@ -62,6 +62,7 @@ object Logger {
     internal const val TRACE = 4
 
     const val SILENT = BuildConfig.SILENT_USER_OUTPUT
+    const val SENTRY_ENABLED = BuildConfig.SENTRY_ENABLED
 
     /**
      * Print stack trace on error log.
@@ -71,14 +72,16 @@ object Logger {
     /**
      * Context of Sentry error reporting software for adding info.
      */
-    private val sentryContext: Context
+    private val sentryContext: Context?
 
     /**
      * Username used for error reporting.
      */
     var username: String? = null
         set(value) {
-            sentryContext.user = UserBuilder().setUsername(value).build()
+            if (SENTRY_ENABLED) {
+                sentryContext?.user = UserBuilder().setUsername(value).build()
+            }
             Analytics.username = value ?: ""
         }
 
@@ -88,9 +91,13 @@ object Logger {
         }
 
     init {
-        Sentry.init(BuildConfig.SENTRY_DSN)
-        sentryContext = Sentry.getContext()
-        addTags()
+        if (SENTRY_ENABLED) {
+            Sentry.init(BuildConfig.SENTRY_DSN)
+            sentryContext = Sentry.getContext()
+            addTags()
+        } else {
+            sentryContext = null
+        }
         LEVEL = configLevelValue()
     }
 
@@ -168,7 +175,7 @@ object Logger {
         }
         if (!logOnly) {
             Analytics.trackError(e)
-            Sentry.capture(e)
+            capture(e)
         }
         addBreadcrumb(finalMessage, Breadcrumb.Level.ERROR)
     }
@@ -221,28 +228,38 @@ object Logger {
 
     @kotlin.PublishedApi
     internal fun addBreadcrumb(message: String, level: Breadcrumb.Level) {
-        sentryContext.recordBreadcrumb(BreadcrumbBuilder()
-            .setMessage(message)
-            .setLevel(level)
-            .setTimestamp(Date())
-            .build())
+        if (SENTRY_ENABLED) {
+            sentryContext?.recordBreadcrumb(BreadcrumbBuilder()
+                .setMessage(message)
+                .setLevel(level)
+                .setTimestamp(Date())
+                .build())
+        }
     }
 
     private fun addTags() {
-        val default = "unavailable"
-        val osName = System.getProperty("os.name", default)
-        val osVersion = System.getProperty("os.version", default)
-        val javaVendor = System.getProperty("java.vendor", default)
-        val javaVersion = System.getProperty("java.version", default)
+        if (SENTRY_ENABLED) {
+            val default = "unavailable"
+            val osName = System.getProperty("os.name", default)
+            val osVersion = System.getProperty("os.version", default)
+            val javaVendor = System.getProperty("java.vendor", default)
+            val javaVersion = System.getProperty("java.version", default)
 
-        sentryContext.addTag("environment", BuildConfig.ENV)
-        sentryContext.addTag("log-level", BuildConfig.LOG_LEVEL)
-        sentryContext.addTag("version", BuildConfig.VERSION)
-        sentryContext.addTag("version-code", BuildConfig.VERSION_CODE
-                                                        .toString())
-        sentryContext.addTag("os-name", osName)
-        sentryContext.addTag("os-version", osVersion)
-        sentryContext.addTag("java-vendor", javaVendor)
-        sentryContext.addTag("java-version", javaVersion)
+            sentryContext?.addTag("environment", BuildConfig.ENV)
+            sentryContext?.addTag("log-level", BuildConfig.LOG_LEVEL)
+            sentryContext?.addTag("version", BuildConfig.VERSION)
+            sentryContext?.addTag("version-code", BuildConfig.VERSION_CODE
+                .toString())
+            sentryContext?.addTag("os-name", osName)
+            sentryContext?.addTag("os-version", osVersion)
+            sentryContext?.addTag("java-vendor", javaVendor)
+            sentryContext?.addTag("java-version", javaVersion)
+        }
+    }
+
+    private fun capture(e: Throwable) {
+        if (SENTRY_ENABLED) {
+            Sentry.capture(e)
+        }
     }
 }
