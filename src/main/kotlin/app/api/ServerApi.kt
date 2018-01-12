@@ -29,6 +29,8 @@ class ServerApi (private val configurator: Configurator) : Api {
         private val HEADER_COOKIE = "Cookie"
         private val HEADER_SET_COOKIE = "Set-Cookie"
         private val KEY_TOKEN = "Token="
+        private val TIMEOUT = 30000
+        private val TIMEOUT_READ = 30000
     }
 
     val fuelManager = FuelManager()
@@ -125,7 +127,8 @@ class ServerApi (private val configurator: Configurator) : Api {
 
         try {
             Logger.debug { "Request $requestName initialized" }
-            val (_, res, result) = request.responseString()
+            val (_, res, result) = request.timeout(TIMEOUT)
+                .timeoutRead(TIMEOUT_READ).responseString()
             val (_, e) = result
             if (e == null) {
                 Logger.debug { "Request $requestName success" }
