@@ -8,6 +8,7 @@ import app.FactCodes
 import app.hashers.CodeLine
 import app.hashers.CodeLineAges
 import app.hashers.CodeLongevity
+import app.hashers.CommitCrawler
 import app.hashers.RevCommitLine
 import app.model.*
 
@@ -40,31 +41,32 @@ class ColleaguesTest : Spek({
         val emails = hashSetOf(author1.email, author2.email)
 
         val serverRepo = Repo(rehash = testRehash)
-        val mockApi = MockApi(mockRepo = serverRepo)
-
-        testRepo.createFile(fileName, listOf("line1", "line2"))
-        testRepo.commit(message = "initial commit",
-                        author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 0, 0)
-                            .build().time)
-
-        testRepo.deleteLines(fileName, 1, 1)
-        testRepo.commit(message = "delete line",
-                        author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
-                            .build().time)
-
-        testRepo.deleteLines(fileName, 0, 0)
-        testRepo.commit(message = "delete line #2",
-                        author = author2,
-                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
-                            .build().time)
-
-        val cl = CodeLongevity(serverRepo, emails, testRepo.git)
-        cl.updateFromObservable(onError = { _ -> fail("exception") },
-                                api = mockApi)
 
         it("'t1'") {
+            val mockApi = MockApi(mockRepo = serverRepo)
+
+            testRepo.createFile(fileName, listOf("line1", "line2"))
+            testRepo.commit(message = "initial commit",
+                author = author1,
+                date = Calendar.Builder().setTimeOfDay(0, 0, 0)
+                    .build().time)
+
+            testRepo.deleteLines(fileName, 1, 1)
+            testRepo.commit(message = "delete line",
+                author = author1,
+                date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                    .build().time)
+
+            testRepo.deleteLines(fileName, 0, 0)
+            testRepo.commit(message = "delete line #2",
+                author = author2,
+                date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                    .build().time)
+
+            val cl = CodeLongevity(serverRepo, emails, testRepo.git)
+            cl.updateFromObservable(onError = { _ -> fail("exception") },
+                api = mockApi)
+
             val triple1 = cl.colleagues.get(author1.email)[0]
             assertEquals(triple1.first, author2.email,
                 "Wrong colleague email #1")
@@ -95,40 +97,39 @@ class ColleaguesTest : Spek({
         val emails = hashSetOf(author1.email, author2.email)
 
         val serverRepo = Repo(rehash = testRehash)
-        val mockApi = MockApi(mockRepo = serverRepo)
-
-        testRepo.createFile(fileName, listOf("line1", "line2"))
-        testRepo.commit(message = "initial commit",
-                        author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 0, 0)
-                            .build().time)
-
-        testRepo.deleteLines(fileName, 1, 1)
-        testRepo.commit(message = "delete line",
-                        author = author2,
-                        date = Calendar.Builder().setTimeOfDay(0, 1, 0)
-                            .build().time)
-
-        testRepo.insertLines(fileName, 1, listOf("line in the end"))
-        testRepo.commit(message = "insert line",
-                        author = author2,
-                        date = Calendar.Builder().setTimeOfDay(0, 10, 0)
-                            .build().time)
-
-        testRepo.deleteLines(fileName, 1, 1)
-        testRepo.commit(message = "delete line #2",
-                        author = author1,
-                        date = Calendar.Builder().setTimeOfDay(0, 20, 0)
-                            .build().time)
-
-        CodeLongevity(serverRepo, emails, testRepo.git)
-            .updateFromObservable(onError = { _ -> fail("exception") },
-                                  api = mockApi)
 
         it("'t1'") {
-            for (f in mockApi.receivedFacts) {
-              println(f)
-            }
+            val mockApi = MockApi(mockRepo = serverRepo)
+
+            testRepo.createFile(fileName, listOf("line1", "line2"))
+            testRepo.commit(message = "initial commit",
+                author = author1,
+                date = Calendar.Builder().setTimeOfDay(0, 0, 0)
+                    .build().time)
+
+            testRepo.deleteLines(fileName, 1, 1)
+            testRepo.commit(message = "delete line",
+                author = author2,
+                date = Calendar.Builder().setTimeOfDay(0, 1, 0)
+                    .build().time)
+
+            testRepo.insertLines(fileName, 1, listOf("line in the end"))
+            testRepo.commit(message = "insert line",
+                author = author2,
+                date = Calendar.Builder().setTimeOfDay(0, 10, 0)
+                    .build().time)
+
+            testRepo.deleteLines(fileName, 1, 1)
+            testRepo.commit(message = "delete line #2",
+                author = author1,
+                date = Calendar.Builder().setTimeOfDay(0, 20, 0)
+                    .build().time)
+
+            CodeLongevity(serverRepo, emails, testRepo.git)
+                .updateFromObservable(
+                    onError = { _ -> fail("exception") },
+                    api = mockApi)
+
             assertTrue(mockApi.receivedFacts.contains(
                 Fact(repo = serverRepo,
                      code = FactCodes.COLLEAGUES,

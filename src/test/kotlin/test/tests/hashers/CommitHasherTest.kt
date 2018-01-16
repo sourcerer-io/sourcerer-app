@@ -19,7 +19,6 @@ import java.io.File
 import java.util.stream.StreamSupport.stream
 import kotlin.streams.toList
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 class CommitHasherTest : Spek({
     fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
@@ -246,13 +245,11 @@ class CommitHasherTest : Spek({
                 "x = map(lambda x: x**2, range(10))," +
                         "map(lambda x: x**3, range(10)))")
 
-        val authorEmail = "test@domain.com"
-        val author = Author("Test", authorEmail)
+        val author = Author(userName, userEmail)
 
         val testRepoPath = "../testrepo-commit-hasher-"
         val testRepo = TestRepo(testRepoPath + "python-facts")
 
-        val emails = hashSetOf(authorEmail)
         val mockApi = MockApi(mockRepo = repo)
         val observable = CommitCrawler.getObservable(testRepo.git, repo)
 
