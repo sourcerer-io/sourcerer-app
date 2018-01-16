@@ -131,7 +131,7 @@ class CodeLine(val repo: Repository,
 /**
  * Detects colleagues and their 'work vicinity' from commits.
  */
-class Colleagues {
+class Colleagues(private val serverRepo: Repo) {
     // A map of <colleague_email1, colleague_email2> pairs to pairs of
     // <month, time>, which indicates to a minimum time in ms between all line
     // changes for these two colleagues in a given month (yyyy-mm).
@@ -145,9 +145,7 @@ class Colleagues {
         if (editorEmail == null || authorEmail == editorEmail) {
             return
         }
-        val emails =
-            if (editorEmail < authorEmail) Pair(editorEmail, authorEmail)
-            else Pair(authorEmail, editorEmail)
+        val emails = Pair(authorEmail, editorEmail)
 
         val dates = map.getOrPut(emails, { hashMapOf() })
         val month = SimpleDateFormat("yyyy-MM").format(line.editDate)
@@ -159,15 +157,36 @@ class Colleagues {
         }
     }
 
-    fun updateStats() {
-        // TODO(alex): report the stats to the server
-        if (Logger.isDebug) {
-            map.forEach( { (email1, email2), dates ->
-                Logger.debug { "<$email1> <$email2>" }
-                dates.forEach { month, vicinity ->
-                    Logger.debug { "  $month: $vicinity ms" }
-                }
-            } )
+    fun calculateAndSendFacts(api: Api) {
+        // Expose colleagues iff colleague1 edited colleague2 code and
+        // colleague2 edited colleauge1 code.
+        val auxHash = hashSetOf<Pair<String, String>>()
+        for ((pair, dates) in map) {
+            val email1 = pair.first;
+            val email2 = pair.second;
+            if (auxHash.contains(Pair(email2, email1))) {
+                continue;
+            }
+
+            val min1 = dates.minBy { (_, vicinity) -> vicinity }!!
+            val dates2 = map.get(Pair(email2, email1));
+            if (dates2 != null) {
+                auxHash.add(Pair(email1, email2))
+
+                val min2 = dates2.minBy { (_, vicinity) -> vicinity }!!
+                val min: Long =
+                    if (min1.value < min2.value) { min1.value }
+                    else { min2.value }
+
+                val stats = mutableListOf<Fact>()
+                stats.add(Fact(serverRepo,
+                               FactCodes.COLLEAGUES,
+                               value = email1,
+                               value2 = email2,
+                               value3 = min.toString()))
+
+                api.postFacts(stats).onErrorThrow()
+            }
         }
     }
 
@@ -243,7 +262,7 @@ class CodeLongevity(
         catch(e: Exception) { throw Exception("No branch") }
 
     val dataPath = FileHelper.getPath(serverRepo.rehash, "longevity")
-    val colleagues = Colleagues()
+    val colleagues = Colleagues(serverRepo)
 
     /**
      * Updates code line age statistics on the server.
@@ -296,7 +315,7 @@ class CodeLongevity(
             Logger.info { "Sent ${stats.size} facts to server" }
         }
 
-        colleagues.updateStats()
+        colleagues.calculateAndSendFacts(api)
     }
 
     /**

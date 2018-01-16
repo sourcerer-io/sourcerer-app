@@ -27,8 +27,10 @@ class JavascriptExtractor : ExtractorInterface {
 
         val splitRegex =
             Regex("""\s+|,|;|:|\*|\n|\(|\)|\\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
-        val fileTokens = fileContent.joinToString(separator = " ").toLowerCase()
+        val twoOrMoreWordsRegex = Regex("""(".+?\s.+?[^"]*"|'.+?\s.+?[^']*')""")
+        val fileTokens = twoOrMoreWordsRegex.replace(fileContent.joinToString(separator = " ").toLowerCase(), "")
             .split(splitRegex)
+
         imports.addAll(fileTokens.filter { token -> token in LIBRARIES })
 
         return imports.toList()

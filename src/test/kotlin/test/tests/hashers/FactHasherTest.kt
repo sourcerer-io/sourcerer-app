@@ -369,4 +369,5 @@ class FactHasherTest : Spek({
             testRepo.destroy()
         }
     }
+
 })

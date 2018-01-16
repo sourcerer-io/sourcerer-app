@@ -15,7 +15,9 @@ data class Fact(
     var code: Int = 0,
     var key: Int = 0,
     var value: String = "",
-    var author: Author = Author()
+    var author: Author = Author(),
+    var value2: String = "",
+    var value3: String = ""
 ) {
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.Fact) : this() {
@@ -38,6 +40,8 @@ data class Fact(
             .setCode(code)
             .setKey(key)
             .setValue1(value)
+            .setValue2(value2)
+            .setValue3(value3)
             .build()
     }
 

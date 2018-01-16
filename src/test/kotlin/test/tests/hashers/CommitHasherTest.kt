@@ -5,6 +5,7 @@
 package test.tests.hashers
 
 import app.api.MockApi
+import app.extractors.Extractor
 import app.hashers.CommitHasher
 import app.hashers.CommitCrawler
 import app.model.*
@@ -13,11 +14,11 @@ import org.eclipse.jgit.api.Git
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
+import test.utils.TestRepo
 import java.io.File
 import java.util.stream.StreamSupport.stream
 import kotlin.streams.toList
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 class CommitHasherTest : Spek({
     fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
@@ -235,6 +236,63 @@ class CommitHasherTest : Spek({
             assertEquals(0, mockApi.receivedDeletedCommits.size)
         }
     }*/
+
+    given("commits with syntax stats") {
+
+        val lines = listOf("x = [i**2 for i range(9999)]", "def fn()", "x = 1",
+                "x = map(lambda x: x**2, range(9999))",
+                "x = map(lambda x: x**2, map(lambda x: x**3, range(10))",
+                "x = map(lambda x: x**2, range(10))," +
+                        "map(lambda x: x**3, range(10)))")
+
+        val author = Author(userName, userEmail)
+
+        val testRepoPath = "../testrepo-commit-hasher-"
+        val testRepo = TestRepo(testRepoPath + "python-facts")
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.py"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author)
+            }
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+            if (errors.size > 0) {
+                println(errors[0].message)
+            }
+            assertEquals(0, errors.size)
+
+            val syntaxStats = mockApi.receivedAddedCommits
+                .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                    allStats.addAll(commit.stats)
+                    allStats
+                }.filter { it.type == Extractor.TYPE_SYNTAX }
+
+            val mapStats = syntaxStats.filter { it.tech == "python>map" }
+            val listStats = syntaxStats.filter { it.tech == "python>list" }
+            assertEquals(3, mapStats.size)
+            assertEquals(1, listStats.size)
+            assertEquals(5, mapStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, mapStats.map { it.numLinesDeleted }.sum())
+
+            assertEquals(1, listStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, listStats.map { it.numLinesDeleted }.sum())
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
 
     cleanRepos()
 })

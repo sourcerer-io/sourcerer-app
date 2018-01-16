@@ -32,6 +32,7 @@ data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 */
 object CommitCrawler {
     private val MASTER_BRANCH = "refs/heads/master"
+    private val MASTER_BRANCH_ORIGIN = "refs/remotes/origin/master"
     private val REMOTE_HEAD = "refs/remotes/origin/HEAD"
 
     fun getDefaultBranchHead(git: Git): ObjectId {
@@ -47,7 +48,12 @@ object CommitCrawler {
             Logger.debug { "Hashing from local master branch" }
             return masterBranch
         }
-        throw Exception("No remote default or local master branch found")
+        val originMasterBranch = git.repository.resolve(MASTER_BRANCH_ORIGIN)
+        if (originMasterBranch != null) {
+            Logger.debug { "Hashing from origin master branch" }
+            return originMasterBranch
+        }
+        throw Exception("No remote default or local/origin master branch found")
     }
 
     fun fetchRehashesAndAuthors(git: Git):

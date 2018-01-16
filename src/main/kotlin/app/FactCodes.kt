@@ -26,4 +26,6 @@ object FactCodes {
     val INDENTATION = 14
     val INDENTATION_TABS = 0
     val INDENTATION_SPACES = 1
+
+    val COLLEAGUES = 15
 }

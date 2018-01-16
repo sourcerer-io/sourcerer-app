@@ -18,10 +18,19 @@ import app.utils.RepoHelper
 import app.utils.UiHelper
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.MissingCommandException
+import java.security.GeneralSecurityException
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import java.security.cert.X509Certificate
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
 
 fun main(argv : Array<String>) {
     Thread.setDefaultUncaughtExceptionHandler { _, e: Throwable ->
         Logger.error(e, "Uncaught exception")
+    }
+    if (BuildConfig.ENV != "production") {
+        disableSslChecks()
     }
     Main(argv)
 }
@@ -146,4 +155,27 @@ class Main(argv: Array<String>) {
             "https://github.com/sourcerer-io")
         jc.usage()  // Will show detailed info about usage based on annotations.
     }
+}
+
+fun disableSslChecks() {
+    // Create a trust manager that does not validate certificate chains.
+    val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+        override fun getAcceptedIssuers(): Array<X509Certificate> {
+            return arrayOf()
+        }
+        override fun checkClientTrusted(certs: Array<X509Certificate>,
+                                        authType: String) {}
+        override fun checkServerTrusted(certs: Array<X509Certificate>,
+                                        authType: String) {}
+    })
+
+    // Install the all-trusting trust manager.
+    try {
+        val sc = SSLContext.getInstance("SSL")
+        sc.init(null, trustAllCerts, java.security.SecureRandom())
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
+    } catch (e: GeneralSecurityException) {}
+
+    // Skip server name checking.
+    HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
 }
