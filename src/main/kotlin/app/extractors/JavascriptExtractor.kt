@@ -23,22 +23,19 @@ class JavascriptExtractor : ExtractorInterface {
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val imports = mutableSetOf<String>()
-
         val splitRegex =
             Regex("""\s+|,|;|:|\*|\n|\(|\)|\\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
-        val twoOrMoreWordsRegex = Regex("""(".+?\s.+?[^"]*"|'.+?\s.+?[^']*')""")
-        val fileTokens = twoOrMoreWordsRegex.replace(fileContent.joinToString(separator = " ").toLowerCase(), "")
-            .split(splitRegex)
+        val twoOrMoreWordsRegex = Regex("""(".+?\s.+?"|'.+?\s.+?')""")
 
-        imports.addAll(fileTokens.filter { token -> token in LIBRARIES })
+        val line = fileContent.joinToString(separator = " ").toLowerCase()
+        val fileTokens = twoOrMoreWordsRegex.replace(line, "").split(splitRegex)
 
-        return imports.toList()
+        return fileTokens.filter { token -> token in LIBRARIES }.distinct()
     }
 
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
-
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

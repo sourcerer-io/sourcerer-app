@@ -14,6 +14,7 @@ class Extractor : ExtractorInterface {
         val TYPE_KEYWORD = 3
         val TYPE_SYNTAX = 4
         val SEPARATOR = ">"
+        val RESTRICTED_EXTS = listOf(".min.js")
     }
 
     fun create(extension: String): ExtractorInterface {
@@ -36,6 +37,7 @@ class Extractor : ExtractorInterface {
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
         return files.groupBy { file -> file.extension }
+            .filter { (extension, _) -> !RESTRICTED_EXTS.contains(extension) }
             .map { (extension, files) -> create(extension).extract(files) }
             .fold(mutableListOf()) { accStats, stats ->
                 accStats.addAll(stats)
