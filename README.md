@@ -1,9 +1,9 @@
 
 <h1 style="font-weight:normal">
   <a href="https://sourcerer.io"><img src=https://user-images.githubusercontent.com/20287615/34189346-d426d4c2-e4ef-11e7-9da4-cc76a1ed111d.png alt="Sourcerer Logo", width=50></a>
-    sourcerer.io
+  &nbsp; sourcerer.io
 </h1>
-  An intelligent profile for software engineers
+  An intelligent profile for software engineers. Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
 <br>
 
 What is it?
@@ -22,8 +22,11 @@ news that is relevant to your code, engineers to follow and learn from,
 technology and libraries you should know about, projects
 that could use your help.
 
-Both open source and closed source repos are fine. Sourcerer app does not upload
-source code anywhere, and it never will. The app looks at repos locally on your
+Both open source and closed source repos are fine. The easiest way to get started with open source repos is to go to
+<https://sourcerer.io/start>, and select GitHub. For closed source repos, you can
+ use this Sourcerer app. You will still need an account, which you can get at <https://sourcerer.io/>
+
+Sourcerer app does not upload source code anywhere, and it never will. The app looks at repos locally on your
 machine, and then sends stats to sourcerer.io. The best way to verify is to
 look at the code. [src/main/proto/sourcerer.proto](https://github.com/sourcerer-io/sourcerer-app/blob/develop/src/main/proto/sourcerer.proto)
 is a good start as it describes the client-server protocol.

@@ -17,6 +17,8 @@ object FileHelper {
     private val jarPath = getJarPath()
     private val settingsPath = jarPath.resolve(dirName)
 
+    private val specificExts = listOf(".min.js")
+
     fun getPath(name: String, vararg parts: String): Path {
         val path = settingsPath.resolve(Paths.get("", *parts))
         if (Files.notExists(path)) {
@@ -34,7 +36,12 @@ object FileHelper {
     }
 
     fun getFileExtension(path: String): String {
-        val fileName = Paths.get(path).fileName.toString()
+        val fileName = Paths.get(path).fileName.toString().toLowerCase()
+        for (ext in specificExts) {
+            if (fileName.endsWith(ext)) {
+                return ext
+            }
+        }
         return fileName.substringAfterLast(delimiter = '.',
                                            missingDelimiterValue = "")
     }
