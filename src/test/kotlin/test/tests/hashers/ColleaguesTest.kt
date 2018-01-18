@@ -32,7 +32,7 @@ import kotlin.test.assertNotNull
  */
 class ColleaguesTest : Spek({
     given("'colleagues #1'") {
-        val testRepoPath = "../CodeLongevity_colleagues1"
+        val testRepoPath = "../colleagues1"
         val testRepo = TestRepo(testRepoPath)
         val testRehash = "rehash_colleagues1"
         val fileName = "test1.txt"
@@ -88,9 +88,9 @@ class ColleaguesTest : Spek({
     }
 
     given("'colleagues stats'") {
-        val testRepoPath = "../CodeLongevity_colleagues_stats"
+        val testRepoPath = "../colleagues_stats"
         val testRepo = TestRepo(testRepoPath)
-        val testRehash = "rehash_lngstats2"
+        val testRehash = "rehash_colleagues_stats"
         val fileName = "test1.txt"
         val author1 = Author(testRepo.userName, testRepo.userEmail)
         val author2 = Author("Vasya Pupkin", "vasya@pupkin.me")
