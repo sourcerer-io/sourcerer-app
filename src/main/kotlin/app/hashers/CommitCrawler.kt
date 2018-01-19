@@ -139,7 +139,22 @@ object CommitCrawler {
             Logger.printCommit(commit.shortMessage, commit.name, perc)
 
             val diffEntries = df.scan(parentCommit, commit)
-            val diffEdits = diffEntries.map { diff ->
+            val diffEdits = diffEntries
+            .filter { diff ->
+                diff.changeType != DiffEntry.ChangeType.COPY
+            }
+            .filter { diff ->
+                val fileId =
+                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
+                        diff.getNewId().toObjectId()
+                    } else {
+                        diff.getOldId().toObjectId()
+                    }
+                val stream = try { repo.open(fileId).openStream() }
+                catch (e: Exception) { null }
+                stream != null && !RawText.isBinary(stream)
+            }
+            .map { diff ->
                 JgitDiff(diff, df.toFileHeader(diff).toEditList())
             }
             subscriber.onNext(JgitPair(commit, diffEdits))
@@ -180,18 +195,6 @@ object CommitCrawler {
     private fun getDiffFiles(jgitRepo: Repository,
                              jgitDiffs: List<JgitDiff>) : List<DiffFile> {
         return jgitDiffs
-            // Skip binary files.
-            .filter { (diff, _) ->
-                val fileId =
-                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
-                        diff.getNewId().toObjectId()
-                    } else {
-                        diff.getOldId().toObjectId()
-                    }
-                val stream = try { jgitRepo.open(fileId).openStream() }
-                catch (e: Exception) { null }
-                stream != null && !RawText.isBinary(stream)
-            }
             .map { (diff, edits) ->
                 // TODO(anatoly): Can produce exception for large object.
                 // Investigate for size.

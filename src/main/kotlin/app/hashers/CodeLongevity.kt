@@ -456,22 +456,6 @@ class CodeLongevity(
                 val newId = diff.getNewId().toObjectId()
                 Logger.trace { "old: '$oldPath', new: '$newPath'" }
 
-                // Skip binary files.
-                val fileId = if (newPath != DiffEntry.DEV_NULL) newId else oldId
-                try {
-                    if (RawText.isBinary(repo.open(fileId).openStream())) {
-                        continue
-                    }
-                } catch (e: Exception) {
-                    continue
-                    //TODO(anatoly): better exception handling.
-                }
-
-                // TODO(alex): does it happen in the wilds?
-                if (diff.changeType == DiffEntry.ChangeType.COPY) {
-                    continue
-                }
-
                 // File was deleted, initialize the line array in the files map.
                 if (diff.changeType == DiffEntry.ChangeType.DELETE) {
                     val fileLoader = repo.open(oldId)
