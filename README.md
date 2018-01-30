@@ -3,7 +3,7 @@
   <a href="https://sourcerer.io"><img src=https://user-images.githubusercontent.com/20287615/34189346-d426d4c2-e4ef-11e7-9da4-cc76a1ed111d.png alt="Sourcerer Logo", width=50></a>
   &nbsp; sourcerer.io
 </h1>
-  An intelligent profile for software engineers. Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
+  A visual profile for software engineers. Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>. Screenshot below.
 <br>
 
 What is it?

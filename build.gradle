@@ -37,7 +37,7 @@ buildConfig {
 
     // App version.
     buildConfigField 'int', 'VERSION_CODE', '6'
-    buildConfigField 'String', 'VERSION', '0.2.0'
+    buildConfigField 'String', 'VERSION', '0.2.1'
 
     // Logging.
     buildConfigField 'String', 'ENV', project.hasProperty('env') ? env : 'production'
@@ -54,6 +54,11 @@ buildConfig {
 
     // Models storage path.
     buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v1/'
+
+    // Hashing.
+    buildConfigField 'boolean', 'COMMIT_HASHER_ENABLED', project.hasProperty('commit-hasher-enabled') ? project.property('commit-hasher-enabled').toString() : 'true'
+    buildConfigField 'boolean', 'FACT_HASHER_ENABLED', project.hasProperty('fact-hasher-enabled') ? project.property('fact-hasher-enabled').toString() : 'true'
+    buildConfigField 'boolean', 'LONGEVITY_ENABLED', project.hasProperty('longevity-enabled') ? project.property('longevity-enabled').toString() : 'false'
 
     buildConfig
 }

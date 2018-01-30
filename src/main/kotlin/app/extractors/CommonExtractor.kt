@@ -40,7 +40,7 @@ class CommonExtractor : ExtractorInterface {
             reversedMap.put("perl", listOf("pl", "PL"))
             reversedMap.put("powershell", listOf("ps1", "psm1", "psd1"))
             reversedMap.put("processing", listOf("pde"))
-            reversedMap.put("prolog", listOf("pl", "pro", "P"))
+            reversedMap.put("prolog", listOf("pl", "P"))
             reversedMap.put("puppet", listOf("pp"))
             reversedMap.put("r", listOf("r", "R"))
             reversedMap.put("rust", listOf("rs"))

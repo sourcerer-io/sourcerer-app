@@ -57,7 +57,7 @@ object CommitCrawler {
     }
 
     fun fetchRehashesAndAuthors(git: Git):
-        Pair<LinkedList<String>, HashSet<Author>> {
+        Triple<LinkedList<String>, HashSet<Author>, HashMap<String, Int>> {
         val head: RevCommit = RevWalk(git.repository)
             .parseCommit(getDefaultBranchHead(git))
 
@@ -67,6 +67,7 @@ object CommitCrawler {
         val commitsRehashes = LinkedList<String>()
         val emails = hashSetOf<String>()
         val names = hashMapOf<String, String>()
+        val commitsCount = hashMapOf<String, Int>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
@@ -81,6 +82,7 @@ object CommitCrawler {
                     names[email] = name
                 }
             }
+            commitsCount[email] = commitsCount.getOrDefault(email, 0) + 1
 
             commit.disposeBody()
             commit = revWalk.next()
@@ -90,11 +92,12 @@ object CommitCrawler {
         val authors = emails.map { email -> Author(names[email]!!, email) }
             .toHashSet()
 
-        return Pair(commitsRehashes, authors)
+        return Triple(commitsRehashes, authors, commitsCount)
     }
 
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
+                          filteredEmails: HashSet<String>? = null,
                           tail : RevCommit? = null) : Observable<JgitPair> =
         Observable.create { subscriber ->
 
@@ -138,8 +141,29 @@ object CommitCrawler {
             } else 0.0
             Logger.printCommit(commit.shortMessage, commit.name, perc)
 
+            val email = commit.authorIdent.emailAddress
+            if (filteredEmails != null && !filteredEmails.contains(email)) {
+                commit = parentCommit
+                continue
+            }
+
             val diffEntries = df.scan(parentCommit, commit)
-            val diffEdits = diffEntries.map { diff ->
+            val diffEdits = diffEntries
+            .filter { diff ->
+                diff.changeType != DiffEntry.ChangeType.COPY
+            }
+            .filter { diff ->
+                val fileId =
+                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
+                        diff.getNewId().toObjectId()
+                    } else {
+                        diff.getOldId().toObjectId()
+                    }
+                val stream = try { repo.open(fileId).openStream() }
+                catch (e: Exception) { null }
+                stream != null && !RawText.isBinary(stream)
+            }
+            .map { diff ->
                 JgitDiff(diff, df.toFileHeader(diff).toEditList())
             }
             subscriber.onNext(JgitPair(commit, diffEdits))
@@ -180,18 +204,6 @@ object CommitCrawler {
     private fun getDiffFiles(jgitRepo: Repository,
                              jgitDiffs: List<JgitDiff>) : List<DiffFile> {
         return jgitDiffs
-            // Skip binary files.
-            .filter { (diff, _) ->
-                val fileId =
-                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
-                        diff.getNewId().toObjectId()
-                    } else {
-                        diff.getOldId().toObjectId()
-                    }
-                val stream = try { jgitRepo.open(fileId).openStream() }
-                catch (e: Exception) { null }
-                stream != null && !RawText.isBinary(stream)
-            }
             .map { (diff, edits) ->
                 // TODO(anatoly): Can produce exception for large object.
                 // Investigate for size.
