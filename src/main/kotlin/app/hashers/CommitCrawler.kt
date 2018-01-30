@@ -57,7 +57,7 @@ object CommitCrawler {
     }
 
     fun fetchRehashesAndAuthors(git: Git):
-        Pair<LinkedList<String>, HashSet<Author>> {
+        Triple<LinkedList<String>, HashSet<Author>, HashMap<String, Int>> {
         val head: RevCommit = RevWalk(git.repository)
             .parseCommit(getDefaultBranchHead(git))
 
@@ -67,6 +67,7 @@ object CommitCrawler {
         val commitsRehashes = LinkedList<String>()
         val emails = hashSetOf<String>()
         val names = hashMapOf<String, String>()
+        val commitsCount = hashMapOf<String, Int>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
@@ -81,6 +82,7 @@ object CommitCrawler {
                     names[email] = name
                 }
             }
+            commitsCount[email] = commitsCount.getOrDefault(email, 0) + 1
 
             commit.disposeBody()
             commit = revWalk.next()
@@ -90,11 +92,12 @@ object CommitCrawler {
         val authors = emails.map { email -> Author(names[email]!!, email) }
             .toHashSet()
 
-        return Pair(commitsRehashes, authors)
+        return Triple(commitsRehashes, authors, commitsCount)
     }
 
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
+                          filteredEmails: HashSet<String>? = null,
                           tail : RevCommit? = null) : Observable<JgitPair> =
         Observable.create { subscriber ->
 
@@ -137,6 +140,12 @@ object CommitCrawler {
                 (commitCount.toDouble() / totalCommitCount) * 100
             } else 0.0
             Logger.printCommit(commit.shortMessage, commit.name, perc)
+
+            val email = commit.authorIdent.emailAddress
+            if (filteredEmails != null && !filteredEmails.contains(email)) {
+                commit = parentCommit
+                continue
+            }
 
             val diffEntries = df.scan(parentCommit, commit)
             val diffEdits = diffEntries

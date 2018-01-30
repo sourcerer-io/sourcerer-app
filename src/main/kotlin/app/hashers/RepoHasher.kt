@@ -3,6 +3,7 @@
 
 package app.hashers
 
+import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
@@ -56,18 +57,29 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 Logger.error(e, "Hashing error")
             }
 
-            // Hash by all plugins.
-            val jgitObservable =
-                CommitCrawler.getJGitObservable(git, rehashes.size).publish()
-            val observable =
-                CommitCrawler.getObservable(git, jgitObservable, serverRepo)
+            // Only code longevity needs to calculate each commit, if it's
+            // disabled then read only author's emails.
+            val crawlerEmails = if (!BuildConfig.LONGEVITY_ENABLED) {
+                filteredEmails
+            } else null
+            val jgitObservable = CommitCrawler.getJGitObservable(git,
+                rehashes.size, crawlerEmails).publish()
+            val observable = CommitCrawler.getObservable(git,
+                jgitObservable, serverRepo)
 
-            CommitHasher(serverRepo, api, rehashes, filteredEmails)
-                .updateFromObservable(observable, onError)
-            FactHasher(serverRepo, api, rehashes, filteredEmails)
-                .updateFromObservable(observable, onError)
-            CodeLongevity(serverRepo, filteredEmails, git)
-                .updateFromObservable(jgitObservable, onError, api)
+            // Hash by all plugins.
+            if (BuildConfig.COMMIT_HASHER_ENABLED) {
+                CommitHasher(serverRepo, api, rehashes, filteredEmails)
+                    .updateFromObservable(observable, onError)
+            }
+            if (BuildConfig.FACT_HASHER_ENABLED) {
+                FactHasher(serverRepo, api, rehashes, filteredEmails)
+                    .updateFromObservable(observable, onError)
+            }
+            if (BuildConfig.LONGEVITY_ENABLED) {
+                CodeLongevity(serverRepo, filteredEmails, git)
+                    .updateFromObservable(jgitObservable, onError, api)
+            }
 
             // Start and synchronously wait until all subscribers complete.
             Logger.print("Stats computation. May take a while...")
