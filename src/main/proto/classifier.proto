@@ -19,3 +19,9 @@ message Classifier {
 
     repeated float biases = 5;
 }
+
+message ModelsVersions {
+    repeated string languages = 1;
+
+    repeated int32 version = 2;
+}
