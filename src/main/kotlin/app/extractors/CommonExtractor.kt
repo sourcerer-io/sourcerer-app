@@ -29,7 +29,6 @@ class CommonExtractor : ExtractorInterface {
             reversedMap.put("html", listOf("html", "htm"))
             reversedMap.put("j", listOf("ijs"))
             reversedMap.put("julia", listOf("jl"))
-            reversedMap.put("kotlin", listOf("kt"))
             reversedMap.put("lisp", listOf("lisp", "lsp", "l"))
             reversedMap.put("lua", listOf("lua"))
             reversedMap.put("makefile", listOf("makefile"))
@@ -74,6 +73,7 @@ class CommonExtractor : ExtractorInterface {
                 file
             } else null
         }
+
         return super.extract(files)
     }
 }

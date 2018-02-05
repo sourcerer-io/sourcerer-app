@@ -31,6 +31,7 @@ class Extractor : ExtractorInterface {
             in ObjectiveCExtractor.FILE_EXTS -> ObjectiveCExtractor()
             in SwiftExtractor.FILE_EXTS -> SwiftExtractor()
             in KotlinExtractor.FILE_EXTS -> KotlinExtractor()
+            in CssExtractor.FILE_EXTS -> CssExtractor()
             else -> CommonExtractor()
         }
     }
