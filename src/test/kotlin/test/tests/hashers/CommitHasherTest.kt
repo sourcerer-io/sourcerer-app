@@ -294,5 +294,54 @@ class CommitHasherTest : Spek({
         }
     }
 
+    given("commits with scss stats") {
+
+        val lines = listOf("first line in css file", "",
+                "third line in css file")
+
+        val author = Author(userName, userEmail)
+
+        val testRepoPath = "../testrepo-extractor-"
+        val testRepo = TestRepo(testRepoPath + "css")
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.scss"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author)
+            }
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+            if (errors.size > 0) {
+                println(errors[0].message)
+            }
+            assertEquals(0, errors.size)
+
+            val syntaxStats = mockApi.receivedAddedCommits
+                    .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                        allStats.addAll(commit.stats)
+                        allStats
+                    }.filter { it.type == Extractor.TYPE_LIBRARY }
+
+            val scssStats = syntaxStats.filter { it.tech == "scss" }
+            assertEquals(2, scssStats.size)
+            assertEquals(2, scssStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, scssStats.map { it.numLinesDeleted }.sum())
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
+
     cleanRepos()
 })

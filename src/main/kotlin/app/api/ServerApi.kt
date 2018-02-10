@@ -12,6 +12,8 @@ import app.model.Commit
 import app.model.CommitGroup
 import app.model.Fact
 import app.model.FactGroup
+import app.model.Process
+import app.model.ProcessEntry
 import app.model.Repo
 import app.model.User
 import com.github.kittinunf.fuel.core.FuelManager
@@ -93,10 +95,6 @@ class ServerApi (private val configurator: Configurator) : Api {
                             .body(repo.serialize())
     }
 
-    private fun createRequestPostComplete(): Request {
-        return post("/complete").header(getContentTypeHeader())
-    }
-
     private fun createRequestPostCommits(commits: CommitGroup): Request {
         return post("/commits").header(getContentTypeHeader())
                                .body(commits.serialize())
@@ -115,6 +113,16 @@ class ServerApi (private val configurator: Configurator) : Api {
     private fun createRequestPostAuthors(authors: AuthorGroup): Request {
         return post("/authors").header(getContentTypeHeader())
                                .body(authors.serialize())
+    }
+
+    private fun createRequestPostProcessCreate(process: Process): Request {
+        return post("/process/create").header(getContentTypeHeader())
+                                      .body(process.serialize())
+    }
+
+    private fun createRequestPostProcess(process: Process): Request {
+        return post("/process").header(getContentTypeHeader())
+                               .body(process.serialize())
     }
 
     private fun <T> makeRequest(request: Request,
@@ -172,11 +180,6 @@ class ServerApi (private val configurator: Configurator) : Api {
                            { body -> Repo(body) })
     }
 
-    override fun postComplete(): Result<Unit> {
-        return makeRequest(createRequestPostComplete(),
-                           "postComplete", {})
-    }
-
     override fun postCommits(commitsList: List<Commit>): Result<Unit> {
         val commits = CommitGroup(commitsList)
         return makeRequest(createRequestPostCommits(commits),
@@ -198,4 +201,17 @@ class ServerApi (private val configurator: Configurator) : Api {
         val authors = AuthorGroup(authorsList)
         return makeRequest(createRequestPostAuthors(authors), "postAuthors", {})
     }
+
+    override fun postProcessCreate(requestNumEntries: Int): Result<Process> {
+        val process = Process(requestNumEntries = requestNumEntries)
+        return makeRequest(createRequestPostProcessCreate(process),
+                           "postProcessCreate", { body -> Process(body) })
+    }
+
+    override fun postProcess(processEntries: List<ProcessEntry>): Result<Unit> {
+        // TODO(anatoly): Restrict possible status and error codes on CS.
+        val process = Process(entries = processEntries)
+        return makeRequest(createRequestPostProcess(process), "postProcess", {})
+    }
+
 }

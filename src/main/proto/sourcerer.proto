@@ -125,3 +125,16 @@ message Error {
 message Errors {
     repeated Error errors = 1;
 }
+
+// Status of processing.
+message Process {
+    uint32 id = 1;
+    repeated ProcessEntry entries = 4;
+    uint32 request_num_entries = 5;
+}
+
+message ProcessEntry {
+    uint32 id = 1;
+    uint32 status = 2;
+    uint32 error_code = 3;
+}
