@@ -72,8 +72,11 @@ object Analytics {
 
         try {
             // Send event to GA with united params.
-            post(params + defaultParams.filter { !params.contains(it) }
-                + idParams).responseString()
+            val (_, _, result) = post(params +
+                defaultParams.filter { !params.contains(it) } +
+                idParams).responseString()
+            val (_, e) = result
+            if (e != null) { throw e }
         } catch (e: Throwable) {
             Logger.error(e, "Error while sending GA report", logOnly = true)
         }

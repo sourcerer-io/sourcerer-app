@@ -9,6 +9,7 @@ import app.api.Api
 import app.config.Configurator
 import app.model.Author
 import app.model.LocalRepo
+import app.model.ProcessEntry
 import app.model.Repo
 import app.utils.FileHelper.toPath
 import app.utils.HashingException
@@ -19,7 +20,8 @@ import java.io.IOException
 import kotlin.collections.HashSet
 
 class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
-                 private val configurator: Configurator) {
+                 private val configurator: Configurator,
+                 private val processEntryId: Int? = null) {
     var serverRepo: Repo = Repo()
 
     init {
@@ -32,6 +34,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
+            updateProcess(processEntryId, Api.PROCESS_STATUS_START)
             val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
 
             localRepo.parseGitConfig(git.repository.config)
@@ -88,11 +91,13 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             if (errors.isNotEmpty()) {
                 throw HashingException(errors)
             }
-
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
                 { "Hashing repo completed" }
-        }
-        finally {
+            updateProcess(processEntryId, Api.PROCESS_STATUS_COMPLETE)
+        } catch (e: Throwable) {
+            updateProcess(processEntryId, Api.PROCESS_STATUS_FAIL)
+            throw e
+        } finally {
             closeGit(git)
         }
     }
@@ -142,5 +147,16 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         knownEmails.addAll(serverRepo.emails)
 
         return knownEmails.filter { emails.contains(it) }.toHashSet()
+    }
+
+    private fun updateProcess(processEntryId: Int?, status: Int,
+                              errorCode: Int = 0) {
+        if (processEntryId == null) {
+            return
+        }
+
+        val processEntry = ProcessEntry(id = processEntryId, status = status,
+            errorCode = errorCode)
+        api.postProcess(listOf(processEntry)).onErrorThrow()
     }
 }

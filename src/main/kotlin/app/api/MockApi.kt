@@ -8,11 +8,14 @@ import app.model.Author
 import app.model.Commit
 import app.model.Repo
 import app.model.Fact
+import app.model.Process
+import app.model.ProcessEntry
 import app.model.User
 
 class MockApi(  // GET requests.
     var mockUser: User = User(),
-    var mockRepo: Repo = Repo()) : Api {
+    var mockRepo: Repo = Repo(),
+    var mockProcessEntries: List<ProcessEntry> = listOf()) : Api {
     // POST requests.
     // In case of multiple requests.
     var receivedRepos: MutableList<Repo> = mutableListOf()
@@ -20,7 +23,8 @@ class MockApi(  // GET requests.
     var receivedFacts: MutableList<Fact> = mutableListOf()
     var receivedAuthors: MutableList<Author> = mutableListOf()
     var receivedUsers: MutableList<User> = mutableListOf()
-    var receivedComplete: Int = 0
+    var receivedProcessCreate: MutableList<Process> = mutableListOf()
+    var receivedProcess: MutableList<Process> = mutableListOf()
 
     // DELETE requests.
     var receivedDeletedCommits: MutableList<Commit> = mutableListOf()
@@ -45,12 +49,6 @@ class MockApi(  // GET requests.
         Logger.debug { "MockApi: postRepo request" }
         receivedRepos.add(repo)
         return Result(mockRepo)
-    }
-
-    override fun postComplete(): Result<Unit> {
-        Logger.debug { "MockApi: postComplete request " }
-        receivedComplete++
-        return Result()
     }
 
     override fun postCommits(commitsList: List<Commit>): Result<Unit> {
@@ -78,6 +76,21 @@ class MockApi(  // GET requests.
         Logger.debug { "MockApi: postAuthors request (${authorsList.size} " +
             "stats)" }
         receivedAuthors.addAll(authorsList)
+        return Result()
+    }
+
+    override fun postProcessCreate(requestNumEntries: Int): Result<Process> {
+        Logger.debug { "MockApi: postProcessCreate request " +
+            "($requestNumEntries entries requested)" }
+        receivedProcessCreate.add(
+            Process(requestNumEntries = requestNumEntries))
+        return Result(Process(entries = mockProcessEntries))
+    }
+
+    override fun postProcess(processEntries: List<ProcessEntry>): Result<Unit> {
+        Logger.debug { "MockApi: postProcess request (${processEntries.size} " +
+            "entries updated)" }
+        receivedProcess.add(Process(entries = processEntries))
         return Result()
     }
 }
