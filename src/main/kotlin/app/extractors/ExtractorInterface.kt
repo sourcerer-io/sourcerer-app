@@ -6,23 +6,23 @@ package app.extractors
 
 import app.BuildConfig
 import app.Logger
-import app.ModelsProtos.ModelsVersions
 import app.model.DiffFile
 import app.model.CommitStats
+import app.model.ModelsVersionsGroup
 import app.utils.FileHelper
-import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.FileOutputStream
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import java.io.FileInputStream
 
 interface ExtractorInterface {
     companion object {
         private val librariesCache = hashMapOf<String, Set<String>>()
         private val classifiersCache = hashMapOf<String, Classifier>()
-        private val appModelsVersionsCache = hashMapOf<String, Int>()
-        private val storageModelsVersionsCache = hashMapOf<String, Int>()
+        private val appVersionFileName = "app_versions.pb"
+        private val storageVersionFileName = "versions.pb"
+        private val storageModelsVersionsCache: MutableMap<String, Int> = getStorageModelsVersions()
+        private val appModelsVersionsCache: MutableMap<String, Int> = getAppModelsVersions()
         private val modelsDir = "models"
         private val pbExt = ".pb"
 
@@ -71,6 +71,12 @@ interface ExtractorInterface {
             catch (e: Exception) {
                 Logger.error(e, "Failed to download $name model")
             }
+
+            val bytes = FileHelper.getFile(storageVersionFileName, modelsDir)
+                                  .readBytes()
+            ModelsVersionsGroup(bytes).updateModelVersion(name,
+                storageModelsVersionsCache[name]!!, "$modelsDir/$appVersionFileName")
+            appModelsVersionsCache[name] = storageModelsVersionsCache[name]!!
         }
 
         private fun downloadModelVersions(outputFileName: String) {
@@ -95,12 +101,6 @@ interface ExtractorInterface {
             }
         }
 
-        @Throws(InvalidProtocolBufferException::class)
-        fun getModelsVersions(proto: ModelsVersions):
-            Map<String, Int> {
-            return proto.languagesList.zip(proto.versionList).toMap()
-        }
-
         fun getLibraryClassifier(name: String): Classifier {
             val fileName = name + pbExt
 
@@ -108,53 +108,11 @@ interface ExtractorInterface {
                 return classifiersCache[name]!!
             }
 
-            val appVersionFileName = "app_versions.pb"
-            val storageVersionFileName = "versions.pb"
-            if (FileHelper.notExists(appVersionFileName, modelsDir)) {
-                Logger.info { "Downloading " + storageVersionFileName }
-                downloadModelVersions(storageVersionFileName)
-                Logger.info { "Downloaded " + storageVersionFileName }
-
-                val protoBuilder = ModelsVersions.newBuilder()
-                val file = FileHelper.getFile(appVersionFileName, modelsDir)
-                protoBuilder.build().writeTo(FileOutputStream(file))
-            }
-
-            if (appModelsVersionsCache.isEmpty()) {
-                val bytes = FileHelper.getFile(appVersionFileName, modelsDir)
-                    .readBytes()
-                val proto = ModelsVersions.parseFrom(bytes)
-                appModelsVersionsCache.putAll(getModelsVersions(proto))
-            }
-            if (storageModelsVersionsCache.isEmpty()) {
-                val bytes = FileHelper.getFile(storageVersionFileName, modelsDir)
-                    .readBytes()
-                val proto = ModelsVersions.parseFrom(bytes)
-                storageModelsVersionsCache.putAll(getModelsVersions(proto))
-            }
-
             if (!appModelsVersionsCache.containsKey(name) ||
                 appModelsVersionsCache[name]!! < storageModelsVersionsCache[name]!!) {
                 Logger.info { "Downloading " + fileName }
                 downloadModel(name)
                 Logger.info { "Downloaded " + fileName }
-
-                val protoBuilder = ModelsVersions.newBuilder()
-                protoBuilder.mergeFrom(FileInputStream(
-                    FileHelper.getFile(appVersionFileName, modelsDir)))
-                if (!appModelsVersionsCache.containsKey(name)) {
-                    protoBuilder.addLanguages(name)
-                    protoBuilder.addVersion(storageModelsVersionsCache[name]!!)
-                } else {
-                    protoBuilder.setVersion(
-                        protoBuilder.languagesList.indexOf(name),
-                        storageModelsVersionsCache[name]!!)
-                }
-
-                val file = FileHelper.getFile(appVersionFileName, modelsDir)
-                protoBuilder.build().writeTo(FileOutputStream(file))
-                appModelsVersionsCache.put(name, storageModelsVersionsCache[name]!!)
-
             }
 
             Logger.info { "Loading $name evaluator" }
@@ -166,6 +124,29 @@ interface ExtractorInterface {
             Logger.info { "$name evaluator ready" }
 
             return classifier
+        }
+
+        private fun getStorageModelsVersions(): MutableMap<String, Int> {
+            Logger.info { "Downloading " + storageVersionFileName }
+            downloadModelVersions(storageVersionFileName)
+            Logger.info { "Downloaded " + storageVersionFileName }
+
+            val bytes = FileHelper.getFile(storageVersionFileName, modelsDir)
+                                  .readBytes()
+            return ModelsVersionsGroup(bytes).getModelsVersions()
+        }
+
+        private fun getAppModelsVersions(): MutableMap<String, Int> {
+            if (FileHelper.notExists(appVersionFileName, modelsDir)) {
+                val oStream = FileHelper.getFile(appVersionFileName, modelsDir)
+                    .outputStream()
+                ModelsVersionsGroup().createEmptyProto(oStream)
+                return mutableMapOf()
+            }
+
+            val bytes = FileHelper.getFile(appVersionFileName, modelsDir)
+                .readBytes()
+            return ModelsVersionsGroup(bytes).getModelsVersions()
         }
     }
 
