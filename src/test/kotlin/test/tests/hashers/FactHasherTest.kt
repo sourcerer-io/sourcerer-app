@@ -15,9 +15,10 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import test.utils.TestRepo
+import test.utils.assertFactDouble
+import test.utils.assertFactInt
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class FactHasherTest : Spek({
@@ -35,27 +36,6 @@ class FactHasherTest : Spek({
         // Month in calendar is 0-based.
         cal.set(year, month - 1, day, hour, minute, seconds)
         return cal.time
-    }
-
-    fun getFact(code: Int, key: Int, author: Author, facts: List<Fact>): Fact {
-        val fact = facts.find { fact ->
-            fact.code == code && fact.key == key && fact.author == author
-        }
-        assertNotNull(fact)
-        return fact!!
-    }
-
-    fun assertFactInt(code: Int, key: Int, value: Int, author: Author,
-                      facts: List<Fact>) {
-        val fact = getFact(code, key, author, facts)
-        assertEquals(value, fact.value.toInt())
-    }
-
-    fun assertFactDouble(code: Int, key: Int, value: Double, author: Author,
-                         facts: List<Fact>) {
-        val fact = getFact(code, key, author, facts)
-        assertTrue(Math.abs(value - fact.value.toDouble()) < 0.1,
-            "Expected approximately <$value>, actual <${fact.value}>")
     }
 
     given("commits for date facts") {
@@ -190,8 +170,6 @@ class FactHasherTest : Spek({
                 (endAuthor1.time/1000).toString(), author1)))
             assertTrue(facts.contains(Fact(repo, FactCodes.REPO_DATE_END, 0,
                 (endAuthor2.time/1000).toString(), author2)))
-            assertTrue(facts.contains(Fact(repo, FactCodes.REPO_TEAM_SIZE, 0,
-                "2")))
         }
 
         afterGroup {
@@ -301,7 +279,8 @@ class FactHasherTest : Spek({
                 val line = lines[i]
                 val fileName = "file$i.txt"
                 testRepo.createFile(fileName, listOf(line))
-                testRepo.commit(message = "$line in $fileName", author = author1)
+                testRepo.commit(message = "$line in $fileName",
+                                author = author1)
             }
 
             val errors = mutableListOf<Throwable>()
@@ -310,9 +289,6 @@ class FactHasherTest : Spek({
 
             FactHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
             assertEquals(0, errors.size)
 
             assertFactInt(FactCodes.VARIABLE_NAMING,
@@ -338,14 +314,16 @@ class FactHasherTest : Spek({
             facts.clear()
         }
 
-        val lines = listOf("\tdef test()", "\t\tdef fn()", "a b c d", "    ", "    def fn()")
+        val lines = listOf("\tdef test()", "\t\tdef fn()", "a b c d", "    ",
+            "    def fn()")
 
         it("sends facts") {
             for (i in 0..lines.size - 1) {
                 val line = lines[i]
                 val fileName = "file$i.txt"
                 testRepo.createFile(fileName, listOf(line))
-                testRepo.commit(message = "$line in $fileName", author = author1)
+                testRepo.commit(message = "$line in $fileName",
+                                author = author1)
             }
 
             val errors = mutableListOf<Throwable>()
@@ -354,9 +332,6 @@ class FactHasherTest : Spek({
 
             FactHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
             assertEquals(0, errors.size)
 
             assertFactInt(FactCodes.INDENTATION,
@@ -369,5 +344,4 @@ class FactHasherTest : Spek({
             testRepo.destroy()
         }
     }
-
 })

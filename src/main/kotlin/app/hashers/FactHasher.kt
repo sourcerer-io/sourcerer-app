@@ -8,7 +8,6 @@ import app.FactCodes
 import app.Logger
 import app.api.Api
 import app.extractors.Extractor
-import app.extractors.PythonExtractor
 import app.model.Author
 import app.model.Commit
 import app.model.Fact
@@ -128,7 +127,8 @@ class FactHasher(private val serverRepo: Repo = Repo(),
 
         // Indentation.
         fsIndentation[email]!![FactCodes.INDENTATION_SPACES] +=
-            lines.count { it.isNotBlank()  &&  it.startsWith(" ") && !it.contains("\t")}
+            lines.count { it.isNotBlank()  &&  it.startsWith(" ") &&
+                !it.contains("\t")}
         fsIndentation[email]!![FactCodes.INDENTATION_TABS] +=
             lines.count { it.startsWith("\t") }
     }
@@ -145,10 +145,12 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                 fs.add(Fact(serverRepo, FactCodes.COMMIT_DAY_WEEK, day,
                             count.toString(), author))
             }}
-            fsVariableNaming[email]?.forEachIndexed { naming, count -> if (count > 0) {
-                fs.add(Fact(serverRepo, FactCodes.VARIABLE_NAMING, naming,
-                        count.toString(), author))
-            }}
+            fsVariableNaming[email]?.forEachIndexed { naming, count ->
+                if (count > 0) {
+                    fs.add(Fact(serverRepo, FactCodes.VARIABLE_NAMING, naming,
+                            count.toString(), author))
+                }
+            }
             fsIndentation[email]?.forEachIndexed { indentation, count ->
                 if (count > 0) {
                     fs.add(Fact(serverRepo, FactCodes.INDENTATION, indentation,
@@ -172,8 +174,6 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                 .sliceArray(IntRange(0, fsCommitNum[email]!! - 1))
             addCommitsPerLinesFacts(fs, linesPerCommits, author)
         }
-        fs.add(Fact(serverRepo, FactCodes.REPO_TEAM_SIZE, 0,
-                    emails.size.toString()))
         return fs
     }
 

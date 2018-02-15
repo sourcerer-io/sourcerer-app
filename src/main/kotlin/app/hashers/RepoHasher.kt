@@ -83,6 +83,10 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
                 CodeLongevity(serverRepo, filteredEmails, git)
                     .updateFromObservable(jgitObservable, onError, api)
             }
+            if (BuildConfig.META_HASHER_ENABLED) {
+                MetaHasher(serverRepo, api)
+                    .calculateAndSendFacts(authors)
+            }
 
             // Start and synchronously wait until all subscribers complete.
             Logger.print("Stats computation. May take a while...")
