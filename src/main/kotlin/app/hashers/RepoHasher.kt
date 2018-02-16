@@ -11,6 +11,7 @@ import app.model.Author
 import app.model.LocalRepo
 import app.model.ProcessEntry
 import app.model.Repo
+import app.utils.EmptyRepoException
 import app.utils.FileHelper.toPath
 import app.utils.HashingException
 import app.utils.RepoHelper
@@ -98,6 +99,10 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
                 { "Hashing repo completed" }
             updateProcess(processEntryId, Api.PROCESS_STATUS_COMPLETE)
+        } catch (e: EmptyRepoException) {
+            updateProcess(processEntryId, Api.PROCESS_STATUS_FAIL,
+                Api.PROCESS_ERROR_EMPTY_REPO)
+            throw e
         } catch (e: Throwable) {
             updateProcess(processEntryId, Api.PROCESS_STATUS_FAIL)
             throw e
