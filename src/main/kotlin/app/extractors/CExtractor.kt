@@ -14,6 +14,10 @@ class CExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val extractImportRegex =
+            Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,9 +28,8 @@ class CExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex = Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues.last()
                 imports.add(lineLib)
@@ -37,8 +40,6 @@ class CExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)

@@ -14,6 +14,10 @@ class KotlinExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^(.*import)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val packageRegex = Regex("""^(.*package)\s[^\n]*""")
+        val extractImportRegex = Regex("""import\s+(\w+[.\w+]*)""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,9 +28,8 @@ class KotlinExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex = Regex("""import\s+(\w+[.\w+]*)""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val importedName = res.groupValues[1]
                 LIBRARIES.forEach { library ->
@@ -41,9 +44,6 @@ class KotlinExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^(.*import)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val packageRegex = Regex("""^(.*package)\s[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         newLine = packageRegex.replace(newLine, "")
@@ -53,6 +53,7 @@ class KotlinExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

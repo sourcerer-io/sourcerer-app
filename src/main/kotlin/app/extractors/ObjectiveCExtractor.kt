@@ -14,6 +14,11 @@ class ObjectiveCExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val sharpImportIncludeRegex =
+                Regex("""#(import|include)\s+[">](\w+)[/\w+]*\.\w+[">]""")
+        val atImportRegex = Regex("""@import\s+(\w+)""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -23,10 +28,6 @@ class ObjectiveCExtractor : ExtractorInterface {
 
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
-
-        val sharpImportIncludeRegex =
-            Regex("""#(import|include)\s+[">](\w+)[/\w+]*\.\w+[">]""")
-        val atImportRegex = Regex("""@import\s+(\w+)""")
 
         fileContent.forEach {
             val res = sharpImportIncludeRegex.findAll(it) +
@@ -41,8 +42,6 @@ class ObjectiveCExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -51,6 +50,7 @@ class ObjectiveCExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

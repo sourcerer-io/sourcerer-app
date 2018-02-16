@@ -14,6 +14,11 @@ class GoExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^(.*import)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val singleImportRegex = Regex("""import\s+"(\w+)"""")
+        val multipleImportRegex = Regex("""import[\s\t\n]+\((.+?)\)""",
+                RegexOption.DOT_MATCHES_ALL)
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,7 +29,6 @@ class GoExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val singleImportRegex = Regex("""import\s+"(\w+)"""")
         fileContent.forEach {
             val res = singleImportRegex.find(it)
             if (res != null) {
@@ -32,23 +36,20 @@ class GoExtractor : ExtractorInterface {
                 imports.add(lineLib)
             }
         }
-        val multipleImportRegex = Regex("""import[\s\t\n]+\((.+?)\)""",
-                RegexOption.DOT_MATCHES_ALL)
         val contentJoined = fileContent.joinToString(separator = "")
         multipleImportRegex.findAll(contentJoined).forEach { matchResult ->
             imports.addAll(matchResult.groupValues.last()
                 .split(Regex("""(\t+|\n+|\s+|")"""))
                 .filter { it.isNotEmpty() }
                 .map { it -> it.replace("\"", "") }
-                .map { it ->  if (it.contains("github.com")) it.split("/")[2] else it})
+                .map { it ->  if (it.contains("github.com")) it.split("/")[2]
+                    else it})
         }
 
         return imports.toList()
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^(.*import)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -57,6 +58,7 @@ class GoExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

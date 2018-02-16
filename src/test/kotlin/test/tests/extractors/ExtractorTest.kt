@@ -246,4 +246,17 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("js comment line") {
+        it("doesn't extract libraries") {
+            var lines = listOf("// It doesn't use Ember 1")
+            var actualLineImports = JavascriptExtractor().extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+
+            lines = listOf("/* It doesn't use ember 2", "* and you Ember ",
+                                "* too Ember */")
+            actualLineImports = JavascriptExtractor().extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+    }
+
 })

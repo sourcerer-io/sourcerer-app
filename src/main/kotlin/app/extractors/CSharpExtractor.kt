@@ -15,6 +15,9 @@ class CSharpExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^.*using\s+(\w+[.\w+]*)""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val extractImportRegex = Regex("""using\s+(\w+[.\w+]*)""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -25,9 +28,8 @@ class CSharpExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex = Regex("""using\s+(\w+[.\w+]*)""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val importedName = res.groupValues[1]
                 LIBRARIES.forEach { library ->
@@ -52,6 +54,7 @@ class CSharpExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

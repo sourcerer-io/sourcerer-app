@@ -14,6 +14,9 @@ class SwiftExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^(.*import)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val extractImportRegex = Regex("""import\s+(\w+)""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,9 +27,8 @@ class SwiftExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex = Regex("""import\s+(\w+)""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues[1]
                 imports.add(lineLib)
@@ -37,8 +39,6 @@ class SwiftExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^(.*import)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -47,6 +47,7 @@ class SwiftExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

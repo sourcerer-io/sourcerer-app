@@ -20,6 +20,9 @@ interface ExtractorInterface {
         private val classifiersCache = hashMapOf<String, Classifier>()
         private val modelsDir = "models"
         private val pbExt = ".pb"
+        val stringRegex = Regex("""(".+?"|'.+?')""")
+        val splitRegex =
+                Regex("""\s|,|;|\*|\n|\(|\)|\[|]|\{|}|\+|=|&|\$|!=|\.|>|<|#|@|:|\?|!""")
 
         private fun getResource(path: String): InputStream {
             return ExtractorInterface::class.java.classLoader
@@ -173,11 +176,8 @@ interface ExtractorInterface {
     }
 
     fun tokenize(line: String): List<String> {
-        val stringRegex = Regex("""(".+?"|'.+?')""")
         val newLine = stringRegex.replace(line, "")
         //TODO(lyaronskaya): multiline comment regex
-        val splitRegex =
-            Regex("""\s|,|;|\*|\n|\(|\)|\[|]|\{|}|\+|=|&|\$|!=|\.|>|<|#|@|:|\?|!""")
         val tokens = splitRegex.split(newLine)
             .filter { it.isNotBlank() && !it.contains('"') && !it.contains('\'')
                 && it != "-" && it != "@"}
