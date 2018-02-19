@@ -18,6 +18,10 @@ class PythonExtractor : ExtractorInterface {
                 ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
         val COMPREHENSION_MAP = "map"
         val COMPREHENSION_LIST = "list"
+        val docImportRegex = Regex("""^([^\n]*#|\s*\"\"\"|\s*import|\s*from)[^\n]*""")
+        val commentRegex = Regex("""^(.*#).*""")
+        val extractImportRegex =
+                Regex("""(from\s+(\w+)[.\w+]*\s+import|import\s+(\w+[,\s*\w+]*))""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -57,10 +61,8 @@ class PythonExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex =
-            Regex("""(from\s+(\w+)[.\w+]*\s+import|import\s+(\w+[,\s*\w+]*))""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val lineLibs = res.groupValues.last { it != "" }
                     .split(Regex(""",\s*"""))
@@ -78,8 +80,6 @@ class PythonExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val docImportRegex = Regex("""^([^\n]*#|\s*\"\"\"|\s*import|\s*from)[^\n]*""")
-        val commentRegex = Regex("""^(.*#).*""")
         var newLine = docImportRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -88,6 +88,7 @@ class PythonExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

@@ -10,6 +10,7 @@ import app.model.DiffContent
 import app.model.DiffFile
 import app.model.DiffRange
 import app.model.Repo
+import app.utils.EmptyRepoException
 import io.reactivex.Observable
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
@@ -31,29 +32,21 @@ data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 * Iterates over the diffs between commits in the repo's history.
 */
 object CommitCrawler {
-    private val MASTER_BRANCH = "refs/heads/master"
-    private val MASTER_BRANCH_ORIGIN = "refs/remotes/origin/master"
     private val REMOTE_HEAD = "refs/remotes/origin/HEAD"
+    private val REMOTE_MASTER_BRANCH = "refs/remotes/origin/master"
+    private val LOCAL_MASTER_BRANCH = "refs/heads/master"
+    private val LOCAL_HEAD = "HEAD"
+    private val REFS = listOf(REMOTE_HEAD, REMOTE_MASTER_BRANCH,
+                              LOCAL_MASTER_BRANCH, LOCAL_HEAD)
 
     fun getDefaultBranchHead(git: Git): ObjectId {
-        val remoteHead = git.branchList()?.repository?.allRefs?.filter {
-            it.key.contains(REMOTE_HEAD)
-        }?.entries?.firstOrNull()?.value?.target?.objectId
-        if (remoteHead != null) {
-            Logger.debug { "Hashing from remote default branch" }
-            return remoteHead
+        for (ref in REFS) {
+            val branch = git.repository.resolve(ref) ?: continue
+
+            Logger.debug { "Hashing from $ref" }
+            return branch
         }
-        val masterBranch = git.repository.resolve(MASTER_BRANCH)
-        if (masterBranch != null) {
-            Logger.debug { "Hashing from local master branch" }
-            return masterBranch
-        }
-        val originMasterBranch = git.repository.resolve(MASTER_BRANCH_ORIGIN)
-        if (originMasterBranch != null) {
-            Logger.debug { "Hashing from origin master branch" }
-            return originMasterBranch
-        }
-        throw Exception("No remote default or local/origin master branch found")
+        throw EmptyRepoException("No remote default, master or HEAD found")
     }
 
     fun fetchRehashesAndAuthors(git: Git):
@@ -72,7 +65,7 @@ object CommitCrawler {
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
             commitsRehashes.add(DigestUtils.sha256Hex(commit.name))
-            val email = commit.authorIdent.emailAddress
+            val email = commit.authorIdent.emailAddress.toLowerCase()
             val name = commit.authorIdent.name
             if (!emails.contains(email)) {
                 emails.add(email)
@@ -141,7 +134,7 @@ object CommitCrawler {
             } else 0.0
             Logger.printCommit(commit.shortMessage, commit.name, perc)
 
-            val email = commit.authorIdent.emailAddress
+            val email = commit.authorIdent.emailAddress.toLowerCase()
             if (filteredEmails != null && !filteredEmails.contains(email)) {
                 commit = parentCommit
                 continue

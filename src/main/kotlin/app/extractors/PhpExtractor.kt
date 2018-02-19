@@ -14,6 +14,11 @@ class PhpExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""^(.*require|require_once|include|include_once|use)\s[^\n]*""")
+        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val useRegex = Regex("""use\s+(\w+)[\\\w+]*""")
+        val requireIncludeRegex = Regex("""(require|require_once|include|""" +
+                """"include_once)\s*[(]?'(\w+)[.\w+]*'[)]?""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,9 +29,6 @@ class PhpExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val useRegex = Regex("""use\s+(\w+)[\\\w+]*""")
-        val requireIncludeRegex = Regex("""(require|require_once|include|""" +
-            """"include_once)\s*[(]?'(\w+)[.\w+]*'[)]?""")
         fileContent.forEach {
             val res = useRegex.findAll(it) + requireIncludeRegex.findAll(it)
             if (res.toList().isNotEmpty()) {
@@ -39,8 +41,6 @@ class PhpExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""^(.*require|require_once|include|include_once|use)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -49,6 +49,7 @@ class PhpExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

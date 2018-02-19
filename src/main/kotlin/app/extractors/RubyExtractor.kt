@@ -14,6 +14,9 @@ class RubyExtractor : ExtractorInterface {
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
+        val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
+        val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
+        val extractImportRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -24,9 +27,8 @@ class RubyExtractor : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
-        val regex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
         fileContent.forEach {
-            val res = regex.find(it)
+            val res = extractImportRegex.find(it)
             if (res != null) {
                 val lineLib = res.groupValues.last { it != "" }
                 imports.add(lineLib)
@@ -40,8 +42,6 @@ class RubyExtractor : ExtractorInterface {
     }
 
     override fun tokenize(line: String): List<String> {
-        val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
-        val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
@@ -50,6 +50,7 @@ class RubyExtractor : ExtractorInterface {
     override fun getLineLibraries(line: String,
                                   fileLibraries: List<String>): List<String> {
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+        return super.getLineLibraries(line, fileLibraries, evaluator,
+            LANGUAGE_NAME)
     }
 }

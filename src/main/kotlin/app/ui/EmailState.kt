@@ -46,9 +46,10 @@ class EmailState constructor(private val context: Context,
             var git: Git? = null
             try {
                 git = Git.open(File(repo.path))
-                val email = git.repository
-                               .config.getString("user", null, "email") ?: ""
-                if (!knownEmails.contains(email)) {
+                var email = git.repository.config
+                               .getString("user", null, "email") ?: ""
+                email = email.toLowerCase()
+                if (email.isNotEmpty() && !knownEmails.contains(email)) {
                     configEmails.add(email)
                 }
                 // Fetch and save emails from repo for "no-email" warning.
@@ -107,7 +108,7 @@ class EmailState constructor(private val context: Context,
             "that you use in repositories?", defaultIsYes = false)) {
             while (true) {
                 Logger.print("Type a email, or hit Enter to continue.")
-                val email = readLine() ?: ""
+                val email = (readLine() ?: "").toLowerCase()
                 if (email.isBlank()) break
                 if (!knownEmails.contains(email)) newEmails.add(email)
             }

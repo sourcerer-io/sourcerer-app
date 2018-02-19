@@ -17,10 +17,7 @@ interface Api {
         val PROCESS_STATUS_START = 100
         val PROCESS_STATUS_COMPLETE = 200
         val PROCESS_STATUS_FAIL = 1000
-        val PROCESS_ERROR_RESTRICTED = 2
-        val PROCESS_ERROR_TOO_BIG = 3
-        val PROCESS_ERROR_TOO_MUCH_COMMITS = 4
-        val PROCESS_ERROR_NO_COMMITS = 5
+        val PROCESS_ERROR_EMPTY_REPO = 8
     }
 
     fun authorize(): Result<Unit>
