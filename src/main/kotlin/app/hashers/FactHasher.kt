@@ -127,7 +127,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
 
         // Indentation.
         fsIndentation[email]!![FactCodes.INDENTATION_SPACES] +=
-            lines.count { it.isNotBlank()  &&  it.startsWith(" ") &&
+            lines.count { it.isNotBlank() && it.startsWith(" ") &&
                 !it.contains("\t")}
         fsIndentation[email]!![FactCodes.INDENTATION_TABS] +=
             lines.count { it.startsWith("\t") }
