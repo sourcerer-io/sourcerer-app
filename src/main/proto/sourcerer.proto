@@ -114,6 +114,18 @@ message Repo {
     // Raw commits server history. Used to find overlap of commits. Hashing
     // starts after last commit from the overlap.
     repeated Commit commits = 5;
+
+    // Meta info about repo. Is not used for a locally run app.
+    RepoMeta meta = 6;
+}
+
+// Meta info about repo. Is not used for a locally run app.
+message RepoMeta {
+    string ghId = 1;
+    string name = 2;
+    string ownerName = 3;
+    string htmlUrl = 4;
+    string cloneUrl = 5;
 }
 
 // Errors from server.

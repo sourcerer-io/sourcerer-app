@@ -31,11 +31,11 @@ data class CommitStats(
 
     fun getProto(): Protos.CommitStats {
         return Protos.CommitStats.newBuilder()
-                .setNumLinesAdded(numLinesAdded)
-                .setNumLinesDeleted(numLinesDeleted)
-                .setType(type)
-                .setTech(tech)
-                .build()
+            .setNumLinesAdded(numLinesAdded)
+            .setNumLinesDeleted(numLinesDeleted)
+            .setType(type)
+            .setTech(tech)
+            .build()
     }
 
     fun serialize(): ByteArray {

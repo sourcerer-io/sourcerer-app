@@ -25,8 +25,8 @@ data class FactGroup(
 
     fun getProto(): Protos.FactGroup {
         return Protos.FactGroup.newBuilder()
-                .addAllFacts(stats.map { it -> it.getProto() })
-                .build()
+            .addAllFacts(stats.map { it -> it.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {

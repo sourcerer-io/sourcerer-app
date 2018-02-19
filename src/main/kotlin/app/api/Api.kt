@@ -14,9 +14,14 @@ import app.model.User
 interface Api {
     companion object {
         val OUT_OF_DATE = 1
+        val STATUS_CLONING = 80
         val PROCESS_STATUS_START = 100
         val PROCESS_STATUS_COMPLETE = 200
         val PROCESS_STATUS_FAIL = 1000
+        val CODE_SUCCESS = 0
+        val PROCESS_ERROR_TOO_MUCH_COMMITS = 4
+        val PROCESS_ERROR_NO_COMMITS = 5
+        val PROCESS_ERROR_PROCESSOR = 6
         val PROCESS_ERROR_EMPTY_REPO = 8
     }
 

@@ -11,6 +11,8 @@ data class LocalRepo(var path: String = "") {
 
     @JsonIgnore var author: Author = Author()
     @JsonIgnore var remoteOrigin: String = ""
+    @JsonIgnore var meta = RepoMeta()
+    @JsonIgnore var processEntryId: Int? = 0
 
     fun parseGitConfig(config: Config) {
         author = Author(
