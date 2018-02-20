@@ -11,16 +11,19 @@ import java.security.InvalidParameterException
  * Repository.
  */
 data class Repo(
-        // Basic info.
-        var rehash: String = "",
-        var initialCommitRehash: String = "",
+    // Basic info.
+    var rehash: String = "",
+    var initialCommitRehash: String = "",
 
-        // Authors' email filter for hashed commits. If empty list then hash
-        // only commits that created by current user.
-        var emails: List<String> = listOf(),
+    // Authors' email filter for hashed commits. If empty list then hash
+    // only commits that created by current user.
+    var emails: List<String> = listOf(),
 
-        // Raw commits server history. Used to find overlap of commits.
-        var commits: List<Commit> = listOf()
+    // Raw commits server history. Used to find overlap of commits.
+    var commits: List<Commit> = listOf(),
+
+    // Meta info about repo. Is not used for a locally run app.
+    var meta: RepoMeta = RepoMeta()
 ) {
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.Repo) : this() {
@@ -37,11 +40,12 @@ data class Repo(
 
     fun getProto(): Protos.Repo {
         return Protos.Repo.newBuilder()
-                .setRehash(rehash)
-                .setInitialCommitRehash(rehash)
-                .addAllEmails(emails)
-                .addAllCommits(commits.map { it.getProto() })
-                .build()
+            .setRehash(rehash)
+            .setInitialCommitRehash(rehash)
+            .addAllEmails(emails)
+            .addAllCommits(commits.map { it.getProto() })
+            .setMeta(meta.getProto())
+            .build()
     }
 
     fun serialize(): ByteArray {

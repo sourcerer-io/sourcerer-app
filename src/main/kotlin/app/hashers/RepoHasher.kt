@@ -20,38 +20,39 @@ import java.io.File
 import java.io.IOException
 import kotlin.collections.HashSet
 
-class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
-                 private val configurator: Configurator,
-                 private val processEntryId: Int? = null) {
-    var serverRepo: Repo = Repo()
+class RepoHasher(private val api: Api,
+                 private val configurator: Configurator) {
+    fun update(localRepo: LocalRepo) {
+        Logger.debug { "RepoHasher.update call: " + localRepo }
+        val processEntryId = localRepo.processEntryId
 
-    init {
         if (!RepoHelper.isValidRepo(localRepo.path.toPath())) {
+            // TODO(anatoly): Send empty repo.
             throw IllegalArgumentException("Invalid repo $localRepo")
         }
-    }
 
-    fun update() {
-        Logger.info { "Hashing of repo started" }
         val git = loadGit(localRepo.path)
         try {
+            Logger.info { "Hashing of repo started" }
             updateProcess(processEntryId, Api.PROCESS_STATUS_START)
-            val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
 
+            val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
             localRepo.parseGitConfig(git.repository.config)
-            initServerRepo(rehashes.last)
-            Logger.debug { "Local repo path: ${localRepo.path}" }
-            Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
-            Logger.debug { "Repo rehash: ${serverRepo.rehash}" }
+            val serverRepo = initServerRepo(localRepo, rehashes.last)
 
             // Get repo setup (commits, emails to hash) from server.
-            postRepoFromServer()
+            postRepoFromServer(serverRepo)
 
             // Send all repo emails for invites.
-            postAuthorsToServer(authors)
+            postAuthorsToServer(authors, serverRepo)
 
+            // Choose emails to filter commits with.
             val emails = authors.map { author -> author.email }.toHashSet()
-            val filteredEmails = filterEmails(emails)
+            val filteredEmails = if (localRepo.hashAllContributors) {
+                emails
+            } else {
+                filterEmails(emails, serverRepo)
+            }
 
             // Common error handling for subscribers.
             // Exceptions can't be thrown out of reactive chain.
@@ -124,7 +125,7 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         git.close()
     }
 
-    private fun postRepoFromServer() {
+    private fun postRepoFromServer(serverRepo: Repo) {
         val repo = api.postRepo(serverRepo).getOrThrow()
         serverRepo.commits = repo.commits
         Logger.info {
@@ -133,24 +134,26 @@ class RepoHasher(private val localRepo: LocalRepo, private val api: Api,
         Logger.debug { serverRepo.toString() }
     }
 
-    private fun postAuthorsToServer(authors: HashSet<Author>) {
-        api.postAuthors(authors.map { author ->
-            author.repo = serverRepo
-            author
-        }).onErrorThrow()
+    private fun postAuthorsToServer(authors: HashSet<Author>,
+                                    serverRepo: Repo) {
+        authors.forEach { author -> author.repo = serverRepo }
+        api.postAuthors(authors.toList()).onErrorThrow()
     }
 
-    private fun initServerRepo(initCommitRehash: String) {
-        serverRepo = Repo(initialCommitRehash = initCommitRehash,
-                          rehash = RepoHelper.calculateRepoRehash(
-                              initCommitRehash, localRepo))
+    private fun initServerRepo(localRepo: LocalRepo,
+                               initCommitRehash: String): Repo {
+        val rehash = RepoHelper.calculateRepoRehash(initCommitRehash, localRepo)
+        val repo = Repo(initialCommitRehash = initCommitRehash,
+                        rehash = rehash,
+                        meta = localRepo.meta)
+        Logger.debug { "Local repo path: ${localRepo.path}" }
+        Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
+        Logger.debug { "Repo rehash: $rehash" }
+        return repo
     }
 
-    private fun filterEmails(emails: HashSet<String>): HashSet<String> {
-        if (localRepo.hashAllContributors) {
-            return emails
-        }
-
+    private fun filterEmails(emails: HashSet<String>,
+                             serverRepo: Repo): HashSet<String> {
         val knownEmails = hashSetOf<String>()
         knownEmails.addAll(configurator.getUser().emails.map { it.email })
         knownEmails.addAll(serverRepo.emails)

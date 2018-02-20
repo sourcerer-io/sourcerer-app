@@ -150,10 +150,12 @@ object Logger {
     private val commitDetailIndent = generateIndent(10) + "|" +
         generateIndent(8)
     fun printCommitDetail(message: String) {
-        val messageTrim = if (message.length > 59) {
-            message.substring(0, 56).plus("...")
-        } else message
-        println(commitDetailIndent + messageTrim)
+        if (!SILENT) {
+            val messageTrim = if (message.length > 59) {
+                message.substring(0, 56).plus("...")
+            } else message
+            println(commitDetailIndent + messageTrim)
+        }
     }
 
     /**

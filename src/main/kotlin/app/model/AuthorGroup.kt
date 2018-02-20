@@ -22,8 +22,8 @@ data class AuthorGroup(
 
     fun getProto(): Protos.AuthorGroup {
         return Protos.AuthorGroup.newBuilder()
-                .addAllAuthors(authors.map { it -> it.getProto() })
-                .build()
+            .addAllAuthors(authors.map { it -> it.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {

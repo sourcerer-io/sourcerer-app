@@ -32,7 +32,7 @@ object RepoHelper {
             repository = git.repository
             commitId = CommitCrawler.getDefaultBranchHead(git)
         } catch (e: Exception) {
-           Logger.error(e, "Cannot access repository at specified path")
+            Logger.error(e, "Cannot access repository at specified path")
             return false
         } finally {
             repository?.close()

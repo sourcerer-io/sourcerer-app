@@ -25,8 +25,8 @@ data class CommitGroup(
 
     fun getProto(): Protos.CommitGroup {
         return Protos.CommitGroup.newBuilder()
-                .addAllCommits(commits.map { it -> it.getProto() })
-                .build()
+            .addAllCommits(commits.map { it -> it.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {

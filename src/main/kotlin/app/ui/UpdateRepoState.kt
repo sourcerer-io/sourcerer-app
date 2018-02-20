@@ -6,9 +6,9 @@ package app.ui
 import app.BuildConfig
 import app.hashers.RepoHasher
 import app.Logger
-import app.Protos
 import app.api.Api
 import app.config.Configurator
+import app.model.LocalRepo
 import app.model.ProcessEntry
 import app.utils.HashingException
 import java.util.*
@@ -24,16 +24,15 @@ class UpdateRepoState constructor(private val context: Context,
     override fun doAction() {
         Logger.info { "Hashing started" }
 
+        // TODO(anatoly): Move code to RepoHasher.
         val localRepos = configurator.getLocalRepos()
-        val process = api.postProcessCreate(requestNumEntries = localRepos.size)
-                         .getOrThrow()
-        val processEntryIds = process.entries.map { entry -> entry.id }
-        val heartbeatTimer = runHeartbeatTimer(processEntryIds)
-        for ((index, repo) in localRepos.withIndex()) {
+        assignProcess(localRepos)
+
+        val heartbeatTimer = runHeartbeatTimer(localRepos)
+        for (repo in localRepos) {
             try {
                 Logger.print("Hashing $repo repository...", indentLine = true)
-                val processEntryId = processEntryIds.elementAtOrNull(index)
-                RepoHasher(repo, api, configurator, processEntryId).update()
+                RepoHasher(api, configurator).update(repo)
                 Logger.print("Hashing $repo completed.")
             } catch (e: HashingException) {
                 e.errors.forEach { error ->
@@ -56,8 +55,19 @@ class UpdateRepoState constructor(private val context: Context,
         context.changeState(CloseState())
     }
 
-    private fun runHeartbeatTimer(processEntryIds: List<Int>): Timer {
-        val entries = processEntryIds.map { id -> ProcessEntry(id = id) }
+    // Notify server about processing start and get processing ids.
+    private fun assignProcess(localRepos: List<LocalRepo>) {
+        val process = api.postProcessCreate(requestNumEntries = localRepos.size)
+            .getOrThrow()
+        if (process.entries.isEmpty()) return
+        process.entries.subList(0, localRepos.size).forEachIndexed { index, e ->
+            localRepos[index].processEntryId = e.id
+        }
+    }
+
+    private fun runHeartbeatTimer(localRepos: List<LocalRepo>): Timer {
+        val entries = localRepos.filter { it.processEntryId != null}
+                                .map { ProcessEntry(id = it.processEntryId!!) }
         return fixedRateTimer(
             name = "heartbeat",
             daemon = true,

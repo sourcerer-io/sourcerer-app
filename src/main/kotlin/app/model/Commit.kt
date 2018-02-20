@@ -60,17 +60,17 @@ data class Commit(
 
     fun getProto(): Protos.Commit {
         return Protos.Commit.newBuilder()
-                .setRehash(rehash)
-                .setRepoRehash(repo.rehash)
-                .setTreeRehash(treeRehash)
-                .setAuthorName(author.name)
-                .setAuthorEmail(author.email)
-                .setDate(dateTimestamp)
-                .setIsQommit(isQommit)
-                .setNumLinesAdded(numLinesAdded)
-                .setNumLinesDeleted(numLinesDeleted)
-                .addAllStats(stats.map { it.getProto() })
-                .build()
+            .setRehash(rehash)
+            .setRepoRehash(repo.rehash)
+            .setTreeRehash(treeRehash)
+            .setAuthorName(author.name)
+            .setAuthorEmail(author.email)
+            .setDate(dateTimestamp)
+            .setIsQommit(isQommit)
+            .setNumLinesAdded(numLinesAdded)
+            .setNumLinesDeleted(numLinesDeleted)
+            .addAllStats(stats.map { it.getProto() })
+            .build()
     }
 
     fun serialize(): ByteArray {
