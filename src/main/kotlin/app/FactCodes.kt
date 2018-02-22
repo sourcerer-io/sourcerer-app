@@ -12,6 +12,8 @@ object FactCodes {
     val COMMIT_NUM = 9  // Used for averaging COMMIT_LINE_NUM_AVG between repos.
     // A map of line numbers to commits number. Used in a commit histogram.
     val COMMIT_NUM_TO_LINE_NUM = 12
+    val COMMIT_SHARE = 16  // Used for commit share chart.
+    val COMMIT_SHARE_REPO_AVG = 17  // Used for commit share chart.
     val LINE_LONGEVITY = 3  // Used for longevity graph.
     val LINE_LONGEVITY_REPO = 4  // Used for longevity graph.
     val LINE_LEN_AVG = 10  // Average length of line fun fact.

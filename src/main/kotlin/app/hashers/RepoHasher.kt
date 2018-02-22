@@ -36,7 +36,8 @@ class RepoHasher(private val api: Api,
             Logger.info { "Hashing of repo started" }
             updateProcess(processEntryId, Api.PROCESS_STATUS_START)
 
-            val (rehashes, authors) = CommitCrawler.fetchRehashesAndAuthors(git)
+            val (rehashes, authors, commitsCount) =
+                CommitCrawler.fetchRehashesAndAuthors(git)
             localRepo.parseGitConfig(git.repository.config)
             val serverRepo = initServerRepo(localRepo, rehashes.last)
 
@@ -86,8 +87,11 @@ class RepoHasher(private val api: Api,
                     .updateFromObservable(jgitObservable, onError, api)
             }
             if (BuildConfig.META_HASHER_ENABLED) {
+                val userEmail = configurator.getUser().emails.map { it.email }
                 MetaHasher(serverRepo, api)
-                    .calculateAndSendFacts(authors)
+                    .calculateAndSendFacts(authors = authors,
+                                           commitsCount = commitsCount,
+                                           userEmails = userEmail)
             }
 
             // Start and synchronously wait until all subscribers complete.
