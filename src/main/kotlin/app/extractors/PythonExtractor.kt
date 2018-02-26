@@ -21,7 +21,7 @@ class PythonExtractor : ExtractorInterface {
         val docImportRegex = Regex("""^([^\n]*#|\s*\"\"\"|\s*import|\s*from)[^\n]*""")
         val commentRegex = Regex("""^(.*#).*""")
         val extractImportRegex =
-                Regex("""(from\s+(\w+)[.\w+]*\s+import|import\s+(\w+[,\s*\w+]*))""")
+            Regex("""(from\s+(\w+)[.\w+]*\s+import|import\s+(\w+(,\s*\w+)*))(as\s+)*""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -64,7 +64,7 @@ class PythonExtractor : ExtractorInterface {
         fileContent.forEach {
             val res = extractImportRegex.find(it)
             if (res != null) {
-                val lineLibs = res.groupValues.last { it != "" }
+                val lineLibs = res.groupValues.last { it != "" && !it.startsWith(',')}
                     .split(Regex(""",\s*"""))
                 imports.addAll(lineLibs)
             }
