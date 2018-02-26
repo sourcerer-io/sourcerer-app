@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 package app.hashers
 
@@ -9,22 +10,51 @@ import app.api.Api
 import app.model.Author
 import app.model.Fact
 import app.model.Repo
+import java.util.*
+import kotlin.collections.HashSet
 
 /**
  * MetaHasher hashes repository and uploads stats to server.
  */
 class MetaHasher(private val serverRepo: Repo = Repo(),
                  private val api: Api) {
-    fun calculateAndSendFacts(authors: HashSet<Author>) {
+    fun calculateAndSendFacts(authors: HashSet<Author>,
+                              commitsCount: HashMap<String, Int>,
+                              userEmails: List<String>) {
+        // Sometimes contributors use multiple emails to contribute to single
+        // project, as we don't know exactly who is who (except current user),
+        // let's at least filter authors by similarity.
+        val otherAuthors = authors.filter { author ->
+            !userEmails.contains(author.email)
+        }
+        // Current user may not be a contributor of repo.
+        val isUserAuthor = otherAuthors.size < authors.size
+        val numAuthors = getAuthorsNum(otherAuthors) +
+            if (isUserAuthor) 1 else 0
+
         val facts = mutableListOf<Fact>()
-        facts.add(Fact(serverRepo, FactCodes.REPO_TEAM_SIZE, 0,
-            getAuthorsNum(authors).toString()))
-        Logger.debug { "Num authors: ${authors.size}" }
-        Logger.debug { "Num real authors: ${facts.first().value}" }
+
+        // Repository facts: team size.
+        facts.add(FactCodes.REPO_TEAM_SIZE, 0, numAuthors)
+
+        // Repository facts: commit share.
+        val numAllCommits = commitsCount.values.fold(0) { acc, i -> acc + i  }
+        val avgCommits = Math.round(numAllCommits.toDouble() / numAuthors)
+            .toInt()
+        facts.add(FactCodes.COMMIT_SHARE_REPO_AVG, 0, avgCommits)
+
+        if (isUserAuthor) {
+            val numUserCommits = userEmails
+                .mapNotNull { email -> commitsCount[email] }
+                .fold(0) { acc, i -> acc + i }
+            val userEmail = userEmails.first()
+            facts.add(FactCodes.COMMIT_SHARE, 0, numUserCommits, userEmail)
+        }
+
         postFactsToServer(facts)
     }
 
-    private fun getAuthorsNum(authors: HashSet<Author>): Int {
+    private fun getAuthorsNum(authors: List<Author>): Int {
         val names = authors.map { it.name }
         val emails = authors.map { it.email.split("@")[0] }
         val namesQgrams = names.map { getThreegrams(it) }
@@ -67,5 +97,16 @@ class MetaHasher(private val serverRepo: Repo = Repo(),
             api.postFacts(facts).onErrorThrow()
             Logger.info { "Sent ${facts.size} facts to server" }
         }
+    }
+
+    private fun MutableList<Fact>.add(code: Int, key: Int, value: Any,
+                                      email: String? = null) {
+        val fact = if (email != null) {
+            Fact(serverRepo, code, key, value.toString(), Author(email = email))
+        } else {
+            Fact(serverRepo, code, key, value.toString())
+        }
+
+        this.add(fact)
     }
 }
