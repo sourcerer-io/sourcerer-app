@@ -23,6 +23,7 @@ interface Api {
         val PROCESS_ERROR_NO_COMMITS = 5
         val PROCESS_ERROR_PROCESSOR = 6
         val PROCESS_ERROR_EMPTY_REPO = 8
+        val PROCESS_ERROR_NO_ACCESS = 9
     }
 
     fun authorize(): Result<Unit>
