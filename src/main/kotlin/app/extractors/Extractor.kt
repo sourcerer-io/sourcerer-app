@@ -15,6 +15,26 @@ class Extractor : ExtractorInterface {
         val TYPE_SYNTAX = 4
         val SEPARATOR = ">"
         val RESTRICTED_EXTS = listOf(".min.js")
+
+        fun getAllExtensions(): HashSet<String> {
+            val set =
+                CommonExtractor.FILE_EXTS_MAP.value.keys +
+                CExtractor.FILE_EXTS +
+                CppExtractor.FILE_EXTS +
+                CSharpExtractor.FILE_EXTS +
+                CssExtractor.FILE_EXTS +
+                GoExtractor.FILE_EXTS +
+                JavaExtractor.FILE_EXTS +
+                JavascriptExtractor.FILE_EXTS +
+                KotlinExtractor.FILE_EXTS +
+                ObjectiveCExtractor.FILE_EXTS +
+                PhpExtractor.FILE_EXTS +
+                PythonExtractor.FILE_EXTS +
+                RubyExtractor.FILE_EXTS +
+                SwiftExtractor.FILE_EXTS
+
+            return set.toHashSet()
+        }
     }
 
     fun create(extension: String): ExtractorInterface {

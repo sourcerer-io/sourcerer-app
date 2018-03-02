@@ -5,6 +5,7 @@ package app
 
 import app.api.ServerApi
 import app.config.FileConfigurator
+import app.extractors.Extractor
 import app.model.LocalRepo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
