@@ -11,6 +11,7 @@ import app.model.DiffFile
 import app.model.DiffRange
 import app.model.Repo
 import app.utils.EmptyRepoException
+import app.utils.FileHelper
 import io.reactivex.Observable
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
@@ -91,9 +92,9 @@ object CommitCrawler {
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
                           filteredEmails: HashSet<String>? = null,
-                          tail : RevCommit? = null) : Observable<JgitPair> =
-        Observable.create { subscriber ->
-
+                          tail : RevCommit? = null,
+                          allowedExts: HashSet<String>? = null) :
+        Observable<JgitPair> = Observable.create { subscriber ->
         val repo: Repository = git.repository
         val revWalk = RevWalk(repo)
         val head: RevCommit =
@@ -146,14 +147,23 @@ object CommitCrawler {
                 diff.changeType != DiffEntry.ChangeType.COPY
             }
             .filter { diff ->
+                val path = diff.newPath
+                val ext = FileHelper.getFileExtension(path)
+                if (allowedExts != null && !allowedExts.contains(ext)) {
+                    return@filter false
+                }
+
                 val fileId =
-                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
+                    if (path != DiffEntry.DEV_NULL) {
                         diff.getNewId().toObjectId()
                     } else {
                         diff.getOldId().toObjectId()
                     }
-                val stream = try { repo.open(fileId).openStream() }
-                catch (e: Exception) { null }
+                val stream = try {
+                    repo.open(fileId).openStream()
+                } catch (e: Exception) {
+                    null
+                }
                 stream != null && !RawText.isBinary(stream)
             }
             .map { diff ->

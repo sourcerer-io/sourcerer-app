@@ -7,6 +7,7 @@ import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
+import app.extractors.Extractor
 import app.model.Author
 import app.model.LocalRepo
 import app.model.ProcessEntry
@@ -69,7 +70,9 @@ class RepoHasher(private val api: Api,
                 filteredEmails
             } else null
             val jgitObservable = CommitCrawler.getJGitObservable(git,
-                rehashes.size, crawlerEmails).publish()
+                rehashes.size, crawlerEmails,
+                allowedExts = Extractor.getAllExtensions()
+            ).publish()
             val observable = CommitCrawler.getObservable(git,
                 jgitObservable, serverRepo)
 

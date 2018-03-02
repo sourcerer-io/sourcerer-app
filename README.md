@@ -15,7 +15,7 @@ What is it?
 Once you feed it some git repos, you will get a beautiful profile that will help
 you learn things about yourself, connect to others, and become a better
 engineer. Example profiles: <https://sourcerer.io/sergey>,
-<https://sourcerer.io/frankie>, <https://sourcerer.io/ice1snice>, <https://sourcerer.io/wemmer>.
+<https://sourcerer.io/ddeveloperr>, <https://sourcerer.io/osantana>, <https://sourcerer.io/adnanrahic>.
 
 Profile is the first step. Some of the things on our roadmap:
 news that is relevant to your code, engineers to follow and learn from,
