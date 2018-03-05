@@ -47,9 +47,8 @@ object FileHelper {
     }
 
     fun getJarPath(): Path {
-        val fullPathString = URLDecoder.decode(FileHelper::class.java
-            .protectionDomain.codeSource.location.toURI().path, "UTF-8")
-        val fullPath = Paths.get(fullPathString)
+        val fullPathURI = FileHelper::class.java.protectionDomain.codeSource.location.toURI()
+        val fullPath = Paths.get(fullPathURI)
         val root = fullPath.root
         // Removing jar filename.
         return root.resolve(fullPath.subpath(0, fullPath.nameCount - 1))
