@@ -267,9 +267,6 @@ class CommitHasherTest : Spek({
 
             CommitHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
             assertEquals(0, errors.size)
 
             val syntaxStats = mockApi.receivedAddedCommits

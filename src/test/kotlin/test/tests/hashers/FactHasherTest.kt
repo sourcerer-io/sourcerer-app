@@ -354,9 +354,6 @@ class FactHasherTest : Spek({
 
             FactHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
             assertEquals(0, errors.size)
 
             assertFactInt(FactCodes.INDENTATION,

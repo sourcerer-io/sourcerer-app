@@ -4,6 +4,7 @@
 package app.model
 
 import app.ModelsProtos.ModelVersionGroup
+import app.utils.FileHelper
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -31,7 +32,7 @@ data class ModelsVersionsGroup(
 
     fun updateModelVersion(language: String, version: Int, pbPath: String) {
         val protoBuilder = ModelVersionGroup.newBuilder()
-        protoBuilder.mergeFrom(FileInputStream(pbPath))
+        protoBuilder.mergeFrom(FileInputStream(FileHelper.getFile(pbPath)))
 
         if (!languageToVersionMap.containsKey(language)) {
             val modelVersionBuilder = protoBuilder.addVersionsBuilder()
@@ -44,6 +45,6 @@ data class ModelsVersionsGroup(
                     .setVersion(version)
         }
 
-        protoBuilder.build().writeTo(FileOutputStream(pbPath))
+        protoBuilder.build().writeTo(FileOutputStream(FileHelper.getFile(pbPath)))
     }
 }

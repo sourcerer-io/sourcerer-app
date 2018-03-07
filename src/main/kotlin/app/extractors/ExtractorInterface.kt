@@ -21,8 +21,8 @@ interface ExtractorInterface {
         private val classifiersCache = hashMapOf<String, Classifier>()
         private val appVersionFileName = "app_versions.pb"
         private val storageVersionFileName = "versions.pb"
-        private val storageModelsVersionsCache: MutableMap<String, Int> = getStorageModelsVersions()
-        private val appModelsVersionsCache: MutableMap<String, Int> = getAppModelsVersions()
+        private val storageModelsVersionsCache: MutableMap<String, Int> = mutableMapOf()
+        private val appModelsVersionsCache: MutableMap<String, Int> = mutableMapOf()
         private val modelsDir = "models"
         private val pbExt = ".pb"
 
@@ -72,7 +72,7 @@ interface ExtractorInterface {
                 Logger.error(e, "Failed to download $name model")
             }
 
-            val bytes = FileHelper.getFile(storageVersionFileName, modelsDir)
+            val bytes = FileHelper.getFile(appVersionFileName, modelsDir)
                                   .readBytes()
             ModelsVersionsGroup(bytes).updateModelVersion(name,
                 storageModelsVersionsCache[name]!!, "$modelsDir/$appVersionFileName")
@@ -106,6 +106,11 @@ interface ExtractorInterface {
 
             if (classifiersCache.containsKey(name)) {
                 return classifiersCache[name]!!
+            }
+
+            if (storageModelsVersionsCache.isEmpty()) {
+                storageModelsVersionsCache.putAll(getStorageModelsVersions())
+                appModelsVersionsCache.putAll(getAppModelsVersions())
             }
 
             if (!appModelsVersionsCache.containsKey(name) ||
