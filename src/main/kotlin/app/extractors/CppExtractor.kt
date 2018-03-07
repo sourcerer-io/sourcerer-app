@@ -18,7 +18,7 @@ class CppExtractor : ExtractorInterface {
             ExtractorInterface.getMultipleImportsToLibraryMap(LANGUAGE_NAME)
         val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val extractImportRegex = Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
+        val extractImportRegex = Regex("""#include\s+["<](\w+)[/\w+]*(\.\w+)?[">]""")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
@@ -32,12 +32,19 @@ class CppExtractor : ExtractorInterface {
         fileContent.forEach {
             val res = extractImportRegex.find(it)
             if (res != null) {
-                val lineLib = res.groupValues.last()
+                val lineLib = res.groupValues
+                                 .last { !it.startsWith(".") && it != ""}
                 imports.add(lineLib)
             }
         }
-
         val libraries = imports.map { MULTI_IMPORT_TO_LIB.getOrDefault(it, it) }
+                               .map { import -> when {
+                                   import.startsWith("Q") -> "Qt"
+                                   import.startsWith("Lzma") -> "Lzma"
+                                   import.startsWith("Ogre") -> "Ogre"
+                                   else -> import
+                               }}
+                               .toSet().toList()
         return libraries
     }
 

@@ -45,7 +45,7 @@ com.airbnb.android.react.lottie
 zipkin
 com.facebook.presto
 dagger
-junit
+org.junit
 com.lmax.disruptor
 com.jakewharton.rxbinding2
 org.physical_web
