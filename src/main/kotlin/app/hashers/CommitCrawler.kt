@@ -39,6 +39,7 @@ object CommitCrawler {
     private val LOCAL_HEAD = "HEAD"
     private val REFS = listOf(REMOTE_HEAD, REMOTE_MASTER_BRANCH,
                               LOCAL_MASTER_BRANCH, LOCAL_HEAD)
+    private val MAX_DIFF_SIZE = 600000
 
     fun getDefaultBranchHead(git: Git): ObjectId {
         for (ref in REFS) {
@@ -168,6 +169,11 @@ object CommitCrawler {
             }
             .map { diff ->
                 JgitDiff(diff, df.toFileHeader(diff).toEditList())
+            }
+            .filter { diff ->
+                diff.editList.fold(0) { acc, edit ->
+                    acc + edit.lengthA + edit.lengthB
+                } < MAX_DIFF_SIZE
             }
             subscriber.onNext(JgitPair(commit, diffEdits))
             commit = parentCommit
