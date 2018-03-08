@@ -1,35 +1,25 @@
 #!/bin/bash
 
-#-------------------#
-#----- Helpers -----#
-#-------------------#
+# Copyright 2017 Sourcerer, Inc. All Rights Reserved.
+# Author: Maxim Rusak (maxim@sourcerer.io)
 
 set -x
 
-usage() {
-    echo "$0 [COMMAND] [ARGUMENTS]"
-    echo "  Commands:"
-    echo "  - build_jar: build jar"
-    echo "  - build_prod_inside: build nginx container"
-    echo "  - run_jar: run jar"
-    echo "  - run_prod: start nginx container"
-}
-
 fn_exists() {
-    type $1 2>/dev/null | grep -q 'is a function'
+  type $1 2>/dev/null | grep -q 'is a function'
 }
 
 COMMAND=$1
 shift
 ARGUMENTS=${@}
 
-TAG="${CONTAINER_TAG:-latest}"
+CONTAINER_TAG="${CONTAINER_TAG:-latest}"
 NAMESPACE="${NAMESPACE:-sandbox}"
 LOG="${LOG:-debug}"
 VOLUME="${BUILD_VOLUME:-$PWD}"
 PROJECT=sourcerer-app
 PORT=3182
-REPO_NAME=gcr.io/sourcerer-1377/$PROJECT:$TAG
+REPO_NAME=gcr.io/sourcerer-1377/$PROJECT:$CONTAINER_TAG
 GRADLE_VERSION=4.2.0
 
 #--------------------#
@@ -40,12 +30,16 @@ GRADLE_VERSION=4.2.0
 build_jar_inside() {
   if [ "$NAMESPACE" == "sandbox" ]; then
     API="https://sandbox.sourcerer/api/commit"
+    LOG="debug"
   elif [ "$NAMESPACE" == "staging" ]; then
     API="https://staging.sourcerer/api/commit"
+    LOG="info"
   elif [ "$NAMESPACE" == "local" ]; then
     API="http://localhost:3181"
+    LOG="debug"
   else
     API="https://sourcerer.io/api/commit"
+    LOG="info"
   fi
   gradle -Penv=$NAMESPACE -Plog=$LOG -Papi=$API build
 }
@@ -88,7 +82,7 @@ push() {
 
 fn_exists $COMMAND
 if [ $? -eq 0 ]; then
-    $COMMAND $ARGUMENTS
+  $COMMAND $ARGUMENTS
 else
-    usage
+  echo "Command not found"
 fi
