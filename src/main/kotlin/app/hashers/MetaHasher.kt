@@ -63,7 +63,7 @@ class MetaHasher(private val serverRepo: Repo = Repo(),
         val results = Array(authors.size) { Array(authors.size) {0} }
 
         for (i in 0..authors.size-2) {
-            for (j in i+1..authors.size-1) {
+            for (j in i+1 until authors.size) {
                 if (isSameAuthor(namesQgrams[i], namesQgrams[j])) {
                     results[j][i] = 1
                 }

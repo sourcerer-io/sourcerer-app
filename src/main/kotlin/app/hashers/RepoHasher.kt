@@ -24,7 +24,7 @@ import kotlin.collections.HashSet
 class RepoHasher(private val api: Api,
                  private val configurator: Configurator) {
     fun update(localRepo: LocalRepo) {
-        Logger.debug { "RepoHasher.update call: " + localRepo }
+        Logger.debug { "RepoHasher.update call: $localRepo" }
         val processEntryId = localRepo.processEntryId
 
         if (!RepoHelper.isValidRepo(localRepo.path.toPath())) {
