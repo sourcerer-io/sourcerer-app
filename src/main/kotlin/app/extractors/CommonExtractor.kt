@@ -45,7 +45,7 @@ class CommonExtractor : ExtractorInterface {
             reversedMap["perl"] = listOf("pl", "PL")
             reversedMap["powershell"] = listOf("ps1", "psm1", "psd1")
             reversedMap["processing"] = listOf("pde")
-            reversedMap["prolog"] = listOf("pl", "P")
+            reversedMap["prolog"] = listOf("P")
             reversedMap["puppet"] = listOf("pp")
             reversedMap["r"] = listOf("r", "R")
             reversedMap["rust"] = listOf("rs")
