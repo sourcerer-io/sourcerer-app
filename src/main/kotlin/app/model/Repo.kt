@@ -23,7 +23,10 @@ data class Repo(
     var commits: List<Commit> = listOf(),
 
     // Meta info about repo. Is not used for a locally run app.
-    var meta: RepoMeta = RepoMeta()
+    var meta: RepoMeta = RepoMeta(),
+
+    // Processing session id, used to check the processing status.
+    var processEntryId: Int = 0
 ) {
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.Repo) : this() {
@@ -31,6 +34,7 @@ data class Repo(
         initialCommitRehash = proto.initialCommitRehash
         emails = proto.emailsList
         commits = proto.commitsList.map { Commit(it) }
+        processEntryId = proto.processEntryId
     }
 
     @Throws(InvalidProtocolBufferException::class)
@@ -45,6 +49,7 @@ data class Repo(
             .addAllEmails(emails)
             .addAllCommits(commits.map { it.getProto() })
             .setMeta(meta.getProto())
+            .setProcessEntryId(processEntryId)
             .build()
     }
 

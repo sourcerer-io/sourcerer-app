@@ -40,7 +40,8 @@ class RepoHasher(private val api: Api,
             val (rehashes, authors, commitsCount) =
                 CommitCrawler.fetchRehashesAndAuthors(git)
             localRepo.parseGitConfig(git.repository.config)
-            val serverRepo = initServerRepo(localRepo, rehashes.last)
+            val serverRepo = initServerRepo(localRepo, rehashes.last,
+                processEntryId)
 
             // Get repo setup (commits, emails to hash) from server.
             postRepoFromServer(serverRepo)
@@ -148,11 +149,13 @@ class RepoHasher(private val api: Api,
     }
 
     private fun initServerRepo(localRepo: LocalRepo,
-                               initCommitRehash: String): Repo {
+                               initCommitRehash: String,
+                               processEntryId: Int?): Repo {
         val rehash = RepoHelper.calculateRepoRehash(initCommitRehash, localRepo)
         val repo = Repo(initialCommitRehash = initCommitRehash,
                         rehash = rehash,
-                        meta = localRepo.meta)
+                        meta = localRepo.meta,
+                        processEntryId = processEntryId ?: 0)
         Logger.debug { "Local repo path: ${localRepo.path}" }
         Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
         Logger.debug { "Repo rehash: $rehash" }
