@@ -16,6 +16,7 @@ import app.utils.EmptyRepoException
 import app.utils.FileHelper.toPath
 import app.utils.HashingException
 import app.utils.RepoHelper
+import app.utils.batch
 import org.eclipse.jgit.api.Git
 import java.io.File
 import java.io.IOException
@@ -145,7 +146,9 @@ class RepoHasher(private val api: Api,
     private fun postAuthorsToServer(authors: HashSet<Author>,
                                     serverRepo: Repo) {
         authors.forEach { author -> author.repo = serverRepo }
-        api.postAuthors(authors.toList()).onErrorThrow()
+        for (authorsBatch in authors.asSequence().batch(1000)) {
+            api.postAuthors(authorsBatch).onErrorThrow()
+        }
     }
 
     private fun initServerRepo(localRepo: LocalRepo,
