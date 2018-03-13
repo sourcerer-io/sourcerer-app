@@ -37,16 +37,16 @@ class FactHasher(private val serverRepo: Repo = Repo(),
 
     init {
         for (author in emails) {
-            fsDayWeek.put(author, Array(7) { 0 })
-            fsDayTime.put(author, Array(24) { 0 })
-            fsRepoDateStart.put(author, -1)
-            fsRepoDateEnd.put(author, -1)
-            fsCommitLineNumAvg.put(author, 0.0)
-            fsCommitNum.put(author, 0)
-            fsLineLenAvg.put(author, 0.0)
+            fsDayWeek[author] = Array(7) { 0 }
+            fsDayTime[author] = Array(24) { 0 }
+            fsRepoDateStart[author] = -1
+            fsRepoDateEnd[author] = -1
+            fsCommitLineNumAvg[author] = 0.0
+            fsCommitNum[author] = 0
+            fsLineLenAvg[author] = 0.0
             fsLineNum.put(author, 0)
             // TODO(anatoly): Do the bin computations on the go.
-            fsLinesPerCommits.put(author, Array(rehashes.size) {0})
+            fsLinesPerCommits[author] = Array(rehashes.size) {0}
             fsVariableNaming.put(author, Array(3) { 0 })
             fsIndentation.put(author, Array(2) { 0 })
         }

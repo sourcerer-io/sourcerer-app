@@ -16,6 +16,7 @@ import app.utils.EmptyRepoException
 import app.utils.FileHelper.toPath
 import app.utils.HashingException
 import app.utils.RepoHelper
+import app.utils.batch
 import org.eclipse.jgit.api.Git
 import java.io.File
 import java.io.IOException
@@ -24,7 +25,7 @@ import kotlin.collections.HashSet
 class RepoHasher(private val api: Api,
                  private val configurator: Configurator) {
     fun update(localRepo: LocalRepo) {
-        Logger.debug { "RepoHasher.update call: " + localRepo }
+        Logger.debug { "RepoHasher.update call: $localRepo" }
         val processEntryId = localRepo.processEntryId
 
         if (!RepoHelper.isValidRepo(localRepo.path.toPath())) {
@@ -40,7 +41,8 @@ class RepoHasher(private val api: Api,
             val (rehashes, authors, commitsCount) =
                 CommitCrawler.fetchRehashesAndAuthors(git)
             localRepo.parseGitConfig(git.repository.config)
-            val serverRepo = initServerRepo(localRepo, rehashes.last)
+            val serverRepo = initServerRepo(localRepo, rehashes.last,
+                processEntryId)
 
             // Get repo setup (commits, emails to hash) from server.
             postRepoFromServer(serverRepo)
@@ -144,15 +146,19 @@ class RepoHasher(private val api: Api,
     private fun postAuthorsToServer(authors: HashSet<Author>,
                                     serverRepo: Repo) {
         authors.forEach { author -> author.repo = serverRepo }
-        api.postAuthors(authors.toList()).onErrorThrow()
+        for (authorsBatch in authors.asSequence().batch(1000)) {
+            api.postAuthors(authorsBatch).onErrorThrow()
+        }
     }
 
     private fun initServerRepo(localRepo: LocalRepo,
-                               initCommitRehash: String): Repo {
+                               initCommitRehash: String,
+                               processEntryId: Int?): Repo {
         val rehash = RepoHelper.calculateRepoRehash(initCommitRehash, localRepo)
         val repo = Repo(initialCommitRehash = initCommitRehash,
                         rehash = rehash,
-                        meta = localRepo.meta)
+                        meta = localRepo.meta,
+                        processEntryId = processEntryId ?: 0)
         Logger.debug { "Local repo path: ${localRepo.path}" }
         Logger.debug { "Repo remote: ${localRepo.remoteOrigin}" }
         Logger.debug { "Repo rehash: $rehash" }

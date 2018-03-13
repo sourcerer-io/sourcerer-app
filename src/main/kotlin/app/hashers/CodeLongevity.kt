@@ -39,7 +39,7 @@ class RevCommitLine(val commit: RevCommit, val fileId: AnyObjectId,
                     val isDeleted: Boolean) {
 
     val id : String
-        get() = "${fileId.getName()}:$line"
+        get() = "${fileId.name}:$line"
 }
 
 /**
@@ -79,13 +79,12 @@ class CodeLine(val repo: Repository,
             }
             return field
         }
-        set(v) { field = v }
 
     /**
      * The code line text.
      */
     val text : String
-        get() = RawText(repo.open(from.fileId).getBytes()).getString(from.line)
+        get() = RawText(repo.open(from.fileId).bytes).getString(from.line)
 
     /**
      * Email address of the line's author.
@@ -103,7 +102,7 @@ class CodeLine(val repo: Repository,
      * A date when the line was changed.
      */
     val editDate : Date
-        get() = Date(to.commit.getCommitTime().toLong() * 1000)
+        get() = Date(to.commit.commitTime.toLong() * 1000)
 
     /**
      * True if the line is deleted.
@@ -116,15 +115,15 @@ class CodeLine(val repo: Repository,
      */
     override fun toString() : String {
         val df = SimpleDateFormat("yyyy-MM-dd HH:mm z")
-        val fd = df.format(Date(from.commit.getCommitTime().toLong() * 1000))
-        val td = df.format(Date(to.commit.getCommitTime().toLong() * 1000))
-        val fc = "${from.commit.getName()} '${from.commit.getShortMessage()}'"
-        val tc = "${to.commit.getName()} '${to.commit.getShortMessage()}'"
+        val fd = df.format(Date(from.commit.commitTime.toLong() * 1000))
+        val td = df.format(Date(to.commit.commitTime.toLong() * 1000))
+        val fc = "${from.commit.name} '${from.commit.shortMessage}'"
+        val tc = "${to.commit.name} '${to.commit.shortMessage}'"
         val revState = if (isDeleted) "deleted in" else "last known as"
         val state = if (isDeleted) "deleted" else "alive"
         return "Line '$text' - '${from.file}:${from.line}' added in $fc $fd\n" +
-            "  ${revState} '${to.file}:${to.line}' in $tc $td,\n" +
-            "  age: ${age} s - $state"
+            "  $revState '${to.file}:${to.line}' in $tc $td,\n" +
+            "  age: $age s - $state"
     }
 }
 
@@ -153,7 +152,7 @@ class Colleagues(private val serverRepo: Repo) {
         Logger.trace { "collected colleague, age: ${line.age}" }
         val vicinity = dates.getOrPut(month, { line.age })
         if (vicinity > line.age) {
-            dates.put(month, line.age)
+            dates[month] = line.age
         }
     }
 
@@ -162,14 +161,14 @@ class Colleagues(private val serverRepo: Repo) {
         // colleague2 edited colleauge1 code.
         val auxHash = hashSetOf<Pair<String, String>>()
         for ((pair, dates) in map) {
-            val email1 = pair.first;
-            val email2 = pair.second;
+            val email1 = pair.first
+            val email2 = pair.second
             if (auxHash.contains(Pair(email2, email1))) {
-                continue;
+                continue
             }
 
             val min1 = dates.minBy { (_, vicinity) -> vicinity }!!
-            val dates2 = map.get(Pair(email2, email1));
+            val dates2 = map[Pair(email2, email1)]
             if (dates2 != null) {
                 auxHash.add(Pair(email1, email2))
 
@@ -237,7 +236,7 @@ class CodeLineAges : Serializable, Cloneable {
      */
     var lastingLines: HashMap<String, LineInfo> = hashMapOf()
 
-    override public fun clone(): CodeLineAges {
+    public override fun clone(): CodeLineAges {
         val clone = CodeLineAges()
         aggrAges.forEach { (email, age) ->
             clone.aggrAges[email] = age.copy() }
@@ -276,7 +275,7 @@ class CodeLongevity(
             repoSum += aggrAge.sum
             repoTotal += aggrAge.count
             if (emails.contains(email)) {
-                aggrAges.put(email, aggrAge)
+                aggrAges[email] = aggrAge
             }
         }
 
@@ -349,7 +348,7 @@ class CodeLongevity(
         // Update ages.
         getLinesObservable(storedHead, diffObservable, onError).subscribe({
             line ->
-            Logger.trace { "Scanning: ${line}" }
+            Logger.trace { "Scanning: $line" }
             if (line.isDeleted) {
                 if (ageData.lastingLines.contains(line.oldId)) {
                     line.age += ageData.lastingLines.remove(line.oldId)!!.age
@@ -365,15 +364,15 @@ class CodeLongevity(
                 if (ageData.lastingLines.contains(line.oldId)) {
                     age += ageData.lastingLines.remove(line.oldId)!!.age
                 }
-                ageData.lastingLines.put(line.newId, CodeLineAges.LineInfo(age,
-                    line.authorEmail))
+                ageData.lastingLines[line.newId] = CodeLineAges.LineInfo(age,
+                        line.authorEmail)
             }
         }, onError, {
             // Store ages for subsequent runs.
             try {
                 val file = dataPath.toFile()
                 val oStream = ObjectOutputStream(FileOutputStream(file))
-                oStream.writeUTF(head.getName())
+                oStream.writeUTF(head.name)
                 oStream.writeObject(ageData)
             }
             catch(e: Exception) {
@@ -418,24 +417,24 @@ class CodeLongevity(
         Observable.create { subscriber ->
 
         val headWalk = TreeWalk(repo)
-        headWalk.setRecursive(true)
-        headWalk.addTree(head.getTree())
+            headWalk.isRecursive = true
+        headWalk.addTree(head.tree)
 
         val files: MutableMap<String, ArrayList<RevCommitLine>> = mutableMapOf()
 
         // Build a map of file names and their code lines.
         while (headWalk.next()) {
             try {
-                val path = headWalk.getPathString()
+                val path = headWalk.pathString
                 val fileId = headWalk.getObjectId(0)
                 val fileLoader = repo.open(fileId)
                 if (!RawText.isBinary(fileLoader.openStream())) {
-                    val fileText = RawText(fileLoader.getBytes())
+                    val fileText = RawText(fileLoader.bytes)
                     val lines = ArrayList<RevCommitLine>(fileText.size())
-                    for (idx in 0..fileText.size() - 1) {
+                    for (idx in 0 until fileText.size()) {
                         lines.add(RevCommitLine(head, fileId, path, idx, false))
                     }
-                    files.put(path, lines)
+                    files[path] = lines
                 }
             } catch (e: Exception) {
                 // TODO(anatoly): better fix of exceptions.
@@ -450,17 +449,17 @@ class CodeLongevity(
             // renames properly.
             // TODO(alex): cover file renames by tests (see APP-132 issue).
             for ((diff, editList) in diffs.asReversed()) {
-                val oldPath = diff.getOldPath()
-                val oldId = diff.getOldId().toObjectId()
-                val newPath = diff.getNewPath()
-                val newId = diff.getNewId().toObjectId()
+                val oldPath = diff.oldPath
+                val oldId = diff.oldId.toObjectId()
+                val newPath = diff.newPath
+                val newId = diff.newId.toObjectId()
                 Logger.trace { "old: '$oldPath', new: '$newPath'" }
 
                 // File was deleted, initialize the line array in the files map.
                 if (diff.changeType == DiffEntry.ChangeType.DELETE) {
                     val fileLoader = repo.open(oldId)
-                    val fileText = RawText(fileLoader.getBytes())
-                    files.put(oldPath, ArrayList(fileText.size()))
+                    val fileText = RawText(fileLoader.bytes)
+                    files[oldPath] = ArrayList(fileText.size())
                 }
 
                 // If a file was deleted, then the new path is /dev/null.
@@ -469,7 +468,7 @@ class CodeLongevity(
                 } else {
                     oldPath
                 }
-                val lines = files.get(path)!!
+                val lines = files[path]!!
 
 
                 // Update the lines array according to diff insertions.
@@ -477,25 +476,25 @@ class CodeLongevity(
                 // the edit list and the lines array in sync.
                 for (edit in editList.asReversed()) {
                     // Insertion case: track the lines.
-                    val insCount = edit.getLengthB()
+                    val insCount = edit.lengthB
                     if (insCount > 0) {
-                        val insStart = edit.getBeginB()
-                        val insEnd = edit.getEndB()
+                        val insStart = edit.beginB
+                        val insEnd = edit.endB
                         Logger.trace { "ins ($insStart, $insEnd)" }
 
-                        for (idx in insStart .. insEnd - 1) {
+                        for (idx in insStart until insEnd) {
                             val from = RevCommitLine(commit, newId,
                                                      newPath, idx, false)
                             try {
-                                val to = lines.get(idx)
+                                val to = lines[idx]
                                 val cl = CodeLine(repo, from, to)
-                                Logger.trace { "Collected: ${cl}" }
+                                Logger.trace { "Collected: $cl" }
                                 subscriber.onNext(cl)
                             }
                             catch(e: IndexOutOfBoundsException) {
-                                Logger.error(e, "No line at ${idx}; commit: " +
-                                    "${commit.getName()}; " +
-                                    "'${commit.getShortMessage()}'")
+                                Logger.error(e, "No line at $idx; commit: " +
+                                    "${commit.name}; " +
+                                    "'${commit.shortMessage}'")
                                 throw e
                             }
                         }
@@ -507,14 +506,14 @@ class CodeLongevity(
                 for (edit in editList) {
                     // Deletion case. Chase down the deleted lines through the
                     // history.
-                    val delCount = edit.getLengthA()
+                    val delCount = edit.lengthA
                     if (delCount > 0) {
-                        val delStart = edit.getBeginA()
-                        val delEnd = edit.getEndA()
+                        val delStart = edit.beginA
+                        val delEnd = edit.endA
                         Logger.trace { "del ($delStart, $delEnd)" }
 
                         val tmpLines = ArrayList<RevCommitLine>(delCount)
-                        for (idx in delStart .. delEnd - 1) {
+                        for (idx in delStart until delEnd) {
                             tmpLines.add(RevCommitLine(commit, oldId,
                                                        oldPath, idx, true))
                         }
@@ -524,7 +523,7 @@ class CodeLongevity(
 
                 // File was renamed, tweak the files map.
                 if (diff.changeType == DiffEntry.ChangeType.RENAME) {
-                    files.set(oldPath, files.remove(newPath)!!)
+                    files[oldPath] = files.remove(newPath)!!
                 }
             }
         }, onError, {
@@ -534,15 +533,15 @@ class CodeLongevity(
             // caller can update their ages properly.
             if (tail != null) {
                 val tailWalk = TreeWalk(repo)
-                tailWalk.setRecursive(true)
-                tailWalk.addTree(tail.getTree())
+                tailWalk.isRecursive = true
+                tailWalk.addTree(tail.tree)
 
                 while (tailWalk.next()) {
-                    val filePath = tailWalk.getPathString()
-                    val lines = files.get(filePath)
+                    val filePath = tailWalk.pathString
+                    val lines = files[filePath]
                     if (lines != null) {
                         val fileId = tailWalk.getObjectId(0)
-                        for (idx in 0 .. lines.size - 1) {
+                        for (idx in 0 until lines.size) {
                             val from = RevCommitLine(tail, fileId,
                                 filePath, idx, false)
                             val cl = CodeLine(repo, from, lines[idx])

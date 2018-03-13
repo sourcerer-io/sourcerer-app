@@ -33,10 +33,10 @@ data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 * Iterates over the diffs between commits in the repo's history.
 */
 object CommitCrawler {
-    private val REMOTE_HEAD = "refs/remotes/origin/HEAD"
-    private val REMOTE_MASTER_BRANCH = "refs/remotes/origin/master"
-    private val LOCAL_MASTER_BRANCH = "refs/heads/master"
-    private val LOCAL_HEAD = "HEAD"
+    private const val REMOTE_HEAD = "refs/remotes/origin/HEAD"
+    private const val REMOTE_MASTER_BRANCH = "refs/remotes/origin/master"
+    private const val LOCAL_MASTER_BRANCH = "refs/heads/master"
+    private const val LOCAL_HEAD = "HEAD"
     private val REFS = listOf(REMOTE_HEAD, REMOTE_MASTER_BRANCH,
                               LOCAL_MASTER_BRANCH, LOCAL_HEAD)
     private val MAX_DIFF_SIZE = 600000
@@ -71,7 +71,7 @@ object CommitCrawler {
             val name = commit.authorIdent.name
             if (!emails.contains(email)) {
                 emails.add(email)
-                names.put(email, name)
+                names[email] = name
             } else {
                 if (name.length > names[email]!!.length) {
                     names[email] = name
@@ -104,7 +104,7 @@ object CommitCrawler {
 
         val df = DiffFormatter(DisabledOutputStream.INSTANCE)
         df.setRepository(repo)
-        df.setDetectRenames(true)
+        df.isDetectRenames = true
 
         var commitCount = 0
         revWalk.markStart(head)
@@ -117,12 +117,12 @@ object CommitCrawler {
             // in an inline lambda, see
             // https://youtrack.jetbrains.com/issue/KT-7186.
             if (Logger.isDebug) {
-                val commitName = commit.getName()
-                val commitMsg = commit.getShortMessage()
+                val commitName = commit.name
+                val commitMsg = commit.shortMessage
                 Logger.debug { "commit: $commitName; '$commitMsg'" }
                 if (parentCommit != null) {
-                    val parentCommitName = parentCommit.getName()
-                    val parentCommitMsg = parentCommit.getShortMessage()
+                    val parentCommitName = parentCommit.name
+                    val parentCommitMsg = parentCommit.shortMessage
                     Logger.debug { "parent commit: $parentCommitName; " +
                         "'$parentCommitMsg'" }
                 }
@@ -156,9 +156,9 @@ object CommitCrawler {
 
                 val fileId =
                     if (path != DiffEntry.DEV_NULL) {
-                        diff.getNewId().toObjectId()
+                        diff.newId.toObjectId()
                     } else {
-                        diff.getOldId().toObjectId()
+                        diff.oldId.toObjectId()
                     }
                 val stream = try {
                     repo.open(fileId).openStream()

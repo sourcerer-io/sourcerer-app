@@ -9,7 +9,7 @@ import app.model.DiffFile
 
 class CExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "c"
+        const val LANGUAGE_NAME = "c"
         val FILE_EXTS = listOf("c")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)

@@ -117,6 +117,9 @@ message Repo {
 
     // Meta info about repo. Is not used for a locally run app.
     RepoMeta meta = 6;
+
+    // Processing session id, used to check the processing status.
+    uint32 process_entry_id = 7;
 }
 
 // Meta info about repo. Is not used for a locally run app.

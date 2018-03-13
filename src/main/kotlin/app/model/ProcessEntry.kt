@@ -26,10 +26,10 @@ data class ProcessEntry(
 
     fun getProto(): Protos.ProcessEntry {
         return Protos.ProcessEntry.newBuilder()
-                     .setId(id)
-                     .setStatus(status)
-                     .setErrorCode(errorCode)
-                     .build()
+            .setId(id)
+            .setStatus(status)
+            .setErrorCode(errorCode)
+            .build()
     }
 
     fun serialize(): ByteArray {
