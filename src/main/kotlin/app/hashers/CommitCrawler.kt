@@ -13,6 +13,10 @@ import app.model.Repo
 import app.utils.EmptyRepoException
 import app.utils.FileHelper
 import io.reactivex.Observable
+import java.io.BufferedReader
+import java.io.FileReader
+import java.io.File
+import java.io.InputStreamReader
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
@@ -23,6 +27,8 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.treewalk.filter.PathFilter
+import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.util.LinkedList
 
@@ -39,6 +45,7 @@ object CommitCrawler {
     private const val LOCAL_HEAD = "HEAD"
     private val REFS = listOf(REMOTE_HEAD, REMOTE_MASTER_BRANCH,
                               LOCAL_MASTER_BRANCH, LOCAL_HEAD)
+    private val CONF_FILE_PATH = ".sourcerer-conf"
     private val MAX_DIFF_SIZE = 600000
 
     fun getDefaultBranchHead(git: Git): ObjectId {
@@ -106,6 +113,18 @@ object CommitCrawler {
         df.setRepository(repo)
         df.isDetectRenames = true
 
+        val confTreeWalk = TreeWalk(repo)
+        confTreeWalk.addTree(head.getTree())
+        confTreeWalk.setFilter(PathFilter.create(CONF_FILE_PATH))
+
+        var ignoredPaths =
+            if (confTreeWalk.next()) {
+                getIgnoredPaths(repo, confTreeWalk.getObjectId(0))
+            }
+            else {
+                listOf()
+            }
+
         var commitCount = 0
         revWalk.markStart(head)
         var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
@@ -166,6 +185,31 @@ object CommitCrawler {
                     null
                 }
                 stream != null && !RawText.isBinary(stream)
+            }
+            .filter { diff ->
+                val filePath =
+                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
+                        diff.getNewPath()
+                    } else {
+                        diff.getOldPath()
+                    }
+
+                // Update ignored paths list. The config file has retroactive
+                // force, i.e. if it was added at this commit, then we presume
+                // it is applied to all commits, preceding this commit.
+                if (diff.getOldPath() == CONF_FILE_PATH) {
+                    ignoredPaths =
+                        getIgnoredPaths(repo, diff.getNewId().toObjectId())
+                }
+
+                !ignoredPaths.any { path ->
+                    if (path.endsWith("/")) {
+                        filePath.startsWith(path)
+                    }
+                    else {
+                        path == filePath
+                    }
+                }
             }
             .map { diff ->
                 JgitDiff(diff, df.toFileHeader(diff).toEditList())
@@ -261,6 +305,41 @@ object CommitCrawler {
             }
             return content
         } catch (e: Exception) {
+            listOf()
+        }
+    }
+
+    /**
+     * Return a list of paths that should be ignored in commit analysis.
+     */
+    private fun getIgnoredPaths(repo: Repository, objectId: ObjectId?): List<String> {
+        return try {
+            if (objectId == null) {
+                return listOf()
+            }
+
+            val list = mutableListOf<String>()
+            val fileLoader = repo.open(objectId)
+            val reader =
+                BufferedReader(InputStreamReader(fileLoader.openStream()))
+            var collectIgnored = false
+            for (line in reader.lines()) {
+                if (line == "" || line.startsWith("#")) {
+                    continue
+                }
+
+                if (line.startsWith("[")) {
+                    collectIgnored = (line == "[ignore]")
+                    continue
+                }
+
+                if (collectIgnored) {
+                    list.add(line)
+                }
+            }
+            list
+        }
+        catch(e: Exception) {
             listOf()
         }
     }
