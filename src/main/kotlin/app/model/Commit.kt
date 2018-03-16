@@ -34,7 +34,7 @@ data class Commit(
 
         rehash = DigestUtils.sha256Hex(revCommit.id.name)
         author = Author(revCommit.authorIdent.name,
-                        revCommit.authorIdent.emailAddress)
+                        revCommit.authorIdent.emailAddress.toLowerCase())
         dateTimestamp = revCommit.authorIdent.getWhen().time / 1000
         dateTimeZoneOffset = revCommit.authorIdent.timeZoneOffset
         treeRehash = DigestUtils.sha256Hex(revCommit.tree.name)
