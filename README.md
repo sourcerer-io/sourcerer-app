@@ -1,37 +1,43 @@
-
 <h1 style="font-weight:normal">
   <a href="https://sourcerer.io"><img src=https://user-images.githubusercontent.com/20287615/34189346-d426d4c2-e4ef-11e7-9da4-cc76a1ed111d.png alt="Sourcerer Logo", width=50></a>
   &nbsp; sourcerer.io
 </h1>
-  A visual profile for software engineers. Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>. Screenshot below.
+A visual profile for software engineers.  
+<br>
+  
+Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
+<br>
+
+
+Screenshot
+==========
+
+![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/34188912-b3aaf8ba-e4ed-11e7-861c-2adf13a921ac.png)
 <br>
 
 What is it?
 ===========
 
-![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/34188912-b3aaf8ba-e4ed-11e7-861c-2adf13a921ac.png)
-<br>
+Once you feed [Sourcerer](https://sourcerer.io/) some git repos, you will get a beautiful profile that will help you learn things about yourself, connect to others, and become a better
+engineer. 
 
-Once you feed it some git repos, you will get a beautiful profile that will help
-you learn things about yourself, connect to others, and become a better
-engineer. Example profiles: <https://sourcerer.io/sergey>,
-<https://sourcerer.io/ddeveloperr>, <https://sourcerer.io/osantana>, <https://sourcerer.io/adnanrahic>.
+Example profiles:<br> 
+<https://sourcerer.io/sergey><br>
+<https://sourcerer.io/ddeveloperr><br>
+<https://sourcerer.io/wanghuaili><br>
+<https://sourcerer.io/adnanrahic><br>
 
-Profile is the first step. Some of the things on our roadmap:
-news that is relevant to your code, engineers to follow and learn from,
-technology and libraries you should know about, projects
-that could use your help.
+Both open source and closed source repos are fine. The easiest way to get started is with your open source repos. Go to <https://sourcerer.io/start>, and select *Build with GitHub* and watch your profile build. For closed source repos, you will need to use this app. If you already created an account using GitHub, you would have received an email with credentials for the app.  If not, You will need a new account, which you can get at <https://sourcerer.io/start>, and select *Build with app*.
 
-Both open source and closed source repos are fine. The easiest way to get started with open source repos is to go to
-<https://sourcerer.io/start>, and select GitHub. For closed source repos, you can
- use this Sourcerer app. You will still need an account, which you can get at <https://sourcerer.io/>
-
-Sourcerer app does not upload source code anywhere, and it never will. The app looks at repos locally on your
-machine, and then sends stats to sourcerer.io. The best way to verify is to
-look at the code. [src/main/proto/sourcerer.proto](https://github.com/sourcerer-io/sourcerer-app/blob/develop/src/main/proto/sourcerer.proto)
+The Sourcerer app does **NOT** upload source code anywhere, and it **NEVER** will. The app looks at repos locally on your machine, and then sends stats to sourcerer.io. The best way to verify is to look at the code. [src/main/proto/sourcerer.proto](https://github.com/sourcerer-io/sourcerer-app/blob/develop/src/main/proto/sourcerer.proto)
 is a good start as it describes the client-server protocol.
 
-You will need an account, sign up on <https://sourcerer.io/>
+Creating your profile is just the first step for us at Sourcerer. Some of the things on our roadmap include:
+* News that is relevant to your code
+* Engineers to follow and learn from
+* Technology and libraries you should know about
+* Projects that could use your help
+
 
 Requirements
 ============
@@ -75,7 +81,17 @@ $ gradle build
 $ java -jar build/libs/sourcerer-app.jar
 ```
 
-Contribution
+Contributing
 ============
 
-We welcome contributions to Sourcerer App by the community. Check the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information.
+We love contributions!  Check out the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information.
+
+Some handy links:<br>
+* [Sourcerer Site](https://sourcerer.io/)
+* [Sourcerer Blog](https://blog.sourcerer.io)
+* [Follow Sourcerer on Twitter](https://twitter.com/sourcerer_io)
+* [Follow Sourcerer on Facebook](https://www.facebook.com/sourcerer.io/)
+
+License
+=======
+Sourcerer is under the MIT license. See the [LICENSE](https://github.com/sourcerer-io/sourcerer-app/blob/develop/LICENSE.md) for more information.
