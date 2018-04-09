@@ -48,6 +48,7 @@ class CommonExtractor : ExtractorInterface {
             reversedMap["processing"] = listOf("pde")
             reversedMap["prolog"] = listOf("P")
             reversedMap["puppet"] = listOf("pp")
+            reversedMap["qml"] = listOf("qml")
             reversedMap["r"] = listOf("r", "R")
             reversedMap["rust"] = listOf("rs")
             reversedMap["sas"] = listOf("sas")
