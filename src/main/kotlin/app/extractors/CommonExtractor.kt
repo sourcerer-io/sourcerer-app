@@ -37,6 +37,7 @@ class CommonExtractor : ExtractorInterface {
             reversedMap["lisp"] = listOf("lisp", "lsp", "l")
             reversedMap["lua"] = listOf("lua")
             reversedMap["makefile"] = listOf("makefile")
+            reversedMap["markdown"] = listOf("md", "markdown")
             reversedMap["matlab"] = listOf("m", "mlx")
             reversedMap["maven"] = listOf("pom")
             reversedMap["ocaml"] = listOf("ml", "mli")
