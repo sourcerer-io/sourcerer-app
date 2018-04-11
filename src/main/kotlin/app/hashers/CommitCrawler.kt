@@ -135,18 +135,18 @@ object CommitCrawler {
             // Smart casts are not yet supported for a mutable variable captured
             // in an inline lambda, see
             // https://youtrack.jetbrains.com/issue/KT-7186.
-            if (Logger.isDebug) {
+            if (Logger.isTrace) {
                 val commitName = commit.name
                 val commitMsg = commit.shortMessage
-                Logger.debug { "commit: $commitName; '$commitMsg'" }
+                Logger.trace { "commit: $commitName; '$commitMsg'" }
                 if (parentCommit != null) {
                     val parentCommitName = parentCommit.name
                     val parentCommitMsg = parentCommit.shortMessage
-                    Logger.debug { "parent commit: $parentCommitName; " +
+                    Logger.trace { "parent commit: $parentCommitName; " +
                         "'$parentCommitMsg'" }
                 }
                 else {
-                    Logger.debug { "parent commit: null" }
+                    Logger.trace { "parent commit: null" }
                 }
             }
 

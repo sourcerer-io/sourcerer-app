@@ -112,7 +112,7 @@ class ExtractorTest : Spek({
         }
 
         it("ruby extractor extracts rails") {
-            val line = "class Article < ApplicationRecord"
+            val line = "class Article < ActiveRecord::Base"
             assertExtractsLineLibraries("rails",
                     line, RubyExtractor())
         }

@@ -225,8 +225,8 @@ object Logger {
         }
     }
 
-    val isDebug: Boolean
-        inline get() = LEVEL >= DEBUG
+    val isTrace: Boolean
+        inline get() = LEVEL >= TRACE
 
     @kotlin.PublishedApi
     internal fun addBreadcrumb(message: String, level: Breadcrumb.Level) {

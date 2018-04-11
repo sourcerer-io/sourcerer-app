@@ -203,6 +203,15 @@ interface ExtractorInterface {
             probabilities[libraries.indexOf(it)] >= 0.2 * maxProbability
         }
 
+        // For languages with small number of libraries(e.g. less than 20).
+        // When found high probability then there won't be two or more
+        // values with high probability. And vise versa,
+        // if several values with high probability are found
+        // then the prediction is unsure. So we don't take them into account.
+        if (libraries.size < 20 && selectedCategories.size > 1) {
+            return emptyList()
+        }
+
         if (maxProbabilityCategory == languageLabel) {
             return emptyList()
         }
