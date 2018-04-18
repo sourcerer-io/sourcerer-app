@@ -21,6 +21,7 @@ class CommonExtractor : ExtractorInterface {
             reversedMap["dosbatch"] = listOf("bat")
             reversedMap["emacslisp"] = listOf("el", "elc")
             reversedMap["erlang"] = listOf("erl", "hrl")
+            reversedMap["elixir"] = listOf("ex", "exs")
             reversedMap["elm"] = listOf("elm")
             reversedMap["factor"] = listOf("factor")
             reversedMap["forth"] = listOf("forth", "4TH")
