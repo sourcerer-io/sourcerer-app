@@ -12,7 +12,7 @@ Start with your public GitHub at <a href="https://sourcerer.io/start">https://so
 Screenshot
 ==========
 
-![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/34188912-b3aaf8ba-e4ed-11e7-861c-2adf13a921ac.png)
+![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/38911373-9f700892-4283-11e8-853b-1ca1fb9f5fa0.png)
 <br>
 
 What is it?
