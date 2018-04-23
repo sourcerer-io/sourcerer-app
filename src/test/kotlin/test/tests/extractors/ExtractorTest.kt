@@ -93,6 +93,12 @@ class ExtractorTest : Spek({
                     line, CSharpExtractor())
         }
 
+        it("fsharp extractor extracts the library") {
+            val line = "Algorithm = fun (h, v, i) -> ContrastiveDivergenceLearning(h, v)"
+            assertExtractsLineLibraries("Accord",
+                    line, FSharpExtractor())
+        }
+
         it("php extractor extracts the library") {
             val line = "public function listRepos(string \$user, int \$limit): Call;"
             assertExtractsLineLibraries("Tebru\\Retrofit",
@@ -162,6 +168,11 @@ class ExtractorTest : Spek({
         it("csharp extractor returns empty list") {
             val line = "static void Main(string[] args)"
             assertExtractsNoLibraries(line, CSharpExtractor())
+        }
+
+        it("fsharp extractor returns empty list") {
+            val line = "let main()"
+            assertExtractsNoLibraries(line, FSharpExtractor())
         }
 
         it("cpp extractor returns empty list") {

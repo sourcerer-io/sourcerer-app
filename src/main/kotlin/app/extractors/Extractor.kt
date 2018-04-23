@@ -23,6 +23,7 @@ class Extractor : ExtractorInterface {
                 CppExtractor.FILE_EXTS +
                 CSharpExtractor.FILE_EXTS +
                 CssExtractor.FILE_EXTS +
+                FSharpExtractor.FILE_EXTS +
                 GoExtractor.FILE_EXTS +
                 JavaExtractor.FILE_EXTS +
                 JavascriptExtractor.FILE_EXTS +
@@ -47,6 +48,7 @@ class Extractor : ExtractorInterface {
             in CExtractor.FILE_EXTS -> CExtractor()
             in CppExtractor.FILE_EXTS -> CppExtractor()
             in CSharpExtractor.FILE_EXTS -> CSharpExtractor()
+            in FSharpExtractor.FILE_EXTS -> FSharpExtractor()
             in GoExtractor.FILE_EXTS -> GoExtractor()
             in ObjectiveCExtractor.FILE_EXTS -> ObjectiveCExtractor()
             in SwiftExtractor.FILE_EXTS -> SwiftExtractor()
