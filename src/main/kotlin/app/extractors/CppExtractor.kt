@@ -10,7 +10,6 @@ import app.model.DiffFile
 class CppExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "cpp"
-        val FILE_EXTS = listOf("cc", "cpp", "cxx", "c++")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

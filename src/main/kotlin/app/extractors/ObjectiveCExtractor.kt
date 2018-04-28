@@ -10,7 +10,6 @@ import app.model.DiffFile
 class ObjectiveCExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "objectivec"
-        val FILE_EXTS = listOf("m", "mm")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

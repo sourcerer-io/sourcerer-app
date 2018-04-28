@@ -10,7 +10,6 @@ import app.model.DiffFile
 class RubyExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "ruby"
-        val FILE_EXTS = listOf("rb", "rbw")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

@@ -10,7 +10,6 @@ import app.model.DiffFile
 class JavaExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "java"
-        val FILE_EXTS = listOf("java")
         val LIBRARIES = ExtractorInterface.getLibraries("java")
         val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized", "boolean",

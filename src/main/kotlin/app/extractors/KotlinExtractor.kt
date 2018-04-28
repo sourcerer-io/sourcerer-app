@@ -9,7 +9,6 @@ import app.model.DiffFile
 class KotlinExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "kotlin"
-        val FILE_EXTS = listOf("kt")
         val LIBRARIES = ExtractorInterface.getLibraries(LANGUAGE_NAME)
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)

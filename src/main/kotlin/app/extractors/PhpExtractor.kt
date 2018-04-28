@@ -10,7 +10,6 @@ import app.model.DiffFile
 class PhpExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "php"
-        val FILE_EXTS = listOf("php", "phtml", "php4", "php3", "php5", "phps")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

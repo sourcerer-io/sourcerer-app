@@ -17,51 +17,20 @@ class Extractor : ExtractorInterface {
         val RESTRICTED_EXTS = listOf(".min.js")
 
         fun getAllExtensions(): HashSet<String> {
-            val set =
-                CommonExtractor.FILE_EXTS_MAP.value.keys +
-                CExtractor.FILE_EXTS +
-                CppExtractor.FILE_EXTS +
-                CSharpExtractor.FILE_EXTS +
-                CssExtractor.FILE_EXTS +
-                FSharpExtractor.FILE_EXTS +
-                GoExtractor.FILE_EXTS +
-                JavaExtractor.FILE_EXTS +
-                JavascriptExtractor.FILE_EXTS +
-                KotlinExtractor.FILE_EXTS +
-                ObjectiveCExtractor.FILE_EXTS +
-                PhpExtractor.FILE_EXTS +
-                PythonExtractor.FILE_EXTS +
-                RubyExtractor.FILE_EXTS +
-                SwiftExtractor.FILE_EXTS
-
-            return set.toHashSet()
-        }
-    }
-
-    fun create(extension: String): ExtractorInterface {
-        return when (extension) {
-            in JavascriptExtractor.FILE_EXTS -> JavascriptExtractor()
-            in JavaExtractor.FILE_EXTS -> JavaExtractor()
-            in PythonExtractor.FILE_EXTS -> PythonExtractor()
-            in RubyExtractor.FILE_EXTS -> RubyExtractor()
-            in PhpExtractor.FILE_EXTS -> PhpExtractor()
-            in CExtractor.FILE_EXTS -> CExtractor()
-            in CppExtractor.FILE_EXTS -> CppExtractor()
-            in CSharpExtractor.FILE_EXTS -> CSharpExtractor()
-            in FSharpExtractor.FILE_EXTS -> FSharpExtractor()
-            in GoExtractor.FILE_EXTS -> GoExtractor()
-            in ObjectiveCExtractor.FILE_EXTS -> ObjectiveCExtractor()
-            in SwiftExtractor.FILE_EXTS -> SwiftExtractor()
-            in KotlinExtractor.FILE_EXTS -> KotlinExtractor()
-            in CssExtractor.FILE_EXTS -> CssExtractor()
-            else -> CommonExtractor()
+            return Heuristics
+                .map { (ext, _) -> ext }
+                .toHashSet()
         }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        return files.groupBy { file -> file.extension }
-            .filter { (extension, _) -> !RESTRICTED_EXTS.contains(extension) }
-            .map { (extension, files) -> create(extension).extract(files) }
+        return files
+            .filter { file -> !RESTRICTED_EXTS.contains(file.extension) }
+            .mapNotNull { file ->
+                val extractor = Heuristics.get(file.extension)
+                if (extractor != null) extractor(file.new.content)?.extract(listOf(file))
+                else null
+            }
             .fold(mutableListOf()) { accStats, stats ->
                 accStats.addAll(stats)
                 accStats

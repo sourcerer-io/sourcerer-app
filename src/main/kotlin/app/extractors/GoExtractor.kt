@@ -10,7 +10,6 @@ import app.model.DiffFile
 class GoExtractor : ExtractorInterface {
     companion object {
         val LANGUAGE_NAME = "go"
-        val FILE_EXTS = listOf("go")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }
