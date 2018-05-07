@@ -326,7 +326,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         else if (Regex("^\\s*;").matches(buf)) CommonExtractor("m")
         else if (Regex("\\*\\)$").matches(buf)) CommonExtractor("mathematica")
         else if (Regex("^\\s*%").matches(buf)) CommonExtractor("matlab")
-        else if (Regex("^\\w+\\s*:\\s*module\\s*{").matches(buf)) CommonExtractor("limbo")
+        else if (Regex("^\\w+\\s*:\\s*module\\s*\\{").matches(buf)) CommonExtractor("limbo")
         else CommonExtractor("wolframlanguage")
     },
     "makefile" to { _ ->

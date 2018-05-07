@@ -107,6 +107,7 @@ dependencies {
     compile 'org.slf4j:slf4j-nop:1.7.2'
     compile 'io.sentry:sentry:1.7.3'
 
+    testCompile 'commons-io:commons-io:2.6'
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.spek:spek-api:1.1.5'
     testCompile 'org.junit.platform:junit-platform-runner:1.0.1'
