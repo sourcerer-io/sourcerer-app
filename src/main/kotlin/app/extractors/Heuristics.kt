@@ -167,7 +167,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "f" to { lines ->
         val buf = toBuf(lines)
         if (ForthRegex.matches(buf)) CommonExtractor("forth")
-        else if (buf.contains("flowop")) CommonExtractor("filebench WML")
+        else if (buf.contains("flowop")) CommonExtractor("filebench_wml")
         else if (FortranRegex.matches(buf)) CommonExtractor("fortran")
         else null
     },
@@ -260,7 +260,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "inc" to { lines ->
         val buf = toBuf(lines)
         if (Regex("^<\\?(?:php)?").matches(buf)) PhpExtractor()
-        else if (Regex("^\\s*#(declare|local|macro|while)\\s").matches(buf)) CommonExtractor("POV-Ray SDL")
+        else if (Regex("^\\s*#(declare|local|macro|while)\\s").matches(buf)) CommonExtractor("pov-ray_sdl")
         else null
     },
     "inl" to { _ ->
@@ -337,7 +337,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         if (Regex("(^\\s*module)|let rec |match\\s+(\\S+\\s)+with").matches(buf))
             CommonExtractor("ocaml")
         else if (Regex("=> |case\\s+(\\S+\\s)+of").matches(buf))
-            CommonExtractor("standard ML")
+            CommonExtractor("standard_ml")
         else null
     },
     "mli" to { _ ->
@@ -397,7 +397,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         val buf = toBuf(lines)
         if (Perl5Regex.matches(buf)) CommonExtractor("perl")
         else if (Perl6Regex.matches(buf)) CommonExtractor("perl6")
-        else if (Regex("^\\s*\\/\\* XPM \\*\\/").matches(buf)) CommonExtractor("XPM")
+        else if (Regex("^\\s*\\/\\* XPM \\*\\/").matches(buf)) CommonExtractor("xpm")
         else null
     },
     "pom" to { _ ->
@@ -416,7 +416,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "props" to { lines ->
         val buf = toBuf(lines)
-        if (XMLPropsRegex.matches(buf)) CommonExtractor("XML")
+        if (XMLPropsRegex.matches(buf)) CommonExtractor("xml")
         else if (Regex("\\w+\\s*=\\s*", RegexOption.IGNORE_CASE).matches(buf)) CommonExtractor("ini")
         else null
     },
@@ -516,7 +516,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         CommonExtractor("tex")
     },
     "ts" to { lines ->
-        if (Regex("<TS\\b").matches(toBuf(lines))) CommonExtractor("XML")
+        if (Regex("<TS\\b").matches(toBuf(lines))) CommonExtractor("xml")
         else CommonExtractor("typescript")
     },
     "tsx" to { lines ->
@@ -524,7 +524,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         if (Regex("^\\s*(import.+(from\\s+|require\\()['\"]react|\\/\\/\\/\\s*<reference\\s)").matches(buf))
             CommonExtractor("typescript")
         else if (Regex("^\\s*<\\?xml\\s+version", RegexOption.IGNORE_CASE).matches(buf))
-            CommonExtractor("XML")
+            CommonExtractor("xml")
         else null
     },
     "v" to { _ ->
