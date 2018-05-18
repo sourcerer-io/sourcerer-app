@@ -14,6 +14,7 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 const val LANG_SAMPLES_PATH = "src/test/resources/samples/"
 
@@ -27,17 +28,21 @@ fun assertLang(file: File, expectedLang: String) {
 
     val actualLang = diffFile.language
 
-    // TODO(anatoly): Verify all sample files from ignored list.
     // TODO(anatoly): Add support for all languages of samples.
+    var todoSample = false;
     for (wc in ignoredSamplesWildcards) {
         if (FilenameUtils.wildcardMatchOnSystem(file.path, wc)) {
-            Logger.debug { "-> File: ${file.absolutePath}. " +
-                "Expected: <$expectedLang>, actual: <$actualLang>" }
-            return
+            todoSample = true
+            break
         }
     }
 
-    assertEquals(expectedLang, actualLang, "Unexpected lang for ${file.path}")
+    if (todoSample) {
+        assertNotEquals(expectedLang, actualLang, "Unexpected lang for ${file.path}")
+    }
+    else {
+        assertEquals(expectedLang, actualLang, "Unexpected lang for ${file.path}")
+    }
 }
 
 class HeuristicsTest : Spek({
