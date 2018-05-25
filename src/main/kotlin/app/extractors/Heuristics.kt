@@ -29,6 +29,13 @@ val ObjectiveCRegex = Regex(
 )
 var Perl5Regex = Regex("\\buse\\s+(?:strict\\b|v?5\\.)")
 var Perl6Regex = Regex("^\\s*(?:use\\s+v6\\b|\\bmodule\\b|\\b(?:my\\s+)?class\\b)")
+
+var PLSQLRegexs = setOf(
+    Regex("\\\$\\\$PLSQL_|XMLTYPE|sysdate|systimestamp|\\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)", RegexOption.IGNORE_CASE),
+    Regex("constructor\\W+function", RegexOption.IGNORE_CASE)
+)
+var NotSQLRegex = Regex("begin|boolean|package|exception", RegexOption.IGNORE_CASE)
+
 var PythonRegex = Regex("(^(import|from|class|def)\\s)", RegexOption.MULTILINE)
 var RustRegex = Regex("^(use |fn |mod |pub |macro_rules|impl|#!?\\[)")
 var RenderScriptRegex = Regex("#include|#pragma\\s+(rs|version)|__attribute__")
@@ -73,6 +80,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "bat" to { _ ->
         CommonExtractor("dosbatch")
     },
+    "bdy" to { _ ->
+        CommonExtractor("plsql")
+    },
     "c" to { _ ->
         CExtractor()
     },
@@ -115,6 +125,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "cpy" to { _ ->
         CommonExtractor("cobol")
     },
+    "cql" to { _ ->
+        CommonExtractor("sql")
+    },
     "cs" to { lines ->
         val buf = toBuf(lines)
         if (Regex("![\\w\\s]+methodsFor: ").matches(buf)) CommonExtractor("smalltalk")
@@ -141,6 +154,17 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         if (DRegex.matches(buf)) CommonExtractor("d")
         else if (DTraceRegex.matches(buf)) CommonExtractor("dtrace")
         else if (MakefileRegex.matches(buf)) CommonExtractor("makefile")
+        else null
+    },
+    "db2" to { _ ->
+        CommonExtractor("sqlpl")
+    },
+    "ddl" to { lines ->
+        val buf = toBuf(lines)
+        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)})
+            CommonExtractor("plsql")  // Oracle
+        else if (!NotSQLRegex.containsMatchIn(buf))
+            CommonExtractor("sql")  // Generic SQL
         else null
     },
     "edn" to { _ ->
@@ -188,6 +212,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "factor" to { _ ->
         CommonExtractor("factor")
+    },
+    "fnc" to { _ ->
+        CommonExtractor("plsql")
     },
     "for" to { lines ->
         val buf = toBuf(lines)
@@ -349,6 +376,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "mm" to { _ ->
         ObjectiveCExtractor()
     },
+    "mysql" to { _ ->
+        CommonExtractor("sql")
+    },
     "nb" to { _ ->
         CommonExtractor("wolframlanguage")
     },
@@ -363,6 +393,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "pas" to { _ ->
         CommonExtractor("pascal")
+    },
+    "pck" to { _ ->
+        CommonExtractor("plsql")
     },
     "pde" to { _ ->
         CommonExtractor("processing")
@@ -386,12 +419,27 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "phps" to { _ ->
         PhpExtractor()
     },
+    "pkb" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "pks" to { _ ->
+        CommonExtractor("plsql")
+    },
     "pl" to { lines ->
         val buf = toBuf(lines)
         if (Regex("^[^#]*:-").matches(buf)) CommonExtractor("prolog")
         else if (Perl5Regex.matches(buf)) CommonExtractor("perl")
         else if (Perl6Regex.matches(buf)) CommonExtractor("perl6")
         else null
+    },
+    "plb" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "pls" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "plsql" to { _ ->
+        CommonExtractor("plsql")
     },
     "pm" to { lines ->
         val buf = toBuf(lines)
@@ -405,6 +453,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "pp" to { _ ->
         CommonExtractor("puppet")
+    },
+    "prc" to { _ ->
+        CommonExtractor("plsql")
     },
     "pro" to { lines ->
         val buf = toBuf(lines)
@@ -497,8 +548,21 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "sh" to { _ ->
         CommonExtractor("shell")
     },
-    "sql" to { _ ->
-        CommonExtractor("sql")
+    "spc" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "sql" to { lines ->
+        val buf = toBuf(lines)
+        if (Regex("^\\\\i\\b|AS \\$\\$|LANGUAGE '?plpgsql'?", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
+            Regex("SECURITY (DEFINER|INVOKER)", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
+            Regex("BEGIN( WORK| TRANSACTION)?;", RegexOption.IGNORE_CASE).containsMatchIn(buf))
+            CommonExtractor("plpgsql")  // Postgres
+        else if (Regex("(alter module)|(language sql)|(begin( NOT)+ atomic)", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
+                 Regex("signal SQLSTATE '[0-9]+'", RegexOption.IGNORE_CASE).containsMatchIn(buf))
+            CommonExtractor("sqlpl")  // IBM db2
+        else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)})
+            CommonExtractor("plsql")  // Oracle
+        else CommonExtractor("sql")  // Generic SQL
     },
     "ss" to { _ ->
         CommonExtractor("scheme")
@@ -509,11 +573,23 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "swift" to { _ ->
         SwiftExtractor()
     },
+    "tab" to { _ ->
+        CommonExtractor("sql")
+    },
     "tcl" to { _ ->
         CommonExtractor("tcl")
     },
     "tex" to { _ ->
         CommonExtractor("tex")
+    },
+    "tpb" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "tps" to { _ ->
+        CommonExtractor("plsql")
+    },
+    "trg" to { _ ->
+        CommonExtractor("plsql")
     },
     "ts" to { lines ->
         if (Regex("<TS\\b").matches(toBuf(lines))) CommonExtractor("xml")
@@ -527,6 +603,9 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
             CommonExtractor("xml")
         else null
     },
+    "udf" to { _ ->
+        CommonExtractor("sql")
+    },
     "v" to { _ ->
         CommonExtractor("verilog")
     },
@@ -539,8 +618,14 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "vim" to { _ ->
         CommonExtractor("viml")
     },
+    "viw" to { _ ->
+        CommonExtractor("sql")
+    },
     "vue" to { _ ->
         CommonExtractor("vue")
+    },
+    "vw" to { _ ->
+        CommonExtractor("plsql")
     },
     "xtend" to { _ ->
         CommonExtractor("xtend")
