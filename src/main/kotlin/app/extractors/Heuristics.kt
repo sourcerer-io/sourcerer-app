@@ -506,7 +506,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "rpy" to { lines ->
         if (PythonRegex.matches(toBuf(lines))) CommonExtractor("python")
-        else CommonExtractor("Ren'Py")
+        else CommonExtractor("renpy")
     },
     "rs" to { lines ->
         val buf = toBuf(lines)

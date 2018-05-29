@@ -49,7 +49,9 @@ class HeuristicsTest : Spek({
     given("heuristics test") {
         it("all language samples") {
             for (dir in File(LANG_SAMPLES_PATH).listFiles()) {
-                val expectedLang = dirToLangMap.getOrDefault(dir.name, dir.name)
+                val expectedLang = dirToLangMap.getOrDefault(
+                    dir.name, dir.name.toLowerCase()
+                )
                 for (file in dir.walkTopDown()) {
                     if (file.isFile) assertLang(file, expectedLang)
                 }
