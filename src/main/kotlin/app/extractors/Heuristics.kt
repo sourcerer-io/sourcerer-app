@@ -4,45 +4,221 @@
 package app.extractors
 
 val ActionScriptRegex = Regex(
-    "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)"
+    "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)",
+    RegexOption.MULTILINE
 )
-val CSharpRegex = Regex("^\\s*namespace\\s*[\\w\\.]+\\s*\\{")
-var DRegex = Regex(
-    "^module\\s+[\\w.]*\\s*;|import\\s+[\\w\\s,.:]*;|\\w+\\s+\\w+\\s*\\(.*\\)(?:\\(.*\\))?\\s*\\{[^}]*\\}|unittest\\s*(?:\\(.*\\))?\\s*\\{[^}]*\\}"
+val CommonLispRegex = Regex(
+    "^\\s*\\((defun|in-package|defpackage) ",
+    setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-var DTraceRegex = Regex(
-    "^(\\w+:\\w*:\\w*:\\w*|BEGIN|END|provider\\s+|(tick|profile)-\\w+\\s+\\{[^}]*\\}|#pragma\\s+D\\s+(option|attributes|depends_on)\\s|#pragma\\s+ident\\s)"
+val CPlusPlusRegex = Regex(
+    "(template |class |namespace |#include <c?std[^.]+>)",
+    RegexOption.MULTILINE
 )
-var FSharpRegex = Regex("^\\s*(#light|import|let|module|namespace|open|type)")
-var ForthRegex = Regex(" /^: /")
-var FortranRegex = Regex(
-    "^([c*][^abd-z]|      (subroutine|program|end|data)\\s|\\s*!)", RegexOption.IGNORE_CASE
+val DRegex = Regex(
+    "^module\\s+[\\w.]*\\s*;|import\\s+[\\w\\s,.:]*;|\\w+\\s+\\w+\\s*\\(.*\\)(?:\\(.*\\))?\\s*\\{[^}]*\\}|unittest\\s*(?:\\(.*\\))?\\s*\\{[^}]*\\}",
+    RegexOption.MULTILINE
 )
-var GLSLRegex = Regex("^\\s*(#version|precision|uniform|varying|vec[234])")
-var LispRegex = Regex("^\\s*\\((defun|in-package|defpackage) ", RegexOption.IGNORE_CASE)
-var MakefileRegex = Regex(
+val DTraceRegex = Regex(
+    "^(\\w+:\\w*:\\w*:\\w*|BEGIN|END|provider\\s+|(tick|profile)-\\w+\\s+\\{[^}]*\\}|#pragma\\s+D\\s+(option|attributes|depends_on)\\s|#pragma\\s+ident\\s)",
+    RegexOption.MULTILINE
+)
+val FilterscriptRegex = Regex(
+    "#include|#pragma\\s+(rs|version)|__attribute__"
+)
+val FSharpRegex = Regex(
+    "^\\s*(#light|import|let|module|namespace|open|type)",
+    RegexOption.MULTILINE
+)
+val ForthRegex = Regex(
+    "^: "
+)
+val ForthFsRegex = Regex(
+    "^(: |new-device)"
+)
+val FortranRegex = Regex(
+    "^([c*][^abd-z]|      (subroutine|program|end|data)\\s|\\s*!)",
+    RegexOption.IGNORE_CASE
+)
+val GLSLRegex = Regex(
+    "^\\s*(#version|precision|uniform|varying|vec[234])",
+    RegexOption.IGNORE_CASE
+)
+val IDLRegex = Regex(
+    "^\\s*function[ \\w,]+$",
+    RegexOption.MULTILINE
+)
+val INIPropsRegex = Regex(
+    "\\w+\\s*=\\s*",
+    RegexOption.IGNORE_CASE
+)
+val LexRegex = Regex(
+    "^(%[%{}]xs|<.*>)",
+    RegexOption.MULTILINE
+)
+val LimboRegex = Regex(
+    "^\\w+\\s*:\\s*module\\s*\\{",
+    RegexOption.MULTILINE
+)
+val MathematicaRegex = Regex(
+    "\\*\\)$",
+    RegexOption.MULTILINE
+)
+val MatlabRegex = Regex(
+    "^\\s*%",
+    RegexOption.MULTILINE
+)
+val MRegexs = setOf(
+    Regex(
+        "^\\s*;",
+        RegexOption.MULTILINE
+    ),
+    Regex(
+        "^\\w+\\s;",
+        RegexOption.MULTILINE
+    )
+)
+val MakefileRegex = Regex(
     "([\\/\\\\].*:\\s+.*\\s\\\\$|: \\\\$|^ : |^[\\w\\s\\/\\\\.]+\\w+\\.\\w+\\s*:\\s+[\\w\\s\\/\\\\.]+\\w+\\.\\w+)"
 )
-var NewLispRegex = Regex("^\\s*\\(define ")
+val MUFRegex =Regex(
+    "^: ",
+    RegexOption.MULTILINE
+)
+val NewLispRegex = Regex(
+    "^\\s*\\(define ",
+    RegexOption.MULTILINE
+)
+val NotSQLRegex = Regex(
+    "begin|boolean|package|exception",
+    RegexOption.IGNORE_CASE
+)
 val ObjectiveCRegex = Regex(
-    "^\\s*(@(interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])"
+    "^\\s*(@(interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])",
+    RegexOption.MULTILINE
 )
-var Perl5Regex = Regex("\\buse\\s+(?:strict\\b|v?5\\.)")
-var Perl6Regex = Regex("^\\s*(?:use\\s+v6\\b|\\bmodule\\b|\\b(?:my\\s+)?class\\b)")
-
-var PLSQLRegexs = setOf(
-    Regex("\\\$\\\$PLSQL_|XMLTYPE|sysdate|systimestamp|\\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)", RegexOption.IGNORE_CASE),
-    Regex("constructor\\W+function", RegexOption.IGNORE_CASE)
+val OCamlRegex = Regex(
+    "(^\\s*module)|let rec |match\\s+(\\S+\\s)+with",
+    RegexOption.MULTILINE
 )
-var NotSQLRegex = Regex("begin|boolean|package|exception", RegexOption.IGNORE_CASE)
-
-var PythonRegex = Regex("(^(import|from|class|def)\\s)", RegexOption.MULTILINE)
-var RustRegex = Regex("^(use |fn |mod |pub |macro_rules|impl|#!?\\[)")
-var RenderScriptRegex = Regex("#include|#pragma\\s+(rs|version)|__attribute__")
-var ScalaRegex = Regex(
-    "^\\s*import (scala|java)\\./.match(data) || /^\\s*val\\s+\\w+\\s*=/.match(data) || /^\\s*class\\b"
+val PascalRegex = Regex(
+    "(^\\s*uses)|(function)|(program)",
+    setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-var XMLPropsRegex = Regex("^(\\s*)(<Project|<Import|<Property|<?xml|xmlns)", RegexOption.IGNORE_CASE)
+val Perl5Regex = Regex(
+    "\\buse\\s+(?:strict\\b|v?5\\.)"
+)
+val Perl6Regex = Regex(
+    "^\\s*(?:use\\s+v6\\b|\\bmodule\\b|\\b(?:my\\s+)?class\\b)",
+    RegexOption.MULTILINE
+)
+val PHPRegex = Regex(
+    "^<\\?(?:php)?"
+)
+val PicoLispRegex = Regex(
+    "^\\((de|class|rel|code|data|must)\\s",
+    RegexOption.MULTILINE
+)
+val PLpgSQLRegexs = setOf(
+    Regex(
+        "^\\\\i\\b|AS \\$\\$|LANGUAGE '?plpgsql'?",
+        setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
+    ),
+    Regex(
+        "SECURITY (DEFINER|INVOKER)",
+        RegexOption.IGNORE_CASE
+    ),
+    Regex(
+        "BEGIN( WORK| TRANSACTION)?;",
+        RegexOption.IGNORE_CASE
+    )
+)
+val PLSQLRegexs = setOf(
+    Regex(
+        "\\\$\\\$PLSQL_|XMLTYPE|sysdate|systimestamp|\\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)",
+        RegexOption.IGNORE_CASE
+    ),
+    Regex(
+        "constructor\\W+function",
+        RegexOption.IGNORE_CASE
+    )
+)
+val POVRaySDLRegex = Regex(
+    "^\\s*#(declare|local|macro|while)\\s", RegexOption.MULTILINE
+)
+val PrologRegex = Regex(
+    "^[^#]*:-",
+    RegexOption.MULTILINE
+)
+val PythonRegex = Regex(
+    "(^(import|from|class|def)\\s)",
+    RegexOption.MULTILINE
+)
+val RRegex = Regex(
+    "<-|^\\s*#"
+)
+val RebolRegex = Regex(
+    "\\bRebol\\b",
+    RegexOption.IGNORE_CASE
+)
+val RoffRegex = Regex(
+    "^\\.[a-z][a-z](\\s|$)",
+    setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
+)
+val RustRegex = Regex(
+    "^(use |fn |mod |pub |macro_rules|impl|#!?\\[)",
+    RegexOption.MULTILINE
+)
+val RenderScriptRegex = Regex(
+    "#include|#pragma\\s+(rs|version)|__attribute__"
+)
+val ScalaRegex = Regex(
+    "^\\s*import (scala|java)\\./.match(data) || /^\\s*val\\s+\\w+\\s*=/.match(data) || /^\\s*class\\b",
+    RegexOption.MULTILINE
+)
+val SmalltalkRegex = Regex(
+    "![\\w\\s]+methodsFor: "
+)
+val SQLPLRegexs = setOf(
+    Regex(
+        "(alter module)|(language sql)|(begin( NOT)+ atomic)",
+        RegexOption.IGNORE_CASE
+    ),
+    Regex(
+        "signal SQLSTATE '[0-9]+'",
+        RegexOption.IGNORE_CASE
+    )
+)
+val StandardMLRegex = Regex(
+    "=> |case\\s+(\\S+\\s)+of"
+)
+val SuperColliderRegexs = setOf(
+    Regex("\\^(this|super)\\."),
+    Regex("^\\s*(\\+|\\*)\\s*\\w+\\s*\\{", RegexOption.MULTILINE),
+    Regex("^\\s*~\\w+\\s*=\\.", RegexOption.MULTILINE)
+)
+val TeXRegex = Regex(
+    "\\\\\\w+\\{"
+)
+val TypeScriptRegex = Regex(
+    "^\\s*(import.+(from\\s+|require\\()['\"]react|\\/\\/\\/\\s*<reference\\s)",
+    RegexOption.MULTILINE
+)
+val XMLPropsRegex = Regex(
+    "^(\\s*)(<Project|<Import|<Property|<?xml|xmlns)",
+    setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
+)
+val XMLTsRegex = Regex(
+    "<TS\\b"
+)
+val XMLTsxRegex = Regex(
+    "^\\s*<\\?xml\\s+version",
+    setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
+)
+val XPMRegex = Regex(
+    "^\\s*\\/\\* XPM \\*\\/",
+    RegexOption.MULTILINE
+)
 
 /**
  * Returns portion of a file content not exceeding the limit.
@@ -64,24 +240,42 @@ fun toBuf(lines: List<String>) : String {
  * Inspired by GitHub Liguist heuristics (https://github.com/github/linguist).
  */
 val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
-    "4TH" to { _ ->
-        CommonExtractor("forth")
+    "4" to { _ ->
+        CommonExtractor(Lang.Roff)
+    },
+    "4th" to { _ ->
+        CommonExtractor(Lang.Forth)
+    },
+    "a51" to { _ ->
+        CommonExtractor(Lang.Assembly)
+    },
+    "al" to { _ ->
+        CommonExtractor(Lang.Perl)
     },
     "as" to { lines ->
-        if (ActionScriptRegex.matches(toBuf(lines))) CommonExtractor("actionscript")
-        else CommonExtractor("angelscript")
+        if (ActionScriptRegex.containsMatchIn(toBuf(lines))) CommonExtractor(Lang.ActionScript)
+        else CommonExtractor(Lang.AngelScript)
     },
     "asm" to { _ ->
-        CommonExtractor("assembly")
+        CommonExtractor(Lang.Assembly)
+    },
+    "b" to { _ ->
+        CommonExtractor(Lang.Limbo)
     },
     "bas" to { _ ->
-        CommonExtractor("visualbasic")
+        CommonExtractor(Lang.VisualBasic)
     },
     "bat" to { _ ->
-        CommonExtractor("dosbatch")
+        CommonExtractor(Lang.DOSBatch)
+    },
+    "bbx" to { _ ->
+        CommonExtractor(Lang.TeX)
     },
     "bdy" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
+    },
+    "boot" to { _ ->
+        CommonExtractor(Lang.Clojure)
     },
     "c" to { _ ->
         CExtractor()
@@ -90,31 +284,50 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         CSharpExtractor()
     },
     "cbl" to { _ ->
-        CommonExtractor("cobol")
+        CommonExtractor(Lang.COBOL)
+    },
+    "cbx" to { _ ->
+        CommonExtractor(Lang.TeX)
     },
     "cc" to { _ ->
         CppExtractor()
     },
-    "cshtml" to { _ ->
-        CSharpExtractor()
+    "cgi" to { lines ->
+        val buf = toBuf(lines)
+        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
+        else null
     },
-    "csx" to { _ ->
-        CSharpExtractor()
+    "cl" to { _ ->
+        CommonExtractor(Lang.CommonLisp)
+    },
+    "cl2" to { _ ->
+        CommonExtractor(Lang.Clojure)
     },
     "clj" to { _ ->
-        CommonExtractor("clojure")
+        CommonExtractor(Lang.Clojure)
     },
     "cljc" to { _ ->
-        CommonExtractor("clojure")
+        CommonExtractor(Lang.Clojure)
+    },
+    "cljscm" to { _ ->
+        CommonExtractor(Lang.Clojure)
     },
     "cljs" to { _ ->
-        CommonExtractor("clojure")
+        CommonExtractor(Lang.Clojure)
+    },
+    "cljx" to { _ ->
+        CommonExtractor(Lang.Clojure)
+    },
+    "cls" to { lines ->
+        val buf = toBuf(lines)
+        if (TeXRegex.containsMatchIn(buf)) CommonExtractor(Lang.TeX)
+        else CommonExtractor(Lang.VisualBasic)
     },
     "cob" to { _ ->
-        CommonExtractor("cobol")
+        CommonExtractor(Lang.COBOL)
     },
     "coffee" to { _ ->
-        CommonExtractor("coffeescript")
+        CommonExtractor(Lang.CoffeeScript)
     },
     "cp" to { _ ->
         CppExtractor()
@@ -123,25 +336,30 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         CppExtractor()
     },
     "cpy" to { _ ->
-        CommonExtractor("cobol")
+        CommonExtractor(Lang.COBOL)
     },
     "cql" to { _ ->
-        CommonExtractor("sql")
+        CommonExtractor(Lang.SQL)
     },
     "cs" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("![\\w\\s]+methodsFor: ").matches(buf)) CommonExtractor("smalltalk")
-        else if (CSharpRegex.matches(buf)) CSharpExtractor()
-        else null
+        if (SmalltalkRegex.containsMatchIn(buf)) CommonExtractor(Lang.Smalltalk)
+        else CSharpExtractor()
+    },
+    "cshtml" to { _ ->
+        CSharpExtractor()
     },
     "css" to { _ ->
         CssExtractor()
     },
+    "csx" to { _ ->
+        CSharpExtractor()
+    },
     "cu" to { _ ->
-        CommonExtractor("cuda")
+        CommonExtractor(Lang.Cuda)
     },
     "cuh" to { _ ->
-        CommonExtractor("cuda")
+        CommonExtractor(Lang.Cuda)
     },
     "cxx" to { _ ->
         CppExtractor()
@@ -151,105 +369,144 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     },
     "d" to { lines ->
         val buf = toBuf(lines)
-        if (DRegex.matches(buf)) CommonExtractor("d")
-        else if (DTraceRegex.matches(buf)) CommonExtractor("dtrace")
-        else if (MakefileRegex.matches(buf)) CommonExtractor("makefile")
+        if (DRegex.containsMatchIn(buf)) CommonExtractor(Lang.D)
+        else if (DTraceRegex.containsMatchIn(buf)) CommonExtractor(Lang.DTrace)
+        else if (MakefileRegex.containsMatchIn(buf)) CommonExtractor(Lang.Makefile)
         else null
     },
     "db2" to { _ ->
-        CommonExtractor("sqlpl")
+        CommonExtractor(Lang.SQLPL)
     },
     "ddl" to { lines ->
         val buf = toBuf(lines)
-        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)})
-            CommonExtractor("plsql")  // Oracle
-        else if (!NotSQLRegex.containsMatchIn(buf))
-            CommonExtractor("sql")  // Generic SQL
+        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
+        else if (!NotSQLRegex.containsMatchIn(buf)) CommonExtractor(Lang.SQL)  // Generic SQL
         else null
     },
+    "dlm" to { _ ->
+        CommonExtractor(Lang.IDL)
+    },
+    "dpr" to { _ ->
+        CommonExtractor(Lang.Pascal)
+    },
     "edn" to { _ ->
-        CommonExtractor("clojure")
+        CommonExtractor(Lang.Clojure)
     },
     "el" to { _ ->
-        CommonExtractor("emacslisp")
+        CommonExtractor(Lang.EmacsLisp)
     },
     "elc" to { _ ->
-        CommonExtractor("emacslisp")
+        CommonExtractor(Lang.EmacsLisp)
+    },
+    "eliom" to { _ ->
+        CommonExtractor(Lang.OCaml)
     },
     "elm" to { _ ->
-        CommonExtractor("elm")
+        CommonExtractor(Lang.Elm)
     },
     "erl" to { _ ->
-        CommonExtractor("erlang")
+        CommonExtractor(Lang.Erlang)
     },
     "ex" to { _ ->
-        CommonExtractor("elixir")
+        CommonExtractor(Lang.Elixir)
     },
     "exs" to { _ ->
-        CommonExtractor("elixir")
+        CommonExtractor(Lang.Elixir)
     },
     "f" to { lines ->
         val buf = toBuf(lines)
-        if (ForthRegex.matches(buf)) CommonExtractor("forth")
-        else if (buf.contains("flowop")) CommonExtractor("filebench_wml")
-        else if (FortranRegex.matches(buf)) CommonExtractor("fortran")
+        if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
+        else if (buf.contains("flowop")) CommonExtractor(Lang.FilebenchWML)
+        else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
         else null
     },
     "f03" to { _ ->
-        CommonExtractor("fortran")
+        CommonExtractor(Lang.Fortran)
     },
     "f08" to { _ ->
-        CommonExtractor("fortran")
+        CommonExtractor(Lang.Fortran)
     },
     "f15" to { _ ->
-        CommonExtractor("fortran")
+        CommonExtractor(Lang.Fortran)
     },
     "f90" to { _ ->
-        CommonExtractor("fortran")
+        CommonExtractor(Lang.Fortran)
     },
     "f95" to { _ ->
-        CommonExtractor("fortran")
+        CommonExtractor(Lang.Fortran)
     },
     "factor" to { _ ->
-        CommonExtractor("factor")
+        CommonExtractor(Lang.Factor)
+    },
+    "fcgi" to { lines ->
+        val buf = toBuf(lines)
+        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
+        else CommonExtractor(Lang.Lua)
     },
     "fnc" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "for" to { lines ->
         val buf = toBuf(lines)
-        if (ForthRegex.matches(buf)) CommonExtractor("forth")
-        else if (FortranRegex.matches(buf)) CommonExtractor("fortran")
+        if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
+        else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
         else null
     },
     "forth" to { _ ->
-        CommonExtractor("forth")
+        CommonExtractor(Lang.Forth)
+    },
+    "fp" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "fr" to { _ ->
+        CommonExtractor(Lang.Forth)
+    },
+    "frag" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "frg" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "frt" to { _ ->
+        CommonExtractor(Lang.Forth)
     },
     "fs" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^(: |new-device)").matches(buf)) CommonExtractor("forth")
-        else if (FSharpRegex.matches(buf)) FSharpExtractor()
-        else if (GLSLRegex.matches(buf)) CommonExtractor("GLSL")
-        else if (Regex("#include|#pragma\\s+(rs|version)|__attribute__").matches(buf))
-            CommonExtractor("filterscript")
+        if (ForthFsRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
+        else if (FSharpRegex.containsMatchIn(buf)) FSharpExtractor()
+        else if (GLSLRegex.containsMatchIn(buf)) CommonExtractor(Lang.GLSL)
+        else if (FilterscriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.Filterscript)
         else null
+    },
+    "fsh" to { _ ->
+        CommonExtractor(Lang.GLSL)
     },
     "fsx" to { _ ->
         FSharpExtractor()
+    },
+    "fth" to { _ ->
+        CommonExtractor(Lang.Forth)
+    },
+    "fxml" to { _ ->
+        CommonExtractor(Lang.XML)
+    },
+    "glsl" to { _ ->
+        CommonExtractor(Lang.GLSL)
     },
     "go" to { _ ->
         GoExtractor()
     },
     "gradle" to { _ ->
-        CommonExtractor("gradle")
+        CommonExtractor(Lang.Gradle)
     },
     "groovy" to { _ ->
-        CommonExtractor("groovy")
+        CommonExtractor(Lang.Groovy)
     },
     "h" to { lines ->
         val buf = toBuf(lines)
-        if (ObjectiveCRegex.matches(buf)) ObjectiveCExtractor()
-        else CppExtractor()
+        if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
+        else if (CPlusPlusRegex.containsMatchIn(buf)) CppExtractor()
+        else CExtractor()
     },
     "h++" to { _ ->
         CppExtractor()
@@ -257,50 +514,57 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "hh" to { _ ->
         CppExtractor()
     },
+    "hic" to { _ ->
+        CommonExtractor(Lang.Clojure)
+    },
+    "hl" to { _ ->
+        CommonExtractor(Lang.Clojure)
+    },
     "hpp" to { _ ->
         CppExtractor()
     },
     "htm" to { _ ->
-        CommonExtractor("html")
+        CommonExtractor(Lang.HTML)
     },
     "html" to { _ ->
-        CommonExtractor("html")
+        CommonExtractor(Lang.HTML)
     },
     "hs" to { _ ->
-        CommonExtractor("haskell")
+        CommonExtractor(Lang.Haskell)
     },
     "hrl" to { _ ->
-        CommonExtractor("erlang")
+        CommonExtractor(Lang.Erlang)
     },
     "hx" to { _ ->
-        CommonExtractor("haxe")
+        CommonExtractor(Lang.Haxe)
     },
     "hxx" to { _ ->
         CppExtractor()
     },
     "hy" to { _ ->
-        CommonExtractor("hy")
+        CommonExtractor(Lang.Hy)
     },
     "ijs" to { _ ->
-        CommonExtractor("j")
+        CommonExtractor(Lang.J)
     },
     "inc" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^<\\?(?:php)?").matches(buf)) PhpExtractor()
-        else if (Regex("^\\s*#(declare|local|macro|while)\\s").matches(buf)) CommonExtractor("pov-ray_sdl")
-        else null
+        if (PHPRegex.containsMatchIn(buf)) PhpExtractor()
+        else if (POVRaySDLRegex.containsMatchIn(buf)) CommonExtractor(Lang.POVRaySDL)
+        else if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
+        else CommonExtractor(Lang.Assembly)
     },
     "inl" to { _ ->
         CppExtractor()
     },
     "ino" to { _ ->
-        CommonExtractor("arduino")
+        CommonExtractor(Lang.Arduino)
     },
     "java" to { _ ->
         JavaExtractor()
     },
     "jl" to { _ ->
-        CommonExtractor("julia")
+        CommonExtractor(Lang.Julia)
     },
     "js" to { _ ->
         JavascriptExtractor()
@@ -311,97 +575,137 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "kt" to { _ ->
         KotlinExtractor()
     },
+    "kojo" to { _ ->
+        CommonExtractor(Lang.Scala)
+    },
     "l" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("\\(def(un|macro)\\s").matches(buf)) CommonExtractor("lisp")
-        else if (Regex("^(%[%{}]xs|<.*>)").matches(buf)) CommonExtractor("lex")
-        else if (Regex("^\\.[a-z][a-z](\\s|$)", RegexOption.IGNORE_CASE).matches(buf))
-            CommonExtractor("roff")
-        else if (Regex("^\\((de|class|rel|code|data|must)\\s").matches(buf))
-            CommonExtractor("picolisp")
+        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
+        else if (LexRegex.containsMatchIn(buf)) CommonExtractor(Lang.Lex)
+        else if (RoffRegex.containsMatchIn(buf)) CommonExtractor(Lang.Roff)
+        else if (PicoLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.PicoLisp)
         else null
+    },
+    "lbx" to { _ ->
+        CommonExtractor(Lang.TeX)
     },
     "less" to { _ ->
         CssExtractor()
     },
     "lhs" to { _ ->
-        CommonExtractor("haskell")
+        CommonExtractor(Lang.Haskell)
     },
     "lisp" to { lines ->
         val buf = toBuf(lines)
-        if (LispRegex.matches(buf)) CommonExtractor("lisp")
-        else if (NewLispRegex.matches(buf)) CommonExtractor("newlisp")
+        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
+        else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
         else null
     },
     "litcoffee" to { _ ->
-        CommonExtractor("coffeescript")
+        CommonExtractor(Lang.CoffeeScript)
     },
     "lsp" to { lines ->
         val buf = toBuf(lines)
-        if (LispRegex.matches(buf)) CommonExtractor("lisp")
-        else if (NewLispRegex.matches(buf)) CommonExtractor("newlisp")
+        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
+        else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
         else null
     },
     "lua" to { _ ->
-        CommonExtractor("lua")
+        CommonExtractor(Lang.Lua)
     },
     "m" to { lines ->
         val buf = toBuf(lines)
-        if (ObjectiveCRegex.matches(buf)) ObjectiveCExtractor()
-        else if (buf.contains(":- module")) CommonExtractor("mercury")
-        else if (Regex("^: ").matches(buf)) CommonExtractor("muf")
-        else if (Regex("^\\s*;").matches(buf)) CommonExtractor("m")
-        else if (Regex("\\*\\)$").matches(buf)) CommonExtractor("mathematica")
-        else if (Regex("^\\s*%").matches(buf)) CommonExtractor("matlab")
-        else if (Regex("^\\w+\\s*:\\s*module\\s*\\{").matches(buf)) CommonExtractor("limbo")
-        else CommonExtractor("wolframlanguage")
+        if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
+        else if (buf.contains(":- module")) CommonExtractor(Lang.Mercury)
+        else if (MUFRegex.containsMatchIn(buf)) CommonExtractor(Lang.MUF)
+        else if (MRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.M)
+        else if (MathematicaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Mathematica)
+        else if (MatlabRegex.containsMatchIn(buf)) CommonExtractor(Lang.Matlab)
+        else if (LimboRegex.containsMatchIn(buf)) CommonExtractor(Lang.Limbo)
+        else CommonExtractor(Lang.WolframLanguage)
+    },
+    "make" to { _ ->
+        CommonExtractor(Lang.Makefile)
     },
     "makefile" to { _ ->
-        CommonExtractor("makefile")
+        CommonExtractor(Lang.Makefile)
+    },
+    "mjml" to { _ ->
+        CommonExtractor(Lang.XML)
     },
     "ml" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("(^\\s*module)|let rec |match\\s+(\\S+\\s)+with").matches(buf))
-            CommonExtractor("ocaml")
-        else if (Regex("=> |case\\s+(\\S+\\s)+of").matches(buf))
-            CommonExtractor("standard_ml")
+        if (OCamlRegex.containsMatchIn(buf)) CommonExtractor(Lang.OCaml)
+        else if (StandardMLRegex.containsMatchIn(buf)) CommonExtractor(Lang.StandardML)
         else null
     },
     "mli" to { _ ->
-        CommonExtractor("ocaml")
+        CommonExtractor(Lang.OCaml)
     },
     "mlx" to { _ ->
-        CommonExtractor("matlab")
+        CommonExtractor(Lang.Matlab)
     },
     "mm" to { _ ->
         ObjectiveCExtractor()
     },
-    "mysql" to { _ ->
-        CommonExtractor("sql")
+    "ms" to { _ ->
+        CommonExtractor(Lang.Roff)
     },
-    "nb" to { _ ->
-        CommonExtractor("wolframlanguage")
+    "mt" to { _ ->
+        CommonExtractor(Lang.Mathematica)
+    },
+    "muf" to { _ ->
+        CommonExtractor(Lang.MUF)
+    },
+    "mysql" to { _ ->
+        CommonExtractor(Lang.SQL)
+    },
+    "n" to { _ ->
+        CommonExtractor(Lang.Roff)
+    },
+    "nasm" to { _ ->
+        CommonExtractor(Lang.Assembly)
+    },
+    "nb" to { lines ->
+        val buf = toBuf(lines)
+        if (MathematicaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Mathematica)
+        else CommonExtractor(Lang.WolframLanguage)
+    },
+    "nl" to { _ ->
+        CommonExtractor(Lang.NewLisp)
+    },
+    "nr" to { _ ->
+        CommonExtractor(Lang.Roff)
     },
     "oxygene" to { _ ->
-        CommonExtractor("oxygene")
+        CommonExtractor(Lang.Oxygene)
     },
     "P" to { _ ->
-        CommonExtractor("prolog")
+        CommonExtractor(Lang.Prolog)
     },
-    "PL" to { _ ->
-        CommonExtractor("perl")
+    "p6" to { _ ->
+        CommonExtractor(Lang.Perl6)
+    },
+    "p8" to { _ ->
+        CommonExtractor(Lang.Lua)
     },
     "pas" to { _ ->
-        CommonExtractor("pascal")
+        CommonExtractor(Lang.Pascal)
+    },
+    "pascal" to { _ ->
+        CommonExtractor(Lang.Pascal)
     },
     "pck" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
+    },
+    "pd_lua" to { _ ->
+        CommonExtractor(Lang.Lua)
     },
     "pde" to { _ ->
-        CommonExtractor("processing")
+        CommonExtractor(Lang.Processing)
     },
     "php" to { lines ->
-        if (toBuf(lines).contains("<?hh")) CommonExtractor("hack")
+        if (toBuf(lines).contains("<?hh")) CommonExtractor(Lang.Hack)
         else PhpExtractor()
     },
     "phtml" to { _ ->
@@ -420,65 +724,75 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         PhpExtractor()
     },
     "pkb" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "pks" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "pl" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^[^#]*:-").matches(buf)) CommonExtractor("prolog")
-        else if (Perl5Regex.matches(buf)) CommonExtractor("perl")
-        else if (Perl6Regex.matches(buf)) CommonExtractor("perl6")
-        else null
+        if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
+        else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
+        else CommonExtractor(Lang.Perl)
     },
     "plb" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "pls" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "plsql" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "pm" to { lines ->
         val buf = toBuf(lines)
-        if (Perl5Regex.matches(buf)) CommonExtractor("perl")
-        else if (Perl6Regex.matches(buf)) CommonExtractor("perl6")
-        else if (Regex("^\\s*\\/\\* XPM \\*\\/").matches(buf)) CommonExtractor("xpm")
+        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
+        else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
+        else if (XPMRegex.containsMatchIn(buf)) CommonExtractor(Lang.XPM)
         else null
     },
-    "pom" to { _ ->
-        CommonExtractor("maven")
+    "pm6" to { _ ->
+        CommonExtractor(Lang.Perl6)
     },
-    "pp" to { _ ->
-        CommonExtractor("puppet")
+    "pom" to { _ ->
+        CommonExtractor(Lang.MavenPOM)
+    },
+    "pov" to { _ ->
+        CommonExtractor(Lang.POVRaySDL)
+    },
+    "pp" to { lines ->
+        val buf = toBuf(lines)
+        if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
+        else CommonExtractor(Lang.Puppet)
     },
     "prc" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "pro" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^[^\\[#]+:-").matches(buf)) CommonExtractor("prolog")
-        else if (buf.contains("last_client=")) CommonExtractor("ini")
-        else if (buf.contains("HEADERS") || buf.contains("SOURCES")) CommonExtractor("qmake")
-        else if (Regex("^\\s*function[ \\w,]+$").matches(buf)) CommonExtractor("idl")
+        if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
+        else if (buf.contains("last_client=")) CommonExtractor(Lang.INI)
+        else if (buf.contains("HEADERS") || buf.contains("SOURCES")) CommonExtractor(Lang.QMake)
+        else if (IDLRegex.containsMatchIn(buf)) CommonExtractor(Lang.IDL)
         else null
+    },
+    "prolog" to { _ ->
+        CommonExtractor(Lang.Prolog)
     },
     "props" to { lines ->
         val buf = toBuf(lines)
-        if (XMLPropsRegex.matches(buf)) CommonExtractor("xml")
-        else if (Regex("\\w+\\s*=\\s*", RegexOption.IGNORE_CASE).matches(buf)) CommonExtractor("ini")
+        if (XMLPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
+        else if (INIPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.INI)
         else null
     },
     "ps1" to { _ ->
-        CommonExtractor("powershell")
+        CommonExtractor(Lang.PowerShell)
     },
     "psd1" to { _ ->
-        CommonExtractor("powershell")
+        CommonExtractor(Lang.PowerShell)
     },
     "psm1" to { _ ->
-        CommonExtractor("powershell")
+        CommonExtractor(Lang.PowerShell)
     },
     "py" to { _ ->
         PythonExtractor()
@@ -487,16 +801,19 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
         PythonExtractor()
     },
     "qml" to { _ ->
-        CommonExtractor("qml")
-    },
-    "R" to { _ ->
-        CommonExtractor("r")
+        CommonExtractor(Lang.QML)
     },
     "r" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("\\bRebol\\b").matches(buf)) CommonExtractor("eebol")
-        else if (Regex("<-|^\\s*#").matches(buf)) CommonExtractor("r")
+        if (RebolRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rebol)
+        else if (RRegex.containsMatchIn(buf)) CommonExtractor(Lang.R)
         else null
+    },
+    "r2" to { _ ->
+        CommonExtractor(Lang.Rebol)
+    },
+    "r3" to { _ ->
+        CommonExtractor(Lang.Rebol)
     },
     "rb" to { _ ->
         RubyExtractor()
@@ -504,130 +821,204 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "rbw" to { _ ->
         RubyExtractor()
     },
+    "rd" to { _ ->
+        CommonExtractor(Lang.R)
+    },
+    "reb" to { _ ->
+        CommonExtractor(Lang.Rebol)
+    },
+    "rebol" to { _ ->
+        CommonExtractor(Lang.Rebol)
+    },
+    "rno" to { _ ->
+        CommonExtractor(Lang.Roff)
+    },
     "rpy" to { lines ->
-        if (PythonRegex.matches(toBuf(lines))) CommonExtractor("python")
-        else CommonExtractor("renpy")
+        if (PythonRegex.containsMatchIn(toBuf(lines))) PythonExtractor()
+        else CommonExtractor(Lang.RenPy)
     },
     "rs" to { lines ->
         val buf = toBuf(lines)
-        if (RustRegex.matches(buf)) CommonExtractor("rust")
-        else if (RenderScriptRegex.matches(buf)) CommonExtractor("renderscript")
+        if (RustRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rust)
+        else if (RenderScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.RenderScript)
         else null
     },
-    "S" to { _ ->
-        CommonExtractor("assembly")
+    "rsh" to { _ ->
+        CommonExtractor(Lang.RenderScript)
+    },
+    "rsx" to { _ ->
+        CommonExtractor(Lang.R)
     },
     "s" to { _ ->
-        CommonExtractor("assembly")
+        CommonExtractor(Lang.Assembly)
     },
     "sas" to { _ ->
-        CommonExtractor("sas")
+        CommonExtractor(Lang.SAS)
     },
     "sass" to { _ ->
         CssExtractor()
     },
+    "sbt" to { _ ->
+        CommonExtractor(Lang.Scala)
+    },
     "sc" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("\\^(this|super)\\.").matches(buf) ||
-            Regex("^\\s*(\\+|\\*)\\s*\\w+\\s*\\{").matches(buf) ||
-            Regex("^\\s*~\\w+\\s*=\\.").matches(buf)) {
-            CommonExtractor("supercollider")
-        }
-        else if (ScalaRegex.matches(buf)) CommonExtractor("scala")
+        if (SuperColliderRegexs.any { re -> re.containsMatchIn(buf) }) CommonExtractor(Lang.SuperCollider)
+        else if (ScalaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Scala)
         else null
     },
     "scala" to { _ ->
-        CommonExtractor("scala")
+        CommonExtractor(Lang.Scala)
+    },
+    "scd" to { _ ->
+        CommonExtractor(Lang.SuperCollider)
+    },
+    "sch" to { _ ->
+        CommonExtractor(Lang.Scheme)
     },
     "scm" to { _ ->
-        CommonExtractor("scheme")
+        CommonExtractor(Lang.Scheme)
     },
     "scss" to { _ ->
         CssExtractor()
     },
+    "sexp" to { _ ->
+        CommonExtractor(Lang.CommonLisp)
+    },
     "sh" to { _ ->
-        CommonExtractor("shell")
+        CommonExtractor(Lang.Shell)
+    },
+    "shader" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "sld" to { _ ->
+        CommonExtractor(Lang.Scheme)
+    },
+    "sls" to { _ ->
+        CommonExtractor(Lang.Scheme)
     },
     "spc" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
+    },
+    "sps" to { _ ->
+        CommonExtractor(Lang.Scheme)
     },
     "sql" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^\\\\i\\b|AS \\$\\$|LANGUAGE '?plpgsql'?", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
-            Regex("SECURITY (DEFINER|INVOKER)", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
-            Regex("BEGIN( WORK| TRANSACTION)?;", RegexOption.IGNORE_CASE).containsMatchIn(buf))
-            CommonExtractor("plpgsql")  // Postgres
-        else if (Regex("(alter module)|(language sql)|(begin( NOT)+ atomic)", RegexOption.IGNORE_CASE).containsMatchIn(buf) ||
-                 Regex("signal SQLSTATE '[0-9]+'", RegexOption.IGNORE_CASE).containsMatchIn(buf))
-            CommonExtractor("sqlpl")  // IBM db2
-        else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)})
-            CommonExtractor("plsql")  // Oracle
-        else CommonExtractor("sql")  // Generic SQL
+        if (PLpgSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLpgSQL)  // Postgress
+        else if (SQLPLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.SQLPL)  // IDB db2
+        else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
+        else CommonExtractor(Lang.SQL)  // Generic SQL
     },
     "ss" to { _ ->
-        CommonExtractor("scheme")
+        CommonExtractor(Lang.Scheme)
     },
     "st" to { _ ->
-        CommonExtractor("smalltalk")
+        CommonExtractor(Lang.Smalltalk)
     },
     "swift" to { _ ->
         SwiftExtractor()
     },
+    "t" to { lines ->
+        val buf = toBuf(lines)
+        if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
+        else CommonExtractor(Lang.Perl)
+    },
     "tab" to { _ ->
-        CommonExtractor("sql")
+        CommonExtractor(Lang.SQL)
     },
     "tcl" to { _ ->
-        CommonExtractor("tcl")
+        CommonExtractor(Lang.Tcl)
+    },
+    "tesc" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "tese" to { _ ->
+        CommonExtractor(Lang.GLSL)
     },
     "tex" to { _ ->
-        CommonExtractor("tex")
+        CommonExtractor(Lang.TeX)
+    },
+    "tmac" to { _ ->
+        CommonExtractor(Lang.Roff)
+    },
+    "toc" to { _ ->
+        CommonExtractor(Lang.TeX)
     },
     "tpb" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "tps" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "trg" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
     },
     "ts" to { lines ->
-        if (Regex("<TS\\b").matches(toBuf(lines))) CommonExtractor("xml")
-        else CommonExtractor("typescript")
+        if (XMLTsRegex.containsMatchIn(toBuf(lines))) CommonExtractor(Lang.XML)
+        else CommonExtractor(Lang.TypeScript)
     },
     "tsx" to { lines ->
         val buf = toBuf(lines)
-        if (Regex("^\\s*(import.+(from\\s+|require\\()['\"]react|\\/\\/\\/\\s*<reference\\s)").matches(buf))
-            CommonExtractor("typescript")
-        else if (Regex("^\\s*<\\?xml\\s+version", RegexOption.IGNORE_CASE).matches(buf))
-            CommonExtractor("xml")
+        if (TypeScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.TypeScript)
+        else if (XMLTsxRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
         else null
     },
     "udf" to { _ ->
-        CommonExtractor("sql")
+        CommonExtractor(Lang.SQL)
+    },
+    "ux" to { _ ->
+        CommonExtractor(Lang.XML)
     },
     "v" to { _ ->
-        CommonExtractor("verilog")
+        CommonExtractor(Lang.Verilog)
+    },
+    "vb" to { _ ->
+        CommonExtractor(Lang.VisualBasic)
     },
     "vba" to { _ ->
-        CommonExtractor("visualbasicforapps")
+        CommonExtractor(Lang.VisualBasicForApps)
     },
     "vhdl" to { _ ->
-        CommonExtractor("vhdl")
+        CommonExtractor(Lang.VHDL)
+    },
+    "vbhtml" to { _ ->
+        CommonExtractor(Lang.VisualBasic)
     },
     "vim" to { _ ->
-        CommonExtractor("viml")
+        CommonExtractor(Lang.VimL)
     },
     "viw" to { _ ->
-        CommonExtractor("sql")
+        CommonExtractor(Lang.SQL)
+    },
+    "vrx" to { _ ->
+        CommonExtractor(Lang.GLSL)
+    },
+    "vsh" to { _ ->
+        CommonExtractor(Lang.GLSL)
     },
     "vue" to { _ ->
-        CommonExtractor("vue")
+        CommonExtractor(Lang.Vue)
     },
     "vw" to { _ ->
-        CommonExtractor("plsql")
+        CommonExtractor(Lang.PLSQL)
+    },
+    "wl" to { _ ->
+        CommonExtractor(Lang.Mathematica)
+    },
+    "wlt" to { _ ->
+        CommonExtractor(Lang.Mathematica)
+    },
+    "xml" to { _ ->
+        CommonExtractor(Lang.XML)
+    },
+    "xpm" to { _ ->
+        CommonExtractor(Lang.XPM)
     },
     "xtend" to { _ ->
-        CommonExtractor("xtend")
+        CommonExtractor(Lang.Xtend)
+    },
+    "yap" to { _ ->
+        CommonExtractor(Lang.Prolog)
     }
 )

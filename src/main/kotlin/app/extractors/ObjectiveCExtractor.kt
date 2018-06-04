@@ -9,7 +9,7 @@ import app.model.DiffFile
 
 class ObjectiveCExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "objectivec"
+        const val LANGUAGE_NAME = Lang.ObjectiveC
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

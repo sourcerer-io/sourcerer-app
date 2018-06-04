@@ -9,7 +9,7 @@ import app.model.DiffFile
 
 class PhpExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "php"
+        const val LANGUAGE_NAME = Lang.PHP
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

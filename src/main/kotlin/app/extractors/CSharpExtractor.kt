@@ -9,7 +9,7 @@ import app.model.DiffFile
 
 class CSharpExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "csharp"
+        const val LANGUAGE_NAME = Lang.CSharp
         val LIBRARIES = ExtractorInterface.getLibraries("cs")
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)

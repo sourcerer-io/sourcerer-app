@@ -9,7 +9,7 @@ import app.model.DiffFile
 
 class CppExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "cpp"
+        const val LANGUAGE_NAME = Lang.CPlusPlus
         val evaluator by lazy {
             ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
         }

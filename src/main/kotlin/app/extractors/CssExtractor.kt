@@ -8,7 +8,7 @@ import app.model.DiffFile
 
 class CssExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "css"
+        const val LANGUAGE_NAME = Lang.CSS
         val FILE_EXTS = listOf("css", "scss", "less", "sass")
     }
 
