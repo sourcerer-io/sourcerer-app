@@ -3,7 +3,7 @@
 
 package app.extractors
 
-object LG {
+object Lang {
     const val ActionScript = "actionscript" // ActionScript
     const val AngelScript = "angelscript"  // AngelScript
     const val Assembly = "assembly" // Assembly

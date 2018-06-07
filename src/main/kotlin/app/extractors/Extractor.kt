@@ -15,21 +15,13 @@ class Extractor : ExtractorInterface {
         val TYPE_SYNTAX = 4
         val SEPARATOR = ">"
         val RESTRICTED_EXTS = listOf(".min.js")
-
-        fun getAllExtensions(): HashSet<String> {
-            return Heuristics
-                .map { (ext, _) -> ext }
-                .toHashSet()
-        }
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
         return files
             .filter { file -> !RESTRICTED_EXTS.contains(file.extension) }
             .mapNotNull { file ->
-                val extractor = Heuristics.get(file.extension)
-                if (extractor != null) extractor(file.new.content)?.extract(listOf(file))
-                else null
+                Heuristics.analyze(file)
             }
             .fold(mutableListOf()) { accStats, stats ->
                 accStats.addAll(stats)

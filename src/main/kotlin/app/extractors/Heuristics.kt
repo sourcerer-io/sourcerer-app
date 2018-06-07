@@ -3,6 +3,9 @@
 
 package app.extractors
 
+import app.model.DiffFile
+import app.model.CommitStats
+
 val ActionScriptRegex = Regex(
     "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)",
     RegexOption.MULTILINE
@@ -211,8 +214,10 @@ val XMLPropsRegex = Regex(
 val XMLTsRegex = Regex(
     "<TS\\b"
 )
-val XMLTsxRegex = Regex(
-    "^\\s*<\\?xml\\s+version",
+// Mystical \uFEFF 'ZERO WIDTH NO-BREAK SPACE' unicode character may appear
+// in beginning of files.
+val XMLRegex = Regex(
+    "^\\uFEFF?\\s*<\\?xml\\s+version",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
 val XPMRegex = Regex(
@@ -221,25 +226,61 @@ val XPMRegex = Regex(
 )
 
 /**
- * Returns portion of a file content not exceeding the limit.
- */
-const val HEURISTICS_CONSIDER_BYTES = 50 * 1024
-fun toBuf(lines: List<String>) : String {
-    var buf = ""
-    for (line in lines) {
-        buf += "$line\n"
-        if (buf.length > HEURISTICS_CONSIDER_BYTES) {
-            break
-        }
-    }
-    return buf
-}
-
-/**
  * Heuristics to detect a programming language by file extension and content.
  * Inspired by GitHub Liguist heuristics (https://github.com/github/linguist).
  */
-val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
+object Heuristics
+{
+    /**
+     * Returns a hash map of all supported file extensions.
+     */
+    fun getAllExtensions(): HashSet<String> {
+        return HeuristicsMap
+            .map { (ext, _) -> ext }
+            .toHashSet()
+    }
+
+    /**
+     * Returns a list of language commit stats extracted from the given file.
+     */
+    fun analyze(file: DiffFile) : List<CommitStats>? {
+        var buf = toBuf(file.new.content)
+        var extractor: ExtractorInterface? = null
+
+        // Look for an extractor by a file extension. If failed, then fallback
+        // to generic content analysis.
+        val extractorFactory = HeuristicsMap.get(file.extension)
+        if (extractorFactory != null) {
+            extractor = extractorFactory(buf)
+        }
+        else {
+            if (XMLRegex.containsMatchIn(buf))
+                extractor = CommonExtractor(Lang.XML)
+        }
+
+        return extractor?.extract(listOf(file))
+    }
+
+    /**
+     * Returns a portion of the file content not exceeding the limit.
+     */
+    const val HEURISTICS_CONSIDER_BYTES = 50 * 1024
+    private fun toBuf(lines: List<String>) : String {
+        var buf = ""
+        for (line in lines) {
+            buf += "$line\n"
+            if (buf.length > HEURISTICS_CONSIDER_BYTES) {
+                break
+            }
+        }
+        return buf
+    }
+}
+
+/**
+ * A map of file extensions to language extracters.
+ */
+val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "4" to { _ ->
         CommonExtractor(Lang.Roff)
     },
@@ -252,8 +293,8 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "al" to { _ ->
         CommonExtractor(Lang.Perl)
     },
-    "as" to { lines ->
-        if (ActionScriptRegex.containsMatchIn(toBuf(lines))) CommonExtractor(Lang.ActionScript)
+    "as" to { buf ->
+        if (ActionScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.ActionScript)
         else CommonExtractor(Lang.AngelScript)
     },
     "asm" to { _ ->
@@ -292,8 +333,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "cc" to { _ ->
         CppExtractor()
     },
-    "cgi" to { lines ->
-        val buf = toBuf(lines)
+    "cgi" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
         else null
     },
@@ -318,8 +358,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "cljx" to { _ ->
         CommonExtractor(Lang.Clojure)
     },
-    "cls" to { lines ->
-        val buf = toBuf(lines)
+    "cls" to { buf ->
         if (TeXRegex.containsMatchIn(buf)) CommonExtractor(Lang.TeX)
         else CommonExtractor(Lang.VisualBasic)
     },
@@ -341,8 +380,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "cql" to { _ ->
         CommonExtractor(Lang.SQL)
     },
-    "cs" to { lines ->
-        val buf = toBuf(lines)
+    "cs" to { buf ->
         if (SmalltalkRegex.containsMatchIn(buf)) CommonExtractor(Lang.Smalltalk)
         else CSharpExtractor()
     },
@@ -367,8 +405,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "c++" to { _ ->
         CppExtractor()
     },
-    "d" to { lines ->
-        val buf = toBuf(lines)
+    "d" to { buf ->
         if (DRegex.containsMatchIn(buf)) CommonExtractor(Lang.D)
         else if (DTraceRegex.containsMatchIn(buf)) CommonExtractor(Lang.DTrace)
         else if (MakefileRegex.containsMatchIn(buf)) CommonExtractor(Lang.Makefile)
@@ -377,8 +414,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "db2" to { _ ->
         CommonExtractor(Lang.SQLPL)
     },
-    "ddl" to { lines ->
-        val buf = toBuf(lines)
+    "ddl" to { buf ->
         if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
         else if (!NotSQLRegex.containsMatchIn(buf)) CommonExtractor(Lang.SQL)  // Generic SQL
         else null
@@ -413,8 +449,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "exs" to { _ ->
         CommonExtractor(Lang.Elixir)
     },
-    "f" to { lines ->
-        val buf = toBuf(lines)
+    "f" to { buf ->
         if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
         else if (buf.contains("flowop")) CommonExtractor(Lang.FilebenchWML)
         else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
@@ -438,16 +473,14 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "factor" to { _ ->
         CommonExtractor(Lang.Factor)
     },
-    "fcgi" to { lines ->
-        val buf = toBuf(lines)
+    "fcgi" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
         else CommonExtractor(Lang.Lua)
     },
     "fnc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
-    "for" to { lines ->
-        val buf = toBuf(lines)
+    "for" to { buf ->
         if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
         else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
         else null
@@ -470,8 +503,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "frt" to { _ ->
         CommonExtractor(Lang.Forth)
     },
-    "fs" to { lines ->
-        val buf = toBuf(lines)
+    "fs" to { buf ->
         if (ForthFsRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
         else if (FSharpRegex.containsMatchIn(buf)) FSharpExtractor()
         else if (GLSLRegex.containsMatchIn(buf)) CommonExtractor(Lang.GLSL)
@@ -502,8 +534,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "groovy" to { _ ->
         CommonExtractor(Lang.Groovy)
     },
-    "h" to { lines ->
-        val buf = toBuf(lines)
+    "h" to { buf ->
         if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
         else if (CPlusPlusRegex.containsMatchIn(buf)) CppExtractor()
         else CExtractor()
@@ -547,8 +578,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "ijs" to { _ ->
         CommonExtractor(Lang.J)
     },
-    "inc" to { lines ->
-        val buf = toBuf(lines)
+    "inc" to { buf ->
         if (PHPRegex.containsMatchIn(buf)) PhpExtractor()
         else if (POVRaySDLRegex.containsMatchIn(buf)) CommonExtractor(Lang.POVRaySDL)
         else if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
@@ -578,8 +608,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "kojo" to { _ ->
         CommonExtractor(Lang.Scala)
     },
-    "l" to { lines ->
-        val buf = toBuf(lines)
+    "l" to { buf ->
         if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
         else if (LexRegex.containsMatchIn(buf)) CommonExtractor(Lang.Lex)
         else if (RoffRegex.containsMatchIn(buf)) CommonExtractor(Lang.Roff)
@@ -595,8 +624,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "lhs" to { _ ->
         CommonExtractor(Lang.Haskell)
     },
-    "lisp" to { lines ->
-        val buf = toBuf(lines)
+    "lisp" to { buf ->
         if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
         else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
         else null
@@ -604,8 +632,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "litcoffee" to { _ ->
         CommonExtractor(Lang.CoffeeScript)
     },
-    "lsp" to { lines ->
-        val buf = toBuf(lines)
+    "lsp" to { buf ->
         if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
         else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
         else null
@@ -613,8 +640,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "lua" to { _ ->
         CommonExtractor(Lang.Lua)
     },
-    "m" to { lines ->
-        val buf = toBuf(lines)
+    "m" to { buf ->
         if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
         else if (buf.contains(":- module")) CommonExtractor(Lang.Mercury)
         else if (MUFRegex.containsMatchIn(buf)) CommonExtractor(Lang.MUF)
@@ -633,8 +659,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "mjml" to { _ ->
         CommonExtractor(Lang.XML)
     },
-    "ml" to { lines ->
-        val buf = toBuf(lines)
+    "ml" to { buf ->
         if (OCamlRegex.containsMatchIn(buf)) CommonExtractor(Lang.OCaml)
         else if (StandardMLRegex.containsMatchIn(buf)) CommonExtractor(Lang.StandardML)
         else null
@@ -666,8 +691,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "nasm" to { _ ->
         CommonExtractor(Lang.Assembly)
     },
-    "nb" to { lines ->
-        val buf = toBuf(lines)
+    "nb" to { buf ->
         if (MathematicaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Mathematica)
         else CommonExtractor(Lang.WolframLanguage)
     },
@@ -704,8 +728,8 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "pde" to { _ ->
         CommonExtractor(Lang.Processing)
     },
-    "php" to { lines ->
-        if (toBuf(lines).contains("<?hh")) CommonExtractor(Lang.Hack)
+    "php" to { buf ->
+        if (buf.contains("<?hh")) CommonExtractor(Lang.Hack)
         else PhpExtractor()
     },
     "phtml" to { _ ->
@@ -729,8 +753,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "pks" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
-    "pl" to { lines ->
-        val buf = toBuf(lines)
+    "pl" to { buf ->
         if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
         else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
         else CommonExtractor(Lang.Perl)
@@ -744,8 +767,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "plsql" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
-    "pm" to { lines ->
-        val buf = toBuf(lines)
+    "pm" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
         else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
         else if (XPMRegex.containsMatchIn(buf)) CommonExtractor(Lang.XPM)
@@ -760,16 +782,14 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "pov" to { _ ->
         CommonExtractor(Lang.POVRaySDL)
     },
-    "pp" to { lines ->
-        val buf = toBuf(lines)
+    "pp" to { buf ->
         if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
         else CommonExtractor(Lang.Puppet)
     },
     "prc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
-    "pro" to { lines ->
-        val buf = toBuf(lines)
+    "pro" to { buf ->
         if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
         else if (buf.contains("last_client=")) CommonExtractor(Lang.INI)
         else if (buf.contains("HEADERS") || buf.contains("SOURCES")) CommonExtractor(Lang.QMake)
@@ -779,8 +799,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "prolog" to { _ ->
         CommonExtractor(Lang.Prolog)
     },
-    "props" to { lines ->
-        val buf = toBuf(lines)
+    "props" to { buf ->
         if (XMLPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
         else if (INIPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.INI)
         else null
@@ -803,8 +822,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "qml" to { _ ->
         CommonExtractor(Lang.QML)
     },
-    "r" to { lines ->
-        val buf = toBuf(lines)
+    "r" to { buf ->
         if (RebolRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rebol)
         else if (RRegex.containsMatchIn(buf)) CommonExtractor(Lang.R)
         else null
@@ -833,12 +851,11 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "rno" to { _ ->
         CommonExtractor(Lang.Roff)
     },
-    "rpy" to { lines ->
-        if (PythonRegex.containsMatchIn(toBuf(lines))) PythonExtractor()
+    "rpy" to { buf ->
+        if (PythonRegex.containsMatchIn(buf)) PythonExtractor()
         else CommonExtractor(Lang.RenPy)
     },
-    "rs" to { lines ->
-        val buf = toBuf(lines)
+    "rs" to { buf ->
         if (RustRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rust)
         else if (RenderScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.RenderScript)
         else null
@@ -861,8 +878,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "sbt" to { _ ->
         CommonExtractor(Lang.Scala)
     },
-    "sc" to { lines ->
-        val buf = toBuf(lines)
+    "sc" to { buf ->
         if (SuperColliderRegexs.any { re -> re.containsMatchIn(buf) }) CommonExtractor(Lang.SuperCollider)
         else if (ScalaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Scala)
         else null
@@ -903,8 +919,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "sps" to { _ ->
         CommonExtractor(Lang.Scheme)
     },
-    "sql" to { lines ->
-        val buf = toBuf(lines)
+    "sql" to { buf ->
         if (PLpgSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLpgSQL)  // Postgress
         else if (SQLPLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.SQLPL)  // IDB db2
         else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
@@ -919,8 +934,7 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "swift" to { _ ->
         SwiftExtractor()
     },
-    "t" to { lines ->
-        val buf = toBuf(lines)
+    "t" to { buf ->
         if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
         else CommonExtractor(Lang.Perl)
     },
@@ -954,14 +968,13 @@ val Heuristics = mapOf<String, (List<String>) -> ExtractorInterface?>(
     "trg" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
-    "ts" to { lines ->
-        if (XMLTsRegex.containsMatchIn(toBuf(lines))) CommonExtractor(Lang.XML)
+    "ts" to { buf ->
+        if (XMLTsRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
         else CommonExtractor(Lang.TypeScript)
     },
-    "tsx" to { lines ->
-        val buf = toBuf(lines)
+    "tsx" to { buf ->
         if (TypeScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.TypeScript)
-        else if (XMLTsxRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
+        else if (XMLRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
         else null
     },
     "udf" to { _ ->
