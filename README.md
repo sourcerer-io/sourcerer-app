@@ -5,14 +5,10 @@
 A visual profile for software engineers.  
 <br>
   
-Start with your public GitHub at <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
+Make yours with your public GitHub: <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
 <br>
 
-
-Screenshot
-==========
-
-![profile-sliced-sized](https://user-images.githubusercontent.com/20287615/38911373-9f700892-4283-11e8-853b-1ca1fb9f5fa0.png)
+![profile-anishot](https://user-images.githubusercontent.com/20287615/41503360-cd85b92a-7186-11e8-94a9-c733d93e9f19.gif)
 <br>
 
 What is it?
