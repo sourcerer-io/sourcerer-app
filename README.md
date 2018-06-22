@@ -2,10 +2,11 @@
   <a href="https://sourcerer.io"><img src=https://user-images.githubusercontent.com/20287615/34189346-d426d4c2-e4ef-11e7-9da4-cc76a1ed111d.png alt="Sourcerer Logo", width=50></a>
   &nbsp; sourcerer.io
 </h1>
+<a href="https://sourcerer.io/start"><img src=https://img.shields.io/badge/sourcerer-start%20now-brightgreen.svg></a><br>
 A visual profile for software engineers. 
 <br>
   
-Make yours with your public GitHub: <a href="https://sourcerer.io/start">https://sourcerer.io/start</a> <a href="https://sourcerer.io/start"><img src=https://img.shields.io/badge/sourcerer-start%20now-brightgreen.svg></a>
+Make yours with your public GitHub: <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>
 <br>
 
 ![profile-anishot](https://user-images.githubusercontent.com/20287615/41503360-cd85b92a-7186-11e8-94a9-c733d93e9f19.gif)
