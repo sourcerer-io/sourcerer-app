@@ -8,7 +8,7 @@ A visual profile for software engineers.
 Make yours with your public GitHub: <a href="https://sourcerer.io/start">https://sourcerer.io/start</a>.
 <br>
 
-![profile-anishot](https://user-images.githubusercontent.com/20287615/41503360-cd85b92a-7186-11e8-94a9-c733d93e9f19.gif)
+![profile-anishot](https://user-images.githubusercontent.com/20287615/41816502-ab218674-773b-11e8-9bdd-2973a9cd6371.gif)
 <br>
 
 What is it?
