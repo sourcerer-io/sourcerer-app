@@ -73,8 +73,7 @@ class RepoHasher(private val api: Api,
                 filteredEmails
             } else null
             val jgitObservable = CommitCrawler.getJGitObservable(git,
-                rehashes.size, crawlerEmails,
-                allowedExts = Heuristics.getAllExtensions()
+                rehashes.size, crawlerEmails
             ).publish()
             val observable = CommitCrawler.getObservable(git,
                 jgitObservable, serverRepo)

@@ -4,6 +4,7 @@
 package app.hashers
 
 import app.Logger
+//import app.hashers.VendorConventions
 import app.model.Author
 import app.model.Commit
 import app.model.DiffContent
@@ -100,8 +101,7 @@ object CommitCrawler {
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
                           filteredEmails: HashSet<String>? = null,
-                          tail : RevCommit? = null,
-                          allowedExts: HashSet<String>? = null) :
+                          tail : RevCommit? = null) :
         Observable<JgitPair> = Observable.create { subscriber ->
         val repo: Repository = git.repository
         val revWalk = RevWalk(repo)
@@ -168,9 +168,10 @@ object CommitCrawler {
             }
             .filter { diff ->
                 val path = diff.newPath
-                val ext = FileHelper.getFileExtension(path)
-                if (allowedExts != null && !allowedExts.contains(ext)) {
-                    return@filter false
+                for (cnv in VendorConventions) {
+                    if (cnv.containsMatchIn(path)) {
+                        return@filter false
+                    }
                 }
 
                 val fileId =

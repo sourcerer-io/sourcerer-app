@@ -232,15 +232,6 @@ val XPMRegex = Regex(
 object Heuristics
 {
     /**
-     * Returns a hash map of all supported file extensions.
-     */
-    fun getAllExtensions(): HashSet<String> {
-        return HeuristicsMap
-            .map { (ext, _) -> ext }
-            .toHashSet()
-    }
-
-    /**
      * Returns a list of language commit stats extracted from the given file.
      */
     fun analyze(file: DiffFile) : List<CommitStats>? {
