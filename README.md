@@ -12,7 +12,7 @@ A visual profile for software engineers.
 <br>
 
 <p align="center">
-  <img alt="sergey" src="https://user-images.githubusercontent.com/20287615/41826375-ffe3c62a-77dd-11e8-9352-62c8a8f476a6.gif">
+  <img alt="sergey" src="https://user-images.githubusercontent.com/20287615/42118899-cc2c0b94-7bbb-11e8-86a8-96dcd044b5e2.gif">
 </p>
 
 Features
