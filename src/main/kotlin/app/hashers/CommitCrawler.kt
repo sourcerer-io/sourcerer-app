@@ -4,7 +4,6 @@
 package app.hashers
 
 import app.Logger
-//import app.hashers.VendorConventions
 import app.model.Author
 import app.model.Commit
 import app.model.DiffContent
@@ -12,11 +11,8 @@ import app.model.DiffFile
 import app.model.DiffRange
 import app.model.Repo
 import app.utils.EmptyRepoException
-import app.utils.FileHelper
 import io.reactivex.Observable
 import java.io.BufferedReader
-import java.io.FileReader
-import java.io.File
 import java.io.InputStreamReader
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git

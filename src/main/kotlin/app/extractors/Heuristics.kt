@@ -235,18 +235,18 @@ object Heuristics
      * Returns a list of language commit stats extracted from the given file.
      */
     fun analyze(file: DiffFile) : List<CommitStats>? {
-        var buf = toBuf(file.new.content)
+        val buf = toBuf(file.new.content)
         var extractor: ExtractorInterface? = null
 
         // Look for an extractor by a file extension. If failed, then fallback
         // to generic content analysis.
-        val extractorFactory = HeuristicsMap.get(file.extension)
+        val extractorFactory = HeuristicsMap[file.extension]
         if (extractorFactory != null) {
             extractor = extractorFactory(buf)
-        }
-        else {
-            if (XMLRegex.containsMatchIn(buf))
+        } else {
+            if (XMLRegex.containsMatchIn(buf)) {
                 extractor = CommonExtractor(Lang.XML)
+            }
         }
 
         return extractor?.extract(listOf(file))
@@ -255,7 +255,7 @@ object Heuristics
     /**
      * Returns a portion of the file content not exceeding the limit.
      */
-    const val HEURISTICS_CONSIDER_BYTES = 50 * 1024
+    private const val HEURISTICS_CONSIDER_BYTES = 50 * 1024
     private fun toBuf(lines: List<String>) : String {
         var buf = ""
         for (line in lines) {
