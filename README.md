@@ -40,16 +40,16 @@ Showcase
 <center>
   <table>
     <tr>
-      <td><a href="https://sourcerer.io/chdemko"><img width="120" alt="chdemko" src="https://user-images.githubusercontent.com/29913247/41827998-512ef768-783b-11e8-9afd-f94fac1b2886.png"></a></td>
-      <td><a href="https://sourcerer.io/chendaniely"><img width="120" alt="chendaniely" src="https://user-images.githubusercontent.com/29913247/41827999-514d0b22-783b-11e8-8a05-af7191b86f6c.png"></a></td>
-      <td><a href="https://sourcerer.io/lauragift21"><img width="120" alt="lauragift21" src="https://user-images.githubusercontent.com/29913247/41828000-5169ac8c-783b-11e8-9955-a3cb114c37f7.png"></a></td>
-      <td><a href="https://sourcerer.io/maracuja-juice"><img width="120" alt="maracuja-juice" src="https://user-images.githubusercontent.com/29913247/41828001-5184d8fe-783b-11e8-9d5f-ce57d208d7cd.png"></a></td>
+      <td><a href="https://sourcerer.io/chdemko"><img width="120" alt="chdemko" src="https://user-images.githubusercontent.com/20287615/42243607-c7f6c40c-7ec6-11e8-9f8e-d4450d1d92d1.png"></a></td>
+      <td><a href="https://sourcerer.io/chendaniely"><img width="120" alt="chendaniely" src="https://user-images.githubusercontent.com/20287615/42243623-d1bd479a-7ec6-11e8-983c-00945c926dc6.png"></a></td>
+      <td><a href="https://sourcerer.io/lauragift21"><img width="120" alt="lauragift21" src="https://user-images.githubusercontent.com/20287615/42243624-d1d24cd0-7ec6-11e8-84c0-3a1aad54a774.png"></a></td>
+      <td><a href="https://sourcerer.io/maracuja-juice"><img width="120" alt="maracuja-juice" src="https://user-images.githubusercontent.com/20287615/42243626-d1eb19c2-7ec6-11e8-8e94-fa02d8f11894.png"></a></td>
     </tr>
     <tr>
-      <td><a href="https://sourcerer.io/marisbotero"><img width="120" alt="marisbotero" src="https://user-images.githubusercontent.com/29913247/41828002-519fb4a8-783b-11e8-98dd-ed3599b16a5a.png"></a></td>
-      <td><a href="https://sourcerer.io/nordes"><img width="120" alt="nordes" src="https://user-images.githubusercontent.com/29913247/41828003-51baff56-783b-11e8-883c-608fd476afc9.png"></a></td>
-      <td><a href="https://sourcerer.io/ppapadeas"><img width="120" alt="ppapadeas" src="https://user-images.githubusercontent.com/29913247/41828004-51d833f0-783b-11e8-9681-9725a7e3ed6a.png"></a></td>
-      <td><a href="https://sourcerer.io/praharshjain"><img width="120" alt="praharshjain" src="https://user-images.githubusercontent.com/29913247/41828005-51f4fb48-783b-11e8-9f29-071bef43909f.png"></a></td>
+      <td><a href="https://sourcerer.io/marisbotero"><img width="120" alt="marisbotero" src="https://user-images.githubusercontent.com/20287615/42243627-d203bb58-7ec6-11e8-945e-49b878f07436.png"></a></td>
+      <td><a href="https://sourcerer.io/nordes"><img width="120" alt="nordes" src="https://user-images.githubusercontent.com/20287615/42243628-d21df464-7ec6-11e8-9147-31b99ea3465d.png"></a></td>
+      <td><a href="https://sourcerer.io/ppapadeas"><img width="120" alt="ppapadeas" src="https://user-images.githubusercontent.com/20287615/42243629-d23b27e6-7ec6-11e8-92c1-0c3edc2f3dba.png"></a></td>
+      <td><a href="https://sourcerer.io/praharshjain"><img width="120" alt="praharshjain" src="https://user-images.githubusercontent.com/20287615/42243630-d2562abe-7ec6-11e8-8ad3-fd6ca3ddd413.png"></a></td>
     </tr>
   </table>
 </center>
