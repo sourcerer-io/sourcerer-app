@@ -4,23 +4,12 @@
 
 package app.extractors
 
-import app.model.CommitStats
-import app.model.DiffFile
-
 class SwiftExtractor : ExtractorInterface {
     companion object {
-        const val LANGUAGE_NAME = Lang.Swift
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
+        const val LANGUAGE_NAME = Lang.SWIFT
         val importRegex = Regex("""^(.*import)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val extractImportRegex = Regex("""import\s+(\w+)""")
-    }
-
-    override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-        return super.extract(files)
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
@@ -43,10 +32,7 @@ class SwiftExtractor : ExtractorInterface {
         return super.tokenize(newLine)
     }
 
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
-
-        return super.getLineLibraries(line, fileLibraries, evaluator,
-            LANGUAGE_NAME)
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

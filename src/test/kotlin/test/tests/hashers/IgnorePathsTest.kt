@@ -4,19 +4,14 @@
 package test.tests.hashers
 
 import app.api.MockApi
-import app.extractors.Extractor
+import app.extractors.ExtractorInterface
 import app.hashers.CommitHasher
 import app.hashers.CommitCrawler
 import app.model.*
-import app.utils.RepoHelper
-import org.eclipse.jgit.api.Git
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import test.utils.TestRepo
-import java.io.File
-import java.util.stream.StreamSupport.stream
-import kotlin.streams.toList
 import kotlin.test.assertEquals
 
 class IgnorePathsTest : Spek({
@@ -83,7 +78,7 @@ class IgnorePathsTest : Spek({
                 .fold(mutableListOf<CommitStats>()) { allStats, commit ->
                     allStats.addAll(commit.stats)
                     allStats
-                }.filter { it.type == Extractor.TYPE_SYNTAX }
+                }.filter { it.type == ExtractorInterface.TYPE_SYNTAX }
 
             val mapStats = syntaxStats.filter { it.tech == "python>map" }
             assertEquals(1, mapStats.size)

@@ -273,41 +273,42 @@ object Heuristics
  */
 val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "4" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "4th" to { _ ->
-        CommonExtractor(Lang.Forth)
+        CommonExtractor(Lang.FORTH)
     },
     "a51" to { _ ->
-        CommonExtractor(Lang.Assembly)
+        CommonExtractor(Lang.ASSEMBLY)
     },
     "al" to { _ ->
-        CommonExtractor(Lang.Perl)
+        CommonExtractor(Lang.PERL)
     },
     "as" to { buf ->
-        if (ActionScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.ActionScript)
-        else CommonExtractor(Lang.AngelScript)
+        if (ActionScriptRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.ACTIONSCRIPT)
+        } else CommonExtractor(Lang.ANGELSCRIPT)
     },
     "asm" to { _ ->
-        CommonExtractor(Lang.Assembly)
+        CommonExtractor(Lang.ASSEMBLY)
     },
     "b" to { _ ->
-        CommonExtractor(Lang.Limbo)
+        CommonExtractor(Lang.LIMBO)
     },
     "bas" to { _ ->
-        CommonExtractor(Lang.VisualBasic)
+        CommonExtractor(Lang.VISUALBASIC)
     },
     "bat" to { _ ->
-        CommonExtractor(Lang.DOSBatch)
+        CommonExtractor(Lang.DOSBATCH)
     },
     "bbx" to { _ ->
-        CommonExtractor(Lang.TeX)
+        CommonExtractor(Lang.TEX)
     },
     "bdy" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "boot" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "c" to { _ ->
         CExtractor()
@@ -319,45 +320,49 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.COBOL)
     },
     "cbx" to { _ ->
-        CommonExtractor(Lang.TeX)
+        CommonExtractor(Lang.TEX)
     },
     "cc" to { _ ->
         CppExtractor()
     },
     "cgi" to { buf ->
-        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
-        else null
+        if (Perl5Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL)
+        } else null
     },
     "cl" to { _ ->
-        CommonExtractor(Lang.CommonLisp)
+        CommonExtractor(Lang.COMMONLISP)
     },
     "cl2" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "clj" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "cljc" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "cljscm" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "cljs" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "cljx" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "cls" to { buf ->
-        if (TeXRegex.containsMatchIn(buf)) CommonExtractor(Lang.TeX)
-        else CommonExtractor(Lang.VisualBasic)
+        if (TeXRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.TEX)
+        } else {
+            CommonExtractor(Lang.VISUALBASIC)
+        }
     },
     "cob" to { _ ->
         CommonExtractor(Lang.COBOL)
     },
     "coffee" to { _ ->
-        CommonExtractor(Lang.CoffeeScript)
+        CommonExtractor(Lang.COFFEESCRIPT)
     },
     "cp" to { _ ->
         CppExtractor()
@@ -372,8 +377,11 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SQL)
     },
     "cs" to { buf ->
-        if (SmalltalkRegex.containsMatchIn(buf)) CommonExtractor(Lang.Smalltalk)
-        else CSharpExtractor()
+        if (SmalltalkRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.SMALLTALK)
+        } else {
+            CSharpExtractor()
+        }
     },
     "cshtml" to { _ ->
         CSharpExtractor()
@@ -385,10 +393,10 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CSharpExtractor()
     },
     "cu" to { _ ->
-        CommonExtractor(Lang.Cuda)
+        CommonExtractor(Lang.CUDA)
     },
     "cuh" to { _ ->
-        CommonExtractor(Lang.Cuda)
+        CommonExtractor(Lang.CUDA)
     },
     "cxx" to { _ ->
         CppExtractor()
@@ -397,93 +405,106 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CppExtractor()
     },
     "d" to { buf ->
-        if (DRegex.containsMatchIn(buf)) CommonExtractor(Lang.D)
-        else if (DTraceRegex.containsMatchIn(buf)) CommonExtractor(Lang.DTrace)
-        else if (MakefileRegex.containsMatchIn(buf)) CommonExtractor(Lang.Makefile)
-        else null
+        if (DRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.D)
+        } else if (DTraceRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.DTRACE)
+        } else if (MakefileRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.MAKEFILE)
+        } else null
     },
     "db2" to { _ ->
         CommonExtractor(Lang.SQLPL)
     },
     "ddl" to { buf ->
-        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
-        else if (!NotSQLRegex.containsMatchIn(buf)) CommonExtractor(Lang.SQL)  // Generic SQL
-        else null
+        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.PLSQL)  // Oracle
+        } else if (!NotSQLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.SQL)  // Generic SQL
+        } else null
     },
     "dlm" to { _ ->
         CommonExtractor(Lang.IDL)
     },
     "dpr" to { _ ->
-        CommonExtractor(Lang.Pascal)
+        CommonExtractor(Lang.PASCAL)
     },
     "edn" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "el" to { _ ->
-        CommonExtractor(Lang.EmacsLisp)
+        CommonExtractor(Lang.EMACSLISP)
     },
     "elc" to { _ ->
-        CommonExtractor(Lang.EmacsLisp)
+        CommonExtractor(Lang.EMACSLISP)
     },
     "eliom" to { _ ->
-        CommonExtractor(Lang.OCaml)
+        CommonExtractor(Lang.OCAML)
     },
     "elm" to { _ ->
-        CommonExtractor(Lang.Elm)
+        CommonExtractor(Lang.ELM)
     },
     "erl" to { _ ->
-        CommonExtractor(Lang.Erlang)
+        CommonExtractor(Lang.ERLANG)
     },
     "ex" to { _ ->
-        CommonExtractor(Lang.Elixir)
+        CommonExtractor(Lang.ELIXIR)
     },
     "exs" to { _ ->
-        CommonExtractor(Lang.Elixir)
+        CommonExtractor(Lang.ELIXIR)
     },
     "f" to { buf ->
-        if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
-        else if (buf.contains("flowop")) CommonExtractor(Lang.FilebenchWML)
-        else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
-        else null
+        if (ForthRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FORTH)
+        } else if (buf.contains("flowop")) {
+            CommonExtractor(Lang.FILEBENCHWML)
+        } else if (FortranRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FORTRAN)
+        } else null
     },
     "f03" to { _ ->
-        CommonExtractor(Lang.Fortran)
+        CommonExtractor(Lang.FORTRAN)
     },
     "f08" to { _ ->
-        CommonExtractor(Lang.Fortran)
+        CommonExtractor(Lang.FORTRAN)
     },
     "f15" to { _ ->
-        CommonExtractor(Lang.Fortran)
+        CommonExtractor(Lang.FORTRAN)
     },
     "f90" to { _ ->
-        CommonExtractor(Lang.Fortran)
+        CommonExtractor(Lang.FORTRAN)
     },
     "f95" to { _ ->
-        CommonExtractor(Lang.Fortran)
+        CommonExtractor(Lang.FORTRAN)
     },
     "factor" to { _ ->
-        CommonExtractor(Lang.Factor)
+        CommonExtractor(Lang.FACTOR)
     },
     "fcgi" to { buf ->
-        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
-        else CommonExtractor(Lang.Lua)
+        if (Perl5Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL)
+        } else {
+            CommonExtractor(Lang.LUA)
+        }
     },
     "fnc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "for" to { buf ->
-        if (ForthRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
-        else if (FortranRegex.containsMatchIn(buf)) CommonExtractor(Lang.Fortran)
-        else null
+        if (ForthRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FORTH)
+        } else if (FortranRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FORTRAN)
+        } else null
     },
     "forth" to { _ ->
-        CommonExtractor(Lang.Forth)
+        CommonExtractor(Lang.FORTH)
     },
     "fp" to { _ ->
         CommonExtractor(Lang.GLSL)
     },
     "fr" to { _ ->
-        CommonExtractor(Lang.Forth)
+        CommonExtractor(Lang.FORTH)
     },
     "frag" to { _ ->
         CommonExtractor(Lang.GLSL)
@@ -492,14 +513,18 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.GLSL)
     },
     "frt" to { _ ->
-        CommonExtractor(Lang.Forth)
+        CommonExtractor(Lang.FORTH)
     },
     "fs" to { buf ->
-        if (ForthFsRegex.containsMatchIn(buf)) CommonExtractor(Lang.Forth)
-        else if (FSharpRegex.containsMatchIn(buf)) FSharpExtractor()
-        else if (GLSLRegex.containsMatchIn(buf)) CommonExtractor(Lang.GLSL)
-        else if (FilterscriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.Filterscript)
-        else null
+        if (ForthFsRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FORTH)
+        } else if (FSharpRegex.containsMatchIn(buf)) {
+            FSharpExtractor()
+        } else if (GLSLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.GLSL)
+        } else if (FilterscriptRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.FILTERSCRIPT)
+        } else null
     },
     "fsh" to { _ ->
         CommonExtractor(Lang.GLSL)
@@ -508,7 +533,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         FSharpExtractor()
     },
     "fth" to { _ ->
-        CommonExtractor(Lang.Forth)
+        CommonExtractor(Lang.FORTH)
     },
     "fxml" to { _ ->
         CommonExtractor(Lang.XML)
@@ -520,15 +545,17 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         GoExtractor()
     },
     "gradle" to { _ ->
-        CommonExtractor(Lang.Gradle)
+        CommonExtractor(Lang.GRADLE)
     },
     "groovy" to { _ ->
-        CommonExtractor(Lang.Groovy)
+        CommonExtractor(Lang.GROOVY)
     },
     "h" to { buf ->
-        if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
-        else if (CPlusPlusRegex.containsMatchIn(buf)) CppExtractor()
-        else CExtractor()
+        if (ObjectiveCRegex.containsMatchIn(buf)) {
+            ObjectiveCExtractor()
+        } else if (CPlusPlusRegex.containsMatchIn(buf)) {
+            CppExtractor()
+        } else CExtractor()
     },
     "h++" to { _ ->
         CppExtractor()
@@ -537,10 +564,10 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CppExtractor()
     },
     "hic" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "hl" to { _ ->
-        CommonExtractor(Lang.Clojure)
+        CommonExtractor(Lang.CLOJURE)
     },
     "hpp" to { _ ->
         CppExtractor()
@@ -552,40 +579,45 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.HTML)
     },
     "hs" to { _ ->
-        CommonExtractor(Lang.Haskell)
+        CommonExtractor(Lang.HASKELL)
     },
     "hrl" to { _ ->
-        CommonExtractor(Lang.Erlang)
+        CommonExtractor(Lang.ERLANG)
     },
     "hx" to { _ ->
-        CommonExtractor(Lang.Haxe)
+        CommonExtractor(Lang.HAXE)
     },
     "hxx" to { _ ->
         CppExtractor()
     },
     "hy" to { _ ->
-        CommonExtractor(Lang.Hy)
+        CommonExtractor(Lang.HY)
     },
     "ijs" to { _ ->
         CommonExtractor(Lang.J)
     },
     "inc" to { buf ->
-        if (PHPRegex.containsMatchIn(buf)) PhpExtractor()
-        else if (POVRaySDLRegex.containsMatchIn(buf)) CommonExtractor(Lang.POVRaySDL)
-        else if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
-        else CommonExtractor(Lang.Assembly)
+        if (PHPRegex.containsMatchIn(buf)) {
+            PhpExtractor()
+        } else if (POVRaySDLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.POVRAYSDL)
+        } else if (PascalRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PASCAL)
+        } else {
+            CommonExtractor(Lang.ASSEMBLY)
+        }
     },
     "inl" to { _ ->
         CppExtractor()
     },
     "ino" to { _ ->
-        CommonExtractor(Lang.Arduino)
+        CommonExtractor(Lang.ARDUINO)
     },
     "java" to { _ ->
         JavaExtractor()
     },
     "jl" to { _ ->
-        CommonExtractor(Lang.Julia)
+        CommonExtractor(Lang.JULIA)
     },
     "js" to { _ ->
         JavascriptExtractor()
@@ -597,78 +629,97 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         KotlinExtractor()
     },
     "kojo" to { _ ->
-        CommonExtractor(Lang.Scala)
+        CommonExtractor(Lang.SCALA)
     },
     "l" to { buf ->
-        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
-        else if (LexRegex.containsMatchIn(buf)) CommonExtractor(Lang.Lex)
-        else if (RoffRegex.containsMatchIn(buf)) CommonExtractor(Lang.Roff)
-        else if (PicoLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.PicoLisp)
-        else null
+        if (CommonLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.COMMONLISP)
+        } else if (LexRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.LEX)
+        } else if (RoffRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.ROFF)
+        } else if (PicoLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PICOLISP)
+        } else null
     },
     "lbx" to { _ ->
-        CommonExtractor(Lang.TeX)
+        CommonExtractor(Lang.TEX)
     },
     "less" to { _ ->
         CssExtractor()
     },
     "lhs" to { _ ->
-        CommonExtractor(Lang.Haskell)
+        CommonExtractor(Lang.HASKELL)
     },
     "lisp" to { buf ->
-        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
-        else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
-        else null
+        if (CommonLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.COMMONLISP)
+        } else if (NewLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.NEWLISP)
+        } else null
     },
     "litcoffee" to { _ ->
-        CommonExtractor(Lang.CoffeeScript)
+        CommonExtractor(Lang.COFFEESCRIPT)
     },
     "lsp" to { buf ->
-        if (CommonLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.CommonLisp)
-        else if (NewLispRegex.containsMatchIn(buf)) CommonExtractor(Lang.NewLisp)
-        else null
+        if (CommonLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.COMMONLISP)
+        } else if (NewLispRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.NEWLISP)
+        } else null
     },
     "lua" to { _ ->
-        CommonExtractor(Lang.Lua)
+        CommonExtractor(Lang.LUA)
     },
     "m" to { buf ->
-        if (ObjectiveCRegex.containsMatchIn(buf)) ObjectiveCExtractor()
-        else if (buf.contains(":- module")) CommonExtractor(Lang.Mercury)
-        else if (MUFRegex.containsMatchIn(buf)) CommonExtractor(Lang.MUF)
-        else if (MRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.M)
-        else if (MathematicaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Mathematica)
-        else if (MatlabRegex.containsMatchIn(buf)) CommonExtractor(Lang.Matlab)
-        else if (LimboRegex.containsMatchIn(buf)) CommonExtractor(Lang.Limbo)
-        else CommonExtractor(Lang.WolframLanguage)
+        if (ObjectiveCRegex.containsMatchIn(buf)) {
+            ObjectiveCExtractor()
+        } else if (buf.contains(":- module")) {
+            CommonExtractor(Lang.MERCURY)
+        } else if (MUFRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.MUF)
+        } else if (MRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.M)
+        } else if (MathematicaRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.MATHEMATICA)
+        } else if (MatlabRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.MATLAB)
+        } else if (LimboRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.LIMBO)
+        } else {
+            CommonExtractor(Lang.WOLFRAM)
+        }
     },
     "make" to { _ ->
-        CommonExtractor(Lang.Makefile)
+        CommonExtractor(Lang.MAKEFILE)
     },
     "makefile" to { _ ->
-        CommonExtractor(Lang.Makefile)
+        CommonExtractor(Lang.MAKEFILE)
     },
     "mjml" to { _ ->
         CommonExtractor(Lang.XML)
     },
     "ml" to { buf ->
-        if (OCamlRegex.containsMatchIn(buf)) CommonExtractor(Lang.OCaml)
-        else if (StandardMLRegex.containsMatchIn(buf)) CommonExtractor(Lang.StandardML)
-        else null
+        if (OCamlRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.OCAML)
+        } else if (StandardMLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.STANDARDML)
+        } else null
     },
     "mli" to { _ ->
-        CommonExtractor(Lang.OCaml)
+        CommonExtractor(Lang.OCAML)
     },
     "mlx" to { _ ->
-        CommonExtractor(Lang.Matlab)
+        CommonExtractor(Lang.MATLAB)
     },
     "mm" to { _ ->
         ObjectiveCExtractor()
     },
     "ms" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "mt" to { _ ->
-        CommonExtractor(Lang.Mathematica)
+        CommonExtractor(Lang.MATHEMATICA)
     },
     "muf" to { _ ->
         CommonExtractor(Lang.MUF)
@@ -677,51 +728,55 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SQL)
     },
     "n" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "nasm" to { _ ->
-        CommonExtractor(Lang.Assembly)
+        CommonExtractor(Lang.ASSEMBLY)
     },
     "nb" to { buf ->
-        if (MathematicaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Mathematica)
-        else CommonExtractor(Lang.WolframLanguage)
+        if (MathematicaRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.MATHEMATICA)
+        } else CommonExtractor(Lang.WOLFRAM)
     },
     "nl" to { _ ->
-        CommonExtractor(Lang.NewLisp)
+        CommonExtractor(Lang.NEWLISP)
     },
     "nr" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "oxygene" to { _ ->
-        CommonExtractor(Lang.Oxygene)
+        CommonExtractor(Lang.OXYGENE)
     },
     "P" to { _ ->
-        CommonExtractor(Lang.Prolog)
+        CommonExtractor(Lang.PROLOG)
     },
     "p6" to { _ ->
-        CommonExtractor(Lang.Perl6)
+        CommonExtractor(Lang.PERL6)
     },
     "p8" to { _ ->
-        CommonExtractor(Lang.Lua)
+        CommonExtractor(Lang.LUA)
     },
     "pas" to { _ ->
-        CommonExtractor(Lang.Pascal)
+        CommonExtractor(Lang.PASCAL)
     },
     "pascal" to { _ ->
-        CommonExtractor(Lang.Pascal)
+        CommonExtractor(Lang.PASCAL)
     },
     "pck" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "pd_lua" to { _ ->
-        CommonExtractor(Lang.Lua)
+        CommonExtractor(Lang.LUA)
     },
     "pde" to { _ ->
-        CommonExtractor(Lang.Processing)
+        CommonExtractor(Lang.PROCESSING)
     },
     "php" to { buf ->
-        if (buf.contains("<?hh")) CommonExtractor(Lang.Hack)
-        else PhpExtractor()
+        if (buf.contains("<?hh")) {
+            CommonExtractor(Lang.HACK)
+        } else {
+            PhpExtractor()
+        }
     },
     "phtml" to { _ ->
         PhpExtractor()
@@ -745,9 +800,13 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PLSQL)
     },
     "pl" to { buf ->
-        if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
-        else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
-        else CommonExtractor(Lang.Perl)
+        if (PrologRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PROLOG)
+        } else if (Perl6Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL6)
+        } else {
+            CommonExtractor(Lang.PERL)
+        }
     },
     "plb" to { _ ->
         CommonExtractor(Lang.PLSQL)
@@ -759,50 +818,62 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PLSQL)
     },
     "pm" to { buf ->
-        if (Perl5Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl)
-        else if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
-        else if (XPMRegex.containsMatchIn(buf)) CommonExtractor(Lang.XPM)
-        else null
+        if (Perl5Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL)
+        } else if (Perl6Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL6)
+        } else if (XPMRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.XPM)
+        } else null
     },
     "pm6" to { _ ->
-        CommonExtractor(Lang.Perl6)
+        CommonExtractor(Lang.PERL6)
     },
     "pom" to { _ ->
-        CommonExtractor(Lang.MavenPOM)
+        CommonExtractor(Lang.MAVENPOM)
     },
     "pov" to { _ ->
-        CommonExtractor(Lang.POVRaySDL)
+        CommonExtractor(Lang.POVRAYSDL)
     },
     "pp" to { buf ->
-        if (PascalRegex.containsMatchIn(buf)) CommonExtractor(Lang.Pascal)
-        else CommonExtractor(Lang.Puppet)
+        if (PascalRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PASCAL)
+        } else {
+            CommonExtractor(Lang.PUPPET)
+        }
     },
     "prc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "pro" to { buf ->
-        if (PrologRegex.containsMatchIn(buf)) CommonExtractor(Lang.Prolog)
-        else if (buf.contains("last_client=")) CommonExtractor(Lang.INI)
-        else if (buf.contains("HEADERS") || buf.contains("SOURCES")) CommonExtractor(Lang.QMake)
-        else if (IDLRegex.containsMatchIn(buf)) CommonExtractor(Lang.IDL)
-        else null
+        if (PrologRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PROLOG)
+        } else if (buf.contains("last_client=")) {
+            CommonExtractor(Lang.INI)
+        } else if (buf.contains("HEADERS") || buf.contains("SOURCES")) {
+            CommonExtractor(Lang.QMAKE)
+        } else if (IDLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.IDL)
+        } else null
     },
     "prolog" to { _ ->
-        CommonExtractor(Lang.Prolog)
+        CommonExtractor(Lang.PROLOG)
     },
     "props" to { buf ->
-        if (XMLPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
-        else if (INIPropsRegex.containsMatchIn(buf)) CommonExtractor(Lang.INI)
-        else null
+        if (XMLPropsRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.XML)
+        } else if (INIPropsRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.INI)
+        } else null
     },
     "ps1" to { _ ->
-        CommonExtractor(Lang.PowerShell)
+        CommonExtractor(Lang.POWERSHELL)
     },
     "psd1" to { _ ->
-        CommonExtractor(Lang.PowerShell)
+        CommonExtractor(Lang.POWERSHELL)
     },
     "psm1" to { _ ->
-        CommonExtractor(Lang.PowerShell)
+        CommonExtractor(Lang.POWERSHELL)
     },
     "py" to { _ ->
         PythonExtractor()
@@ -814,15 +885,17 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.QML)
     },
     "r" to { buf ->
-        if (RebolRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rebol)
-        else if (RRegex.containsMatchIn(buf)) CommonExtractor(Lang.R)
-        else null
+        if (RebolRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.REBOL)
+        } else if (RRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.R)
+        } else null
     },
     "r2" to { _ ->
-        CommonExtractor(Lang.Rebol)
+        CommonExtractor(Lang.REBOL)
     },
     "r3" to { _ ->
-        CommonExtractor(Lang.Rebol)
+        CommonExtractor(Lang.REBOL)
     },
     "rb" to { _ ->
         RubyExtractor()
@@ -834,31 +907,34 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.R)
     },
     "reb" to { _ ->
-        CommonExtractor(Lang.Rebol)
+        CommonExtractor(Lang.REBOL)
     },
     "rebol" to { _ ->
-        CommonExtractor(Lang.Rebol)
+        CommonExtractor(Lang.REBOL)
     },
     "rno" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "rpy" to { buf ->
-        if (PythonRegex.containsMatchIn(buf)) PythonExtractor()
-        else CommonExtractor(Lang.RenPy)
+        if (PythonRegex.containsMatchIn(buf)) {
+            PythonExtractor()
+        } else CommonExtractor(Lang.RENPY)
     },
     "rs" to { buf ->
-        if (RustRegex.containsMatchIn(buf)) CommonExtractor(Lang.Rust)
-        else if (RenderScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.RenderScript)
-        else null
+        if (RustRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.RUST)
+        } else if (RenderScriptRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.RENDERSCRIPT)
+        } else null
     },
     "rsh" to { _ ->
-        CommonExtractor(Lang.RenderScript)
+        CommonExtractor(Lang.RENDERSCRIPT)
     },
     "rsx" to { _ ->
         CommonExtractor(Lang.R)
     },
     "s" to { _ ->
-        CommonExtractor(Lang.Assembly)
+        CommonExtractor(Lang.ASSEMBLY)
     },
     "sas" to { _ ->
         CommonExtractor(Lang.SAS)
@@ -867,73 +943,83 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CssExtractor()
     },
     "sbt" to { _ ->
-        CommonExtractor(Lang.Scala)
+        CommonExtractor(Lang.SCALA)
     },
     "sc" to { buf ->
-        if (SuperColliderRegexs.any { re -> re.containsMatchIn(buf) }) CommonExtractor(Lang.SuperCollider)
-        else if (ScalaRegex.containsMatchIn(buf)) CommonExtractor(Lang.Scala)
-        else null
+        if (SuperColliderRegexs.any { re -> re.containsMatchIn(buf) }) {
+            CommonExtractor(Lang.SUPERCOLLIDER)
+        } else if (ScalaRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.SCALA)
+        } else null
     },
     "scala" to { _ ->
-        CommonExtractor(Lang.Scala)
+        CommonExtractor(Lang.SCALA)
     },
     "scd" to { _ ->
-        CommonExtractor(Lang.SuperCollider)
+        CommonExtractor(Lang.SUPERCOLLIDER)
     },
     "sch" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "scm" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "scss" to { _ ->
         CssExtractor()
     },
     "sexp" to { _ ->
-        CommonExtractor(Lang.CommonLisp)
+        CommonExtractor(Lang.COMMONLISP)
     },
     "sh" to { _ ->
-        CommonExtractor(Lang.Shell)
+        CommonExtractor(Lang.SHELL)
     },
     "shader" to { _ ->
         CommonExtractor(Lang.GLSL)
     },
     "sld" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "sls" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "spc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "sps" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "sql" to { buf ->
-        if (PLpgSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLpgSQL)  // Postgress
-        else if (SQLPLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.SQLPL)  // IDB db2
-        else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) CommonExtractor(Lang.PLSQL)  // Oracle
-        else CommonExtractor(Lang.SQL)  // Generic SQL
+        if (PLpgSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.PLPGSQL)  // POSTGRES
+        } else if (SQLPLRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.SQLPL)  // IDB DB2
+        } else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.PLSQL)  // Oracle
+        } else {
+            CommonExtractor(Lang.SQL)  // GENERIC SQL
+        }
     },
     "ss" to { _ ->
-        CommonExtractor(Lang.Scheme)
+        CommonExtractor(Lang.SCHEME)
     },
     "st" to { _ ->
-        CommonExtractor(Lang.Smalltalk)
+        CommonExtractor(Lang.SMALLTALK)
     },
     "swift" to { _ ->
         SwiftExtractor()
     },
     "t" to { buf ->
-        if (Perl6Regex.containsMatchIn(buf)) CommonExtractor(Lang.Perl6)
-        else CommonExtractor(Lang.Perl)
+        if (Perl6Regex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.PERL6)
+        } else {
+            CommonExtractor(Lang.PERL)
+        }
     },
     "tab" to { _ ->
         CommonExtractor(Lang.SQL)
     },
     "tcl" to { _ ->
-        CommonExtractor(Lang.Tcl)
+        CommonExtractor(Lang.TCL)
     },
     "tesc" to { _ ->
         CommonExtractor(Lang.GLSL)
@@ -942,13 +1028,13 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.GLSL)
     },
     "tex" to { _ ->
-        CommonExtractor(Lang.TeX)
+        CommonExtractor(Lang.TEX)
     },
     "tmac" to { _ ->
-        CommonExtractor(Lang.Roff)
+        CommonExtractor(Lang.ROFF)
     },
     "toc" to { _ ->
-        CommonExtractor(Lang.TeX)
+        CommonExtractor(Lang.TEX)
     },
     "tpb" to { _ ->
         CommonExtractor(Lang.PLSQL)
@@ -960,13 +1046,18 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PLSQL)
     },
     "ts" to { buf ->
-        if (XMLTsRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
-        else CommonExtractor(Lang.TypeScript)
+        if (XMLTsRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.XML)
+        } else {
+            CommonExtractor(Lang.TYPESCRIPT)
+        }
     },
     "tsx" to { buf ->
-        if (TypeScriptRegex.containsMatchIn(buf)) CommonExtractor(Lang.TypeScript)
-        else if (XMLRegex.containsMatchIn(buf)) CommonExtractor(Lang.XML)
-        else null
+        if (TypeScriptRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.TYPESCRIPT)
+        } else if (XMLRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.XML)
+        } else null
     },
     "udf" to { _ ->
         CommonExtractor(Lang.SQL)
@@ -975,22 +1066,22 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.XML)
     },
     "v" to { _ ->
-        CommonExtractor(Lang.Verilog)
+        CommonExtractor(Lang.VERILOG)
     },
     "vb" to { _ ->
-        CommonExtractor(Lang.VisualBasic)
+        CommonExtractor(Lang.VISUALBASIC)
     },
     "vba" to { _ ->
-        CommonExtractor(Lang.VisualBasicForApps)
+        CommonExtractor(Lang.VBA)
     },
     "vhdl" to { _ ->
         CommonExtractor(Lang.VHDL)
     },
     "vbhtml" to { _ ->
-        CommonExtractor(Lang.VisualBasic)
+        CommonExtractor(Lang.VISUALBASIC)
     },
     "vim" to { _ ->
-        CommonExtractor(Lang.VimL)
+        CommonExtractor(Lang.VIML)
     },
     "viw" to { _ ->
         CommonExtractor(Lang.SQL)
@@ -1002,16 +1093,16 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.GLSL)
     },
     "vue" to { _ ->
-        CommonExtractor(Lang.Vue)
+        CommonExtractor(Lang.VUE)
     },
     "vw" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },
     "wl" to { _ ->
-        CommonExtractor(Lang.Mathematica)
+        CommonExtractor(Lang.MATHEMATICA)
     },
     "wlt" to { _ ->
-        CommonExtractor(Lang.Mathematica)
+        CommonExtractor(Lang.MATHEMATICA)
     },
     "xml" to { _ ->
         CommonExtractor(Lang.XML)
@@ -1020,9 +1111,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.XPM)
     },
     "xtend" to { _ ->
-        CommonExtractor(Lang.Xtend)
+        CommonExtractor(Lang.XTEND)
     },
     "yap" to { _ ->
-        CommonExtractor(Lang.Prolog)
+        CommonExtractor(Lang.PROLOG)
     }
 )

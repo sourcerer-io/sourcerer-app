@@ -4,24 +4,13 @@
 
 package app.extractors
 
-import app.model.CommitStats
-import app.model.DiffFile
-
 class CExtractor : ExtractorInterface {
     companion object {
         const val LANGUAGE_NAME = Lang.C
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
         val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val extractImportRegex =
             Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
-    }
-
-    override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-        return super.extract(files)
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
@@ -44,9 +33,13 @@ class CExtractor : ExtractorInterface {
         return super.tokenize(newLine)
     }
 
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
+    override fun mapImportToIndex(import: String, lang: String,
+                                  startsWith: Boolean): String? {
+        // TODO(lyaronskaya): Add C to libraries.
+        return super.mapImportToIndex(import, Lang.CPP, startsWith = true)
+    }
 
-        return super.getLineLibraries(line, fileLibraries, evaluator, LANGUAGE_NAME)
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

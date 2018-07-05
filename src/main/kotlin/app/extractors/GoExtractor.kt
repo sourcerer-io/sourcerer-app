@@ -4,25 +4,15 @@
 
 package app.extractors
 
-import app.model.CommitStats
-import app.model.DiffFile
-
 class GoExtractor : ExtractorInterface {
     companion object {
-        const val LANGUAGE_NAME = Lang.Go
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
+        const val LANGUAGE_NAME = Lang.GO
         val importRegex = Regex("""^(.*import)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val singleImportRegex = Regex("""import\s+"(\w+)"""")
         val multipleImportRegex = Regex("""import[\s\t\n]+\((.+?)\)""",
                 RegexOption.DOT_MATCHES_ALL)
-    }
-
-    override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-        return super.extract(files)
+        val separatorsRegex = Regex("""(\t+|\n+|\s+|")""")
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
@@ -38,11 +28,9 @@ class GoExtractor : ExtractorInterface {
         val contentJoined = fileContent.joinToString(separator = "")
         multipleImportRegex.findAll(contentJoined).forEach { matchResult ->
             imports.addAll(matchResult.groupValues.last()
-                .split(Regex("""(\t+|\n+|\s+|")"""))
+                .split(separatorsRegex)
                 .filter { it.isNotEmpty() }
-                .map { it -> it.replace("\"", "") }
-                .map { it ->  if (it.contains("github.com")) it.split("/")[2]
-                    else it})
+                .map { it.replace("\"", "") })
         }
 
         return imports.toList()
@@ -54,10 +42,7 @@ class GoExtractor : ExtractorInterface {
         return super.tokenize(newLine)
     }
 
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
-
-        return super.getLineLibraries(line, fileLibraries, evaluator,
-            LANGUAGE_NAME)
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

@@ -9,8 +9,7 @@ import app.model.DiffFile
 
 class JavaExtractor : ExtractorInterface {
     companion object {
-        const val LANGUAGE_NAME = Lang.Java
-        val LIBRARIES = ExtractorInterface.getLibraries("java")
+        const val LANGUAGE_NAME = Lang.JAVA
         val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized", "boolean",
             "do", "if", "private", "this", "break", "double", "implements",
@@ -19,9 +18,6 @@ class JavaExtractor : ExtractorInterface {
             "extends", "int", "short", "try", "char", "final", "interface",
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
         val importRegex = Regex("""^(.*import)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val packageRegex = Regex("""^(.*package)\s[^\n]*""")
@@ -29,22 +25,18 @@ class JavaExtractor : ExtractorInterface {
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-
         val stats = super.extract(files).toMutableList()
 
+        // Keywords stats.
         val added = files.fold(mutableListOf<String>(), { total, file ->
             total.addAll(file.getAllAdded())
             total
         })
-
         val deleted = files.fold(mutableListOf<String>(), { total, file ->
             total.addAll(file.getAllDeleted())
             total
         })
 
-        // Keywords stats.
-        // TODO(anatoly): ANTLR parsing.
         KEYWORDS.forEach { keyword ->
             val totalAdded = added.count { line -> line.contains(keyword)}
             val totalDeleted = deleted.count { line -> line.contains(keyword)}
@@ -52,8 +44,10 @@ class JavaExtractor : ExtractorInterface {
                 stats.add(CommitStats(
                     numLinesAdded = totalAdded,
                     numLinesDeleted = totalDeleted,
-                    type = Extractor.TYPE_KEYWORD,
-                    tech = LANGUAGE_NAME + Extractor.SEPARATOR + keyword))
+                    type = ExtractorInterface.TYPE_KEYWORD,
+                    tech = LANGUAGE_NAME + ExtractorInterface.SEPARATOR +
+                        keyword
+                ))
             }
         }
 
@@ -67,11 +61,7 @@ class JavaExtractor : ExtractorInterface {
             val res = extractImportRegex.find(it)
             if (res != null) {
                 val importedName = res.groupValues[1]
-                LIBRARIES.forEach { library ->
-                    if (importedName.startsWith(library)) {
-                        imports.add(library)
-                    }
-                }
+                imports.add(importedName)
             }
         }
 
@@ -85,10 +75,12 @@ class JavaExtractor : ExtractorInterface {
         return super.tokenize(newLine)
     }
 
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
+    override fun mapImportToIndex(import: String, lang: String,
+                                  startsWith: Boolean): String? {
+        return super.mapImportToIndex(import, lang, startsWith = true)
+    }
 
-        return super.getLineLibraries(line, fileLibraries, evaluator,
-            LANGUAGE_NAME)
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

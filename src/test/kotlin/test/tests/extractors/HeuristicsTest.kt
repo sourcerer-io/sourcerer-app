@@ -3,7 +3,6 @@
 
 package test.tests.extractors
 
-import app.Logger
 import app.model.DiffFile
 import app.model.DiffContent
 import app.extractors.*
@@ -26,7 +25,7 @@ fun assertLang(file: File, expectedLang: String) {
     )
     Extractor().extract(listOf(diffFile))
 
-    val actualLang = diffFile.language
+    val actualLang = diffFile.lang
 
     // TODO(anatoly): Add support for all languages of samples.
     var todoSample = false;

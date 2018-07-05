@@ -1,9 +1,9 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
-package app.extractors
+package app.model
 
-import app.ModelsProtos
+import app.ClassifierProtos
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
 
@@ -15,7 +15,7 @@ class Classifier {
     var biases: Map<String, Float>
 
     @Throws(InvalidParameterException::class)
-    constructor(proto: ModelsProtos.Classifier) {
+    constructor(proto: ClassifierProtos.Classifier) {
         tokens = proto.tokensList
         libraries = proto.librariesList
         idf = tokens.zip(proto.idfList).toMap()
@@ -25,7 +25,7 @@ class Classifier {
     }
 
     @Throws(InvalidProtocolBufferException::class)
-    constructor(bytes: ByteArray) : this(ModelsProtos.Classifier
+    constructor(bytes: ByteArray) : this(ClassifierProtos.Classifier
         .parseFrom(bytes))
 
     fun evaluate(input: List<String>): List<Double> {
@@ -36,7 +36,14 @@ class Classifier {
         val norm = Math.sqrt(tokensWithWeight
             .map { (_, tfidf) -> tfidf * tfidf }
             .sum() + 1e-7)
-        val output = libraries.map {
+        val output = if (libraries.size == 2) {
+            val secondDecision = Math.exp(tokensWithWeight
+                .map { (token, tfidf) ->
+                    tfidf / norm * weights[libraries[0]]!![token]!!
+                }
+                .sum() + biases[libraries[0]]!!)
+            listOf(1.0, secondDecision)
+        } else libraries.map {
             Math.exp(tokensWithWeight
                 .map { (token, tfidf) -> tfidf / norm * weights[it]!![token]!! }
                 .sum() + biases[it]!!)
@@ -45,10 +52,6 @@ class Classifier {
         val probs = output.map { it / norm2 }
 
         return probs
-    }
-
-    fun getCategories(): List<String> {
-        return libraries
     }
 
     private fun <T> List<T>.partition(size: Int): List<List<T>> {

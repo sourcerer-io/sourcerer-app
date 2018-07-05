@@ -5,7 +5,7 @@
 package test.tests.hashers
 
 import app.api.MockApi
-import app.extractors.Extractor
+import app.extractors.ExtractorInterface
 import app.hashers.CommitHasher
 import app.hashers.CommitCrawler
 import app.model.*
@@ -276,7 +276,7 @@ class CommitHasherTest : Spek({
                 .fold(mutableListOf<CommitStats>()) { allStats, commit ->
                     allStats.addAll(commit.stats)
                     allStats
-                }.filter { it.type == Extractor.TYPE_SYNTAX }
+                }.filter { it.type == ExtractorInterface.TYPE_SYNTAX }
 
             val mapStats = syntaxStats.filter { it.tech == "python>map" }
             val listStats = syntaxStats.filter { it.tech == "python>list" }
@@ -330,7 +330,7 @@ class CommitHasherTest : Spek({
                     .fold(mutableListOf<CommitStats>()) { allStats, commit ->
                         allStats.addAll(commit.stats)
                         allStats
-                    }.filter { it.type == Extractor.TYPE_LIBRARY }
+                    }.filter { it.type == ExtractorInterface.TYPE_LIBRARY }
 
             val scssStats = syntaxStats.filter { it.tech == "scss" }
             assertEquals(2, scssStats.size)
