@@ -11,11 +11,8 @@ import app.model.DiffFile
 import app.model.DiffRange
 import app.model.Repo
 import app.utils.EmptyRepoException
-import app.utils.FileHelper
 import io.reactivex.Observable
 import java.io.BufferedReader
-import java.io.FileReader
-import java.io.File
 import java.io.InputStreamReader
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.jgit.api.Git
@@ -100,8 +97,7 @@ object CommitCrawler {
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
                           filteredEmails: HashSet<String>? = null,
-                          tail : RevCommit? = null,
-                          allowedExts: HashSet<String>? = null) :
+                          tail : RevCommit? = null) :
         Observable<JgitPair> = Observable.create { subscriber ->
         val repo: Repository = git.repository
         val revWalk = RevWalk(repo)
@@ -168,9 +164,10 @@ object CommitCrawler {
             }
             .filter { diff ->
                 val path = diff.newPath
-                val ext = FileHelper.getFileExtension(path)
-                if (allowedExts != null && !allowedExts.contains(ext)) {
-                    return@filter false
+                for (cnv in VendorConventions) {
+                    if (cnv.containsMatchIn(path)) {
+                        return@filter false
+                    }
                 }
 
                 val fileId =

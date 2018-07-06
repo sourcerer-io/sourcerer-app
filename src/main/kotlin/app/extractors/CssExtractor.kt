@@ -1,5 +1,6 @@
 // Copyright 2018 Sourcerer Inc. All Rights Reserved.
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 package app.extractors
 
@@ -8,12 +9,12 @@ import app.model.DiffFile
 
 class CssExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "css"
+        const val LANGUAGE_NAME = Lang.CSS
         val FILE_EXTS = listOf("css", "scss", "less", "sass")
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
+        files.map { file -> file.lang = LANGUAGE_NAME }
         val stats = FILE_EXTS.filter { it != "css" }.map { extension ->
             val result = files.filter { it.extension == extension }
                 .fold(Pair(0, 0)) { total, file ->
@@ -26,10 +27,14 @@ class CssExtractor : ExtractorInterface {
 
             CommitStats(numLinesAdded = result[0],
                         numLinesDeleted = result[1],
-                        type = Extractor.TYPE_LIBRARY,
+                        type = ExtractorInterface.TYPE_LIBRARY,
                         tech = extension)
         }.filter { it.numLinesAdded > 0 || it.numLinesDeleted > 0 }
 
         return stats + super.extract(files)
+    }
+
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

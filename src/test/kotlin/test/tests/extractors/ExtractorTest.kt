@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
+// Author: Anatoly Kislov (anatoly@sourcerer.io)
 
 package test.tests.extractors
 
@@ -8,19 +9,21 @@ import junit.framework.TestCase.assertTrue
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
+import org.jetbrains.spek.api.dsl.xit
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 fun assertExtractsLineLibraries(expectedLibrary: String, actualLine: String,
                                 extractor: ExtractorInterface) {
     val actualLineLibraries =
-            extractor.getLineLibraries(actualLine, listOf(expectedLibrary))
+        extractor.determineLibs(actualLine, listOf(expectedLibrary))
     assertTrue(expectedLibrary in actualLineLibraries)
 }
 
 fun assertExtractsNoLibraries(actualLine: String,
                               extractor: ExtractorInterface) {
     val actualLineLibraries =
-            extractor.getLineLibraries(actualLine, listOf())
+        extractor.determineLibs(actualLine, listOf())
     assertEquals(listOf(), actualLineLibraries)
 }
 
@@ -30,97 +33,108 @@ fun assertExtractsImport(expectedImport: String, actualLine: String,
     assertTrue(expectedImport in actualLineImport)
 }
 
-class ExtractorTest : Spek({
+fun assertMapsIndex(expectedIndex: String, actualImport: String,
+                    language: String, extractor: ExtractorInterface) {
+    val actualIndex = extractor.mapImportToIndex(actualImport, language)
+    assertEquals(expectedIndex, actualIndex)
+}
 
+fun assertMapsNothing(actualImport: String, language: String,
+                      extractor: ExtractorInterface) {
+    val actualIndex = extractor.mapImportToIndex(actualImport, language)
+    assertNull(actualIndex)
+}
+
+class ExtractorTest : Spek({
     given(" code line contains library code" ) {
         it("python extractor extracts the library") {
             val line = "with tf.Session() as sess"
-            assertExtractsLineLibraries("tensorflow",
-                    line, PythonExtractor())
+            assertExtractsLineLibraries("py.tensorflow",
+                line, PythonExtractor())
         }
 
         it("java extractor extracts the library") {
             val line = "private JdbcTemplate jdbcTemplate=new JdbcTemplate();"
-            assertExtractsLineLibraries("org.springframework",
-                    line, JavaExtractor())
+            assertExtractsLineLibraries("java.spring-framework",
+                line, JavaExtractor())
         }
 
         it("javascript extractor extracts the library") {
             val line = "new Vue({"
-            assertExtractsLineLibraries("vue",
-                    line, JavascriptExtractor())
+            assertExtractsLineLibraries("js.vue",
+                line, JavascriptExtractor())
         }
 
         it("ruby extractor extracts the library") {
             val line1 = "img = Magick::Image.read_inline(Base64.encode64(image)).first"
-            assertExtractsLineLibraries("RMagick",
-                    line1, RubyExtractor())
+            assertExtractsLineLibraries("rb.rmagick",
+                line1, RubyExtractor())
             val line2 = "fximages << {image: img.adaptive_threshold(3, 3, 0), name: \"Adaptive Threshold\"}"
-            assertExtractsLineLibraries("RMagick",
-                    line2, RubyExtractor())
+            assertExtractsLineLibraries("rb.rmagick",
+                line2, RubyExtractor())
         }
 
         it("go extractor extracts the library") {
             val line = "if DB, found = revel.Config.String(\"bloggo.db\"); !found {"
-            assertExtractsLineLibraries("revel",
-                    line, GoExtractor())
+            assertExtractsLineLibraries("go.revel",
+                line, GoExtractor())
         }
 
         it("objectiveC extractor extracts the library") {
             val line = "[[NSFileManager defaultManager] removeItemAtURL:[RLMRealmConfiguration defaultConfiguration].fileURL error:nil];"
-            assertExtractsLineLibraries("Realm",
-                    line, ObjectiveCExtractor())
+            assertExtractsLineLibraries("objc.realm",
+                line, ObjectiveCExtractor())
         }
 
         it("swift extractor extracts the library") {
             val line = "class City: RLMObject {"
-            assertExtractsLineLibraries("Realm",
-                    line, SwiftExtractor())
+            assertExtractsLineLibraries("swift.realm",
+                line, SwiftExtractor())
         }
 
         it("cpp extractor extracts the library") {
             val line1 = "leveldb::Options options;"
-            assertExtractsLineLibraries("leveldb",
-                    line1, CppExtractor())
+            assertExtractsLineLibraries("cpp.level-db",
+                line1, CppExtractor())
             val line2 = "leveldb::Status status = leveldb::DB::Open(options, \"./testdb\", &tmp);"
-            assertExtractsLineLibraries("leveldb",
-                    line2, CppExtractor())
+            assertExtractsLineLibraries("cpp.level-db",
+                line2, CppExtractor())
         }
 
         it("csharp extractor extracts the library") {
             val line = "Algorithm = (h, v, i) => new ContrastiveDivergenceLearning(h, v)"
-            assertExtractsLineLibraries("Accord",
-                    line, CSharpExtractor())
+            assertExtractsLineLibraries("cs.accord-net",
+                line, CSharpExtractor())
         }
 
         it("fsharp extractor extracts the library") {
             val line = "Algorithm = fun (h, v, i) -> ContrastiveDivergenceLearning(h, v)"
-            assertExtractsLineLibraries("Accord",
-                    line, FSharpExtractor())
+            assertExtractsLineLibraries("cs.accord-net",
+                line, FSharpExtractor())
         }
 
         it("php extractor extracts the library") {
             val line = "public function listRepos(string \$user, int \$limit): Call;"
-            assertExtractsLineLibraries("Tebru\\Retrofit",
-                    line, PhpExtractor())
+            assertExtractsLineLibraries("php.retrofit-php",
+                line, PhpExtractor())
         }
 
-        it("c extractor extracts the library") {
+        xit("c extractor extracts the library") {
             val line = "grpc_test_init(argc, argv);"
-            assertExtractsLineLibraries("grpc",
-                    line, CExtractor())
+            assertExtractsLineLibraries("c.grpc",
+                line, CExtractor())
         }
 
         it("kotlin extractor extracts the library") {
             val line = "FuelManager.instance.apply {"
-            assertExtractsLineLibraries("com.github.kittinunf.fuel",
-                    line, KotlinExtractor())
+            assertExtractsLineLibraries("kt.fuel",
+                line, KotlinExtractor())
         }
 
         it("ruby extractor extracts rails") {
             val line = "class Article < ActiveRecord::Base"
-            assertExtractsLineLibraries("rails",
-                    line, RubyExtractor())
+            assertExtractsLineLibraries("rb.rails",
+                line, RubyExtractor())
         }
     }
 
@@ -193,89 +207,95 @@ class ExtractorTest : Spek({
 
     given("import name.h") {
         it("imports name") {
-            assertExtractsImport("protobuf", "#include \"protobuf.h\"", CppExtractor())
+            val line = "#include \"protobuf.h\""
+            assertExtractsImport("protobuf", line, CppExtractor())
         }
     }
 
     given("import library with multiple ways to import") {
         it("imports in both cases") {
-            var lib = "opencv"
             val line1 = "#include \"opencv/module/header.h\""
-            assertExtractsImport(lib, line1, CppExtractor())
+
+            assertExtractsImport("opencv", line1, CppExtractor())
             val line2 = "#include \"opencv2/module/header.h\""
-            assertExtractsImport(lib, line2, CppExtractor())
+            assertExtractsImport("opencv2", line2, CppExtractor())
         }
     }
 
     given("line contains import") {
         it("kotlin extractor extracts import") {
-            val line = "import kategory.optics.*"
-            val lib = "kategory"
-            assertExtractsImport(lib, line, KotlinExtractor())
+            val import = "kategory.optics."
+            val line = "import $import*"
+            assertExtractsImport(import, line, KotlinExtractor())
         }
     }
 
     given("import cv2 or cv") {
-        it("imports opencv") {
-            val lib = "opencv"
+        it("extracts import") {
             val line1 = "import cv2"
-            assertExtractsImport(lib, line1, PythonExtractor())
+            assertExtractsImport("cv2", line1, PythonExtractor())
             val line2 = "import cv"
-            assertExtractsImport(lib, line2, PythonExtractor())
+            assertExtractsImport("cv", line2, PythonExtractor())
         }
     }
 
     given("one line import in go file") {
         it("extracts library name") {
-            val lib = "macagon"
+            val import = "macagon"
             val line = "import \"macagon\""
-            assertExtractsImport(lib, line, GoExtractor())
+            assertExtractsImport(import, line, GoExtractor())
         }
     }
 
     given("multiline import in go file") {
         it("extracts library name") {
-            val lib = "macagon"
+            val import = "macagon"
             val lines = listOf("import (",
-                               "\"macagon\"",
-                               "\"github.com/astaxie/beego\"",
-                               ")")
+                "\"macagon\"",
+                "\"github.com/astaxie/beego\"",
+                ")")
             val actualLineImports = GoExtractor().extractImports(lines)
-            assertTrue(lib in actualLineImports)
+            assertTrue(import in actualLineImports)
         }
     }
 
     given("github  url as import in go file") {
-        it("extracts library name") {
-            val lib = "beego"
+        it("extracts github url") {
+            val url = "github.com/astaxie/beego"
             val lines = listOf("import (",
-                    "\"macagon\"",
-                    "\"github.com/astaxie/beego\"",
-                    ")")
+                    "\"macagon\"", "\"" + url + "\"", ")")
             val actualLineImports = GoExtractor().extractImports(lines)
-            assertTrue(lib in actualLineImports)
+            assertTrue(url in actualLineImports)
         }
     }
 
     given("js comment line") {
         it("doesn't extract libraries") {
             var lines = listOf("// It doesn't use Ember 1")
-            var actualLineImports = JavascriptExtractor().extractImports(lines)
-            assertTrue(actualLineImports.isEmpty())
+            val extractor = JavascriptExtractor()
+            var actualLineImports = extractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.JAVASCRIPT, extractor)
+            }
 
             lines = listOf("/* It doesn't use ember 2", "* and you Ember ",
-                                "* too Ember */")
-            actualLineImports = JavascriptExtractor().extractImports(lines)
-            assertTrue(actualLineImports.isEmpty())
+                "* too Ember */")
+            actualLineImports = extractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.JAVASCRIPT, extractor)
+            }
         }
     }
 
     given("Qt import in cpp file") {
         it("extracts library name") {
-            val lib = "Qt"
-            val line = "#include <QFileDialog>"
-            assertExtractsImport(lib, line, CppExtractor())
+            val lib = "cpp.qt"
+            val import = "QFileDialog"
+            val line = "#include <$import>"
+            val extractor = CppExtractor()
+            assertExtractsImport(import, line, extractor)
+            val actualImport = extractor.extractImports(listOf(line))[0]
+            assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
         }
     }
-
 })

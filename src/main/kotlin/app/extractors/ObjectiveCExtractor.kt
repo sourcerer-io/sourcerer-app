@@ -4,26 +4,14 @@
 
 package app.extractors
 
-import app.model.CommitStats
-import app.model.DiffFile
-
 class ObjectiveCExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "objectivec"
-        val FILE_EXTS = listOf("m", "mm")
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
+        const val LANGUAGE_NAME = Lang.OBJECTIVEC
         val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val sharpImportIncludeRegex =
                 Regex("""#(import|include)\s+[">](\w+)[/\w+]*\.\w+[">]""")
         val atImportRegex = Regex("""@import\s+(\w+)""")
-    }
-
-    override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-        return super.extract(files)
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
@@ -47,10 +35,7 @@ class ObjectiveCExtractor : ExtractorInterface {
         return super.tokenize(newLine)
     }
 
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
-
-        return super.getLineLibraries(line, fileLibraries, evaluator,
-            LANGUAGE_NAME)
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }

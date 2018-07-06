@@ -11,7 +11,7 @@ class DiffFile(
     val changeType: DiffEntry.ChangeType,
     val old: DiffContent = DiffContent(),
     val new: DiffContent = DiffContent(),
-    var language: String = ""
+    var lang: String = ""
 ) {
     val extension: String = FileHelper.getFileExtension(path)
 

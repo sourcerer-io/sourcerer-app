@@ -36,8 +36,8 @@ buildConfig {
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
-    buildConfigField 'int', 'VERSION_CODE', '10'
-    buildConfigField 'String', 'VERSION', '0.2.5'
+    buildConfigField 'int', 'VERSION_CODE', '12'
+    buildConfigField 'String', 'VERSION', '0.3.0'
 
     // Logging.
     buildConfigField 'String', 'ENV', project.hasProperty('env') ? env : 'production'
@@ -53,7 +53,7 @@ buildConfig {
     buildConfigField 'boolean', 'IS_GA_ENABLED', 'true'
 
     // Models storage path.
-    buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v1/'
+    buildConfigField 'String', 'LIBRARY_MODELS_URL', 'https://storage.googleapis.com/sourcerer-app/library-models/v2/'
 
     // Hashing.
     buildConfigField 'boolean', 'COMMIT_HASHER_ENABLED', project.hasProperty('commit-hasher-enabled') ? project.property('commit-hasher-enabled').toString() : 'true'
@@ -107,6 +107,7 @@ dependencies {
     compile 'org.slf4j:slf4j-nop:1.7.2'
     compile 'io.sentry:sentry:1.7.3'
 
+    testCompile 'commons-io:commons-io:2.6'
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.spek:spek-api:1.1.5'
     testCompile 'org.junit.platform:junit-platform-runner:1.0.1'

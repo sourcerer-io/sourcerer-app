@@ -4,47 +4,33 @@
 
 package app.extractors
 
-import app.model.CommitStats
-import app.model.DiffFile
-
 class JavascriptExtractor : ExtractorInterface {
     companion object {
-        val LANGUAGE_NAME = "javascript"
-        val FILE_EXTS = listOf("js", "jsx")
-        val LIBRARIES = ExtractorInterface.getLibraries("js")
-        val evaluator by lazy {
-            ExtractorInterface.getLibraryClassifier(LANGUAGE_NAME)
-        }
-        val splitRegex =
-                Regex("""\s+|,|;|:|\*|\n|\(|\)|\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
+        const val LANGUAGE_NAME = Lang.JAVASCRIPT
+        val splitRegex = Regex("""\s+|,|;|:|\*|\n|\(|\)|\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
         val multilineCommentRegex = Regex("""/\*.+?\*/""")
         val twoOrMoreWordsRegex = Regex("""(".+?\s.+?"|'.+?\s.+?')""")
-
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-    }
-
-    override fun extract(files: List<DiffFile>): List<CommitStats> {
-        files.map { file -> file.language = LANGUAGE_NAME }
-        return super.extract(files)
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
-        val line = fileContent.map { line -> commentRegex.replace(line, "")}
+        val line = fileContent.map { line -> commentRegex.replace(line, "") }
                        .joinToString(separator = " ").toLowerCase()
         val fileTokens = multilineCommentRegex.replace(
-                            twoOrMoreWordsRegex.replace(line, ""), "")
-                            .split(splitRegex)
-        return fileTokens.filter { token -> token in LIBRARIES }.distinct()
-    }
-
-    override fun getLineLibraries(line: String,
-                                  fileLibraries: List<String>): List<String> {
-        return super.getLineLibraries(line, fileLibraries, evaluator,
-            LANGUAGE_NAME)
+            twoOrMoreWordsRegex.replace(line, ""), "").split(splitRegex)
+        return fileTokens.distinct()
     }
 
     override fun tokenize(line: String): List<String> {
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         return super.tokenize(commentRegex.replace(line, ""))
+    }
+
+    override fun mapImportToIndex(import: String, lang: String,
+                                  startsWith: Boolean): String? {
+        return super.mapImportToIndex(import, lang, startsWith = true)
+    }
+
+    override fun getLanguageName(): String? {
+        return LANGUAGE_NAME
     }
 }
