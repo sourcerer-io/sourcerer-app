@@ -49,7 +49,7 @@ class ClassifierManager {
             val prob = prediction[cache[libId]!!.libraries.indexOf(libId)]
             // Libraries with no imports.
             if (libId == "rb.rails") {
-                prob > 0.8
+                prob > 0.91
             } else {
                 prob > 0.5
             }
