@@ -7,7 +7,7 @@ object Lang {
     const val ACTIONSCRIPT = "actionscript"  // ActionScript
     const val ANGELSCRIPT = "angelscript"  // AngelScript
     const val ASSEMBLY = "assembly"  // Assembly
-    const val ARDUINO = "assembly"  // Arduino
+    const val ARDUINO = "arduino"  // Arduino
     const val C = "c"  // C
     const val CSHARP = "csharp"  // C#
     const val CSS = "css"  // CSS
