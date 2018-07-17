@@ -18,6 +18,7 @@ object Lang {
     const val COMMONLISP = "lisp"  // Common Lisp
     const val CUDA = "cuda"  // Cuda
     const val D = "d"  // D
+    const val DART = "dart"  // Dart
     const val DOSBATCH = "dosbatch"  // DOS Batch
     const val DTRACE = "dtrace"  // DTrace
     const val ELIXIR = "elixir"  // Elixir

@@ -413,6 +413,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             CommonExtractor(Lang.MAKEFILE)
         } else null
     },
+    "dart" to { _ ->
+        CommonExtractor(Lang.DART)
+    },
     "db2" to { _ ->
         CommonExtractor(Lang.SQLPL)
     },
