@@ -985,6 +985,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "sls" to { _ ->
         CommonExtractor(Lang.SCHEME)
     },
+    "sol" to { _ ->
+        CommonExtractor(Lang.SOLIDITY)
+    },
     "spc" to { _ ->
         CommonExtractor(Lang.PLSQL)
     },

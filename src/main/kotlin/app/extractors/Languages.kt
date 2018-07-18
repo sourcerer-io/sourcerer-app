@@ -88,9 +88,10 @@ object Lang {
     const val SCHEME = "scheme"  // Scheme
     const val SHELL = "shell"  // Shell
     const val SMALLTALK = "smalltalk"  // Smalltalk
-    const val STANDARDML = "standard_ml"  // Standard ML
+    const val SOLIDITY = "solidity"  // Solidity
     const val SQL = "sql"  // SQL
     const val SQLPL = "sqlpl"  // SQLPL
+    const val STANDARDML = "standard_ml"  // Standard ML
     const val SUPERCOLLIDER = "supercollider"  // SuperCollider
     const val SWIFT = "swift"  // Swift
     const val TCL = "tcl"  // Tcl
