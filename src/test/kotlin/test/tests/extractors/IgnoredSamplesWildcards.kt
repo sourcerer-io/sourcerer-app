@@ -80,7 +80,6 @@ var ignoredSamplesWildcards = listOf(
     "*/DIGITAL Command Language/*",
     "*/DM/*",
     "*/DNS Zone/*",
-    "*/Dart/*",
     "*/DataWeave/*",
     "*/Diff/*",
     "*/Dockerfile/*",

@@ -413,6 +413,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             CommonExtractor(Lang.MAKEFILE)
         } else null
     },
+    "dart" to { _ ->
+        CommonExtractor(Lang.DART)
+    },
     "db2" to { _ ->
         CommonExtractor(Lang.SQLPL)
     },
@@ -981,6 +984,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     },
     "sls" to { _ ->
         CommonExtractor(Lang.SCHEME)
+    },
+    "sol" to { _ ->
+        CommonExtractor(Lang.SOLIDITY)
     },
     "spc" to { _ ->
         CommonExtractor(Lang.PLSQL)

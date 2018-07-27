@@ -242,6 +242,9 @@ val VendorConventions = listOf(
     // Xcode
     Regex("""\.xctemplate/"""),
     Regex("""\.imageset/"""),
+    Regex("""\.xc.*/"""),
+    Regex("""(^|/)Info\.plist$"""),
+    Regex("""\.storyboard$"""),
 
     // Carthage
     Regex("""(^|/)Carthage/"""),

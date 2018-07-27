@@ -7,7 +7,7 @@ object Lang {
     const val ACTIONSCRIPT = "actionscript"  // ActionScript
     const val ANGELSCRIPT = "angelscript"  // AngelScript
     const val ASSEMBLY = "assembly"  // Assembly
-    const val ARDUINO = "assembly"  // Arduino
+    const val ARDUINO = "arduino"  // Arduino
     const val C = "c"  // C
     const val CSHARP = "csharp"  // C#
     const val CSS = "css"  // CSS
@@ -18,6 +18,7 @@ object Lang {
     const val COMMONLISP = "lisp"  // Common Lisp
     const val CUDA = "cuda"  // Cuda
     const val D = "d"  // D
+    const val DART = "dart"  // Dart
     const val DOSBATCH = "dosbatch"  // DOS Batch
     const val DTRACE = "dtrace"  // DTrace
     const val ELIXIR = "elixir"  // Elixir
@@ -87,9 +88,10 @@ object Lang {
     const val SCHEME = "scheme"  // Scheme
     const val SHELL = "shell"  // Shell
     const val SMALLTALK = "smalltalk"  // Smalltalk
-    const val STANDARDML = "standard_ml"  // Standard ML
+    const val SOLIDITY = "solidity"  // Solidity
     const val SQL = "sql"  // SQL
     const val SQLPL = "sqlpl"  // SQLPL
+    const val STANDARDML = "standard_ml"  // Standard ML
     const val SUPERCOLLIDER = "supercollider"  // SuperCollider
     const val SWIFT = "swift"  // Swift
     const val TCL = "tcl"  // Tcl
