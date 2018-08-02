@@ -70,7 +70,6 @@ var ignoredSamplesWildcards = listOf(
     "*/Common Workflow Language/*",
     "*/Component Pascal/*",
     "*/Cool/*",
-    "*/Coq/*",
     "*/Creole/*",
     "*/Crystal/*",
     "*/Csound/*",
