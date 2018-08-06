@@ -10,6 +10,10 @@ val ActionScriptRegex = Regex(
     "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)",
     RegexOption.MULTILINE
 )
+val CoqRegex = Regex(
+    """^Require\s""",
+    RegexOption.MULTILINE
+)
 val CommonLispRegex = Regex(
     "^\\s*\\((defun|in-package|defpackage) ",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
@@ -1071,8 +1075,12 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "ux" to { _ ->
         CommonExtractor(Lang.XML)
     },
-    "v" to { _ ->
-        CommonExtractor(Lang.VERILOG)
+    "v" to { buf ->
+        if (CoqRegex.containsMatchIn(buf)) {
+            CommonExtractor(Lang.COQ)
+        } else {
+            CommonExtractor(Lang.VERILOG)
+        }
     },
     "vb" to { _ ->
         CommonExtractor(Lang.VISUALBASIC)

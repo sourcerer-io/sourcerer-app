@@ -9,9 +9,10 @@ object Lang {
     const val ASSEMBLY = "assembly"  // Assembly
     const val ARDUINO = "arduino"  // Arduino
     const val C = "c"  // C
+    const val COQ = "coq"  // Coq
+    const val CPP = "cpp"  // C++
     const val CSHARP = "csharp"  // C#
     const val CSS = "css"  // CSS
-    const val CPP = "cpp"  // C++
     const val CLOJURE = "clojure"  // Clojure
     const val COBOL = "cobol"  // COBOL
     const val COFFEESCRIPT = "coffeescript"  // CoffeeScript
