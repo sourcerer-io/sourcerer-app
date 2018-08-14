@@ -124,7 +124,7 @@ message Repo {
 
 // Meta info about repo. Is not used for a locally run app.
 message RepoMeta {
-    string ghId = 1;
+    string hosterId = 1;
     string name = 2;
     string ownerName = 3;
     string htmlUrl = 4;
