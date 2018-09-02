@@ -47,10 +47,14 @@ class ClassifierManager {
             val prediction = cache[libId]!!.evaluate(line)
             // Prediction based on two classes.
             val prob = prediction[cache[libId]!!.libraries.indexOf(libId)]
-            // Libraries with no imports.
+            // Define lower bound of classifier output
+            // that depends on data used to create the model.
             if (libId == "rb.rails") {
                 prob > 0.91
-            } else {
+            } else if (libId.startsWith(Lang.PLPGSQL)) {
+                prob > 0.7
+            }
+            else {
                 prob > 0.5
             }
         }
