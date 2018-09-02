@@ -298,4 +298,31 @@ class ExtractorTest : Spek({
             assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
         }
     }
+
+    given("PLpgSQL") {
+        it("PLpgSQL single-line comment") {
+            var lines = listOf("-- CREATE EXTENSION ltree")
+            var actualLineImports = PLpgSQLExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.PLPGSQL, PLpgSQLExtractor)
+            }
+        }
+        it("PLpgSQL multi-line comment") {
+            var lines = listOf("/* CREATE EXTENSION ltree */")
+            var actualLineImports = PLpgSQLExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.PLPGSQL, PLpgSQLExtractor)
+            }
+        }
+        it("PLpgSQL extension") {
+            var line = """ execute("CREATE EXTENSION ltree")"""
+            val import = "ltree"
+            assertExtractsImport(import, line, PLpgSQLExtractor)
+        }
+        it("PLpgSQL language") {
+            var line = """ execute("CREATE LANGUAGE plr")"""
+            val import = "plr"
+            assertExtractsImport(import, line, PLpgSQLExtractor)
+        }
+    }
 })
