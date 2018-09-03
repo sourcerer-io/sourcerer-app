@@ -72,7 +72,7 @@ val MathematicaRegex = Regex(
     RegexOption.MULTILINE
 )
 val MatlabRegex = Regex(
-    "^\\s*%",
+    """(^\s*%)|(^end$)""",
     RegexOption.MULTILINE
 )
 val MRegexs = setOf(
