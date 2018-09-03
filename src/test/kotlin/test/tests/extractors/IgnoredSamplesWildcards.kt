@@ -213,6 +213,8 @@ var ignoredSamplesWildcards = listOf(
     "*/Markdown/*",
     "*/Marko/*",
     "*/Mask/*",
+    "*/Matlab/CVX/functions/@cvx/functions.m",
+    "*/Matlab/CVX/functions/Contents.m",
     "*/Maven POM/*",
     "*/Max/*",
     "*/MediaWiki/*",

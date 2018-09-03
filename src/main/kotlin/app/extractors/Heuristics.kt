@@ -703,6 +703,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "makefile" to { _ ->
         CommonExtractor(Lang.MAKEFILE)
     },
+    "mat" to { _ ->
+        CommonExtractor(Lang.MATLAB)
+    },
     "mjml" to { _ ->
         CommonExtractor(Lang.XML)
     },
