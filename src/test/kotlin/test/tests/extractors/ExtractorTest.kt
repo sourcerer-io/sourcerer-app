@@ -325,4 +325,22 @@ class ExtractorTest : Spek({
             assertExtractsImport(import, line, PLpgSQLExtractor)
         }
     }
+
+    given("Rust") {
+        it("Rust imports") {
+            var lines = listOf(
+                    "extern crate foo;",
+                    "extern crate boo;"
+            )
+            var actualLineImports = RustExtractor().extractImports(lines)
+            assertEquals(actualLineImports, listOf("foo", "boo"))
+
+            lines = listOf(
+                    "// extern crate foo;",
+                    "/* extern crate boo; */"
+            )
+            actualLineImports = RustExtractor().extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+    }
 })

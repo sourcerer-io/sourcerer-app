@@ -11,7 +11,8 @@ open class ExtractorBase(private val language: String,
         val imports = mutableSetOf<String>()
 
         fileContent.forEach {
-            val res = extractImportRegex.find(it)
+            val line = commentRegex.replace(it, "")
+            val res = extractImportRegex.find(line)
             if (res != null) {
                 val lineLib = res.groupValues[1]
                 imports.add(lineLib)
