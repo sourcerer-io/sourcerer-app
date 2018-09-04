@@ -302,27 +302,27 @@ class ExtractorTest : Spek({
     given("PLpgSQL") {
         it("PLpgSQL single-line comment") {
             var lines = listOf("-- CREATE EXTENSION ltree")
-            var actualLineImports = PLpgSQLExtractor.extractImports(lines)
+            var actualLineImports = PlpgsqlExtractor.extractImports(lines)
             actualLineImports.forEach {
-                assertMapsNothing(it, Lang.PLPGSQL, PLpgSQLExtractor)
+                assertMapsNothing(it, Lang.PLPGSQL, PlpgsqlExtractor)
             }
         }
         it("PLpgSQL multi-line comment") {
             var lines = listOf("/* CREATE EXTENSION ltree */")
-            var actualLineImports = PLpgSQLExtractor.extractImports(lines)
+            var actualLineImports = PlpgsqlExtractor.extractImports(lines)
             actualLineImports.forEach {
-                assertMapsNothing(it, Lang.PLPGSQL, PLpgSQLExtractor)
+                assertMapsNothing(it, Lang.PLPGSQL, PlpgsqlExtractor)
             }
         }
         it("PLpgSQL extension") {
             var line = """ execute("CREATE EXTENSION ltree")"""
             val import = "ltree"
-            assertExtractsImport(import, line, PLpgSQLExtractor)
+            assertExtractsImport(import, line, PlpgsqlExtractor)
         }
         it("PLpgSQL language") {
             var line = """ execute("CREATE LANGUAGE plr")"""
             val import = "plr"
-            assertExtractsImport(import, line, PLpgSQLExtractor)
+            assertExtractsImport(import, line, PlpgsqlExtractor)
         }
     }
 
