@@ -9,6 +9,7 @@ import java.security.InvalidParameterException
  */
 data class RepoMeta(
     var hosterId: String = "",
+    var service: String = "",
     var name: String = "",
     var ownerName: String = "",
     var htmlUrl: String = "",
@@ -17,6 +18,7 @@ data class RepoMeta(
     @Throws(InvalidParameterException::class)
     constructor(proto: Protos.RepoMeta) : this() {
         hosterId = proto.hosterId
+        service = proto.service
         name = proto.name
         ownerName = proto.ownerName
         htmlUrl = proto.htmlUrl
@@ -31,6 +33,7 @@ data class RepoMeta(
     fun getProto(): Protos.RepoMeta {
         return Protos.RepoMeta.newBuilder()
             .setHosterId(hosterId)
+            .setService(service)
             .setName(name)
             .setOwnerName(ownerName)
             .setHtmlUrl(htmlUrl)
