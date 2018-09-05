@@ -93,7 +93,7 @@ var ignoredSamplesWildcards = listOf(
     "*/Easybuild/*",
     "*/Edje Data Collection/*",
     "*/Eiffel/*",
-    "*/Elixir/*",
+    "*/Elixir/filenames/*",
     "*/Emacs Lisp/*",
     "*/EmberScript/*",
     "*/Erlang/*.es",

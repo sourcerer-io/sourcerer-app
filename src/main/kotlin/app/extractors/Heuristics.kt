@@ -455,10 +455,10 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.ERLANG)
     },
     "ex" to { _ ->
-        CommonExtractor(Lang.ELIXIR)
+        ElixirExtractor
     },
     "exs" to { _ ->
-        CommonExtractor(Lang.ELIXIR)
+        ElixirExtractor
     },
     "f" to { buf ->
         if (ForthRegex.containsMatchIn(buf)) {

@@ -5,14 +5,13 @@ package app.extractors
 
 open class ExtractorBase(private val language: String,
                          private val importRegex: Regex,
-                         private val commentRegex: Regex,
-                         private val extractImportRegex: Regex) : ExtractorInterface {
+                         private val commentRegex: Regex) : ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
         fileContent.forEach {
             val line = commentRegex.replace(it, "")
-            val res = extractImportRegex.find(line)
+            val res = importRegex.find(line)
             if (res != null) {
                 val lineLib = res.groupValues[1]
                 imports.add(lineLib)
