@@ -128,6 +128,7 @@ message RepoMeta {
     string service = 6;
     string name = 2;
     string ownerName = 3;
+    string description = 7;
     string htmlUrl = 4;
     string cloneUrl = 5;
 }

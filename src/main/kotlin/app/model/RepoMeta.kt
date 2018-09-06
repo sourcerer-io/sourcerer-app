@@ -12,6 +12,7 @@ data class RepoMeta(
     var service: String = "",
     var name: String = "",
     var ownerName: String = "",
+    var description: String = "",
     var htmlUrl: String = "",
     var cloneUrl: String = ""
 ) {
@@ -21,6 +22,7 @@ data class RepoMeta(
         service = proto.service
         name = proto.name
         ownerName = proto.ownerName
+        description = proto.description
         htmlUrl = proto.htmlUrl
         cloneUrl = proto.cloneUrl
     }
@@ -36,6 +38,7 @@ data class RepoMeta(
             .setService(service)
             .setName(name)
             .setOwnerName(ownerName)
+            .setDescription(description)
             .setHtmlUrl(htmlUrl)
             .setCloneUrl(cloneUrl)
             .build()
