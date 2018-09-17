@@ -91,7 +91,7 @@ See [sourcerer.io/faq](https://sourcerer.io/faq).
 
 Contributing
 ============
-We love contributions! Check out the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information. Simplest and really helpfull for the community would be contribution meta information to our [supported libraries list](https://github.com/sourcerer-io/awesome-libraries). If you an author of a library you show definitely add yours to the list or you can help to someone whose work you use.
+We love contributions! Check out the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information. Simplest and really helpful for the community would be contribution meta information to our [supported libraries list](https://github.com/sourcerer-io/awesome-libraries). If you an author of a library you show definitely add yours to the list or you can help to someone whose work you use.
 
 [![0](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/0)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/0)
 [![1](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/1)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/1)
