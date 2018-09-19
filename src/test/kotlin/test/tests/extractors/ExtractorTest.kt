@@ -86,12 +86,6 @@ class ExtractorTest : Spek({
                 line, ObjectiveCExtractor())
         }
 
-        it("swift extractor extracts the library") {
-            val line = "class City: RLMObject {"
-            assertExtractsLineLibraries("swift.realm",
-                line, SwiftExtractor())
-        }
-
         it("cpp extractor extracts the library") {
             val line1 = "leveldb::Options options;"
             assertExtractsLineLibraries("cpp.level-db",
@@ -172,11 +166,6 @@ class ExtractorTest : Spek({
         it("php extractor returns empty list") {
             val line = "<?php"
             assertExtractsNoLibraries(line, PhpExtractor())
-        }
-
-        it("swift extractor returns empty list") {
-            val line = "import Foundation"
-            assertExtractsNoLibraries(line, SwiftExtractor())
         }
 
         it("csharp extractor returns empty list") {
@@ -366,6 +355,31 @@ class ExtractorTest : Spek({
             )
             actualLineImports = RustExtractor().extractImports(lines)
             assertTrue(actualLineImports.isEmpty())
+        }
+    }
+
+    given("Swift") {
+        it("Swift single-line comment") {
+            var lines = listOf("// class City: RLMObject {")
+            var actualLineImports = SwiftExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Swift multi-line comment") {
+            var lines = listOf("/* class City: RLMObject { */")
+            var actualLineImports = SwiftExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Swift imports") {
+            var line = "import UIKit"
+            assertExtractsImport("UIKit", line, SwiftExtractor)
+        }
+        it("Swift no libraries") {
+            val line = "import Foundation"
+            assertExtractsNoLibraries(line, SwiftExtractor)
+        }
+        it("Swift libraries") {
+            val line = "class City: RLMObject {"
+            assertExtractsLineLibraries("swift.realm", line, SwiftExtractor)
         }
     }
 })

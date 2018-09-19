@@ -1019,7 +1019,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SMALLTALK)
     },
     "swift" to { _ ->
-        SwiftExtractor()
+        SwiftExtractor
     },
     "t" to { buf ->
         if (Perl6Regex.containsMatchIn(buf)) {
