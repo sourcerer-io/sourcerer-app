@@ -91,7 +91,16 @@ See [sourcerer.io/faq](https://sourcerer.io/faq).
 
 Contributing
 ============
-We love contributions! Check out the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information. Simplest and really helpfull for the community would be contribution meta information to our [supported libraries list](https://github.com/sourcerer-io/awesome-libraries). If you an author of a library you show definitely add yours to the list or you can help to someone whose work you use.
+We love contributions! Check out the [Contribution guide](https://github.com/sourcerer-io/sourcerer-app/blob/master/CONTRIBUTING.md) for more information. Simplest and really helpful for the community would be contribution meta information to our [supported libraries list](https://github.com/sourcerer-io/awesome-libraries). If you an author of a library you show definitely add yours to the list or you can help to someone whose work you use.
+
+[![0](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/0)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/0)
+[![1](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/1)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/1)
+[![2](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/2)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/2)
+[![3](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/3)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/3)
+[![4](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/4)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/4)
+[![5](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/5)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/5)
+[![6](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/6)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/6)
+[![7](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/images/7)](https://sourcerer.io/fame/sergey48k/sourcerer-io/sourcerer-app/links/7)
 
 Build
 =====

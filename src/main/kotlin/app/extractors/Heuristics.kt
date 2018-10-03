@@ -6,7 +6,7 @@ package app.extractors
 import app.model.DiffFile
 import app.model.CommitStats
 
-val ActionScriptRegex = Regex(
+val ActionscriptRegex = Regex(
     "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)",
     RegexOption.MULTILINE
 )
@@ -18,7 +18,7 @@ val CommonLispRegex = Regex(
     "^\\s*\\((defun|in-package|defpackage) ",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val CPlusPlusRegex = Regex(
+val CppRegex = Regex(
     "(template |class |namespace |#include <c?std[^.]+>)",
     RegexOption.MULTILINE
 )
@@ -26,7 +26,7 @@ val DRegex = Regex(
     "^module\\s+[\\w.]*\\s*;|import\\s+[\\w\\s,.:]*;|\\w+\\s+\\w+\\s*\\(.*\\)(?:\\(.*\\))?\\s*\\{[^}]*\\}|unittest\\s*(?:\\(.*\\))?\\s*\\{[^}]*\\}",
     RegexOption.MULTILINE
 )
-val DTraceRegex = Regex(
+val DtraceRegex = Regex(
     "^(\\w+:\\w*:\\w*:\\w*|BEGIN|END|provider\\s+|(tick|profile)-\\w+\\s+\\{[^}]*\\}|#pragma\\s+D\\s+(option|attributes|depends_on)\\s|#pragma\\s+ident\\s)",
     RegexOption.MULTILINE
 )
@@ -47,15 +47,15 @@ val FortranRegex = Regex(
     "^([c*][^abd-z]|      (subroutine|program|end|data)\\s|\\s*!)",
     RegexOption.IGNORE_CASE
 )
-val GLSLRegex = Regex(
+val GlslRegex = Regex(
     "^\\s*(#version|precision|uniform|varying|vec[234])",
     RegexOption.IGNORE_CASE
 )
-val IDLRegex = Regex(
+val IdlRegex = Regex(
     "^\\s*function[ \\w,]+$",
     RegexOption.MULTILINE
 )
-val INIPropsRegex = Regex(
+val IniPropsRegex = Regex(
     "\\w+\\s*=\\s*",
     RegexOption.IGNORE_CASE
 )
@@ -72,7 +72,7 @@ val MathematicaRegex = Regex(
     RegexOption.MULTILINE
 )
 val MatlabRegex = Regex(
-    "^\\s*%",
+    """(^\s*%)|(^end$)""",
     RegexOption.MULTILINE
 )
 val MRegexs = setOf(
@@ -88,7 +88,7 @@ val MRegexs = setOf(
 val MakefileRegex = Regex(
     "([\\/\\\\].*:\\s+.*\\s\\\\$|: \\\\$|^ : |^[\\w\\s\\/\\\\.]+\\w+\\.\\w+\\s*:\\s+[\\w\\s\\/\\\\.]+\\w+\\.\\w+)"
 )
-val MUFRegex =Regex(
+val MufRegex =Regex(
     "^: ",
     RegexOption.MULTILINE
 )
@@ -96,7 +96,7 @@ val NewLispRegex = Regex(
     "^\\s*\\(define ",
     RegexOption.MULTILINE
 )
-val NotSQLRegex = Regex(
+val NotSqlRegex = Regex(
     "begin|boolean|package|exception",
     RegexOption.IGNORE_CASE
 )
@@ -104,7 +104,7 @@ val ObjectiveCRegex = Regex(
     "^\\s*(@(interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])",
     RegexOption.MULTILINE
 )
-val OCamlRegex = Regex(
+val OcamlRegex = Regex(
     "(^\\s*module)|let rec |match\\s+(\\S+\\s)+with",
     RegexOption.MULTILINE
 )
@@ -119,14 +119,14 @@ val Perl6Regex = Regex(
     "^\\s*(?:use\\s+v6\\b|\\bmodule\\b|\\b(?:my\\s+)?class\\b)",
     RegexOption.MULTILINE
 )
-val PHPRegex = Regex(
+val PhpRegex = Regex(
     "^<\\?(?:php)?"
 )
 val PicoLispRegex = Regex(
     "^\\((de|class|rel|code|data|must)\\s",
     RegexOption.MULTILINE
 )
-val PLpgSQLRegexs = setOf(
+val PlpgsqlRegexs = setOf(
     Regex(
         "^\\\\i\\b|AS \\$\\$|LANGUAGE '?plpgsql'?",
         setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
@@ -140,7 +140,7 @@ val PLpgSQLRegexs = setOf(
         RegexOption.IGNORE_CASE
     )
 )
-val PLSQLRegexs = setOf(
+val PlsqlRegexs = setOf(
     Regex(
         "\\\$\\\$PLSQL_|XMLTYPE|sysdate|systimestamp|\\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)",
         RegexOption.IGNORE_CASE
@@ -150,7 +150,7 @@ val PLSQLRegexs = setOf(
         RegexOption.IGNORE_CASE
     )
 )
-val POVRaySDLRegex = Regex(
+val PovRaySdlRegex = Regex(
     "^\\s*#(declare|local|macro|while)\\s", RegexOption.MULTILINE
 )
 val PrologRegex = Regex(
@@ -176,7 +176,7 @@ val RustRegex = Regex(
     "^(use |fn |mod |pub |macro_rules|impl|#!?\\[)",
     RegexOption.MULTILINE
 )
-val RenderScriptRegex = Regex(
+val RenderscriptRegex = Regex(
     "#include|#pragma\\s+(rs|version)|__attribute__"
 )
 val ScalaRegex = Regex(
@@ -186,7 +186,7 @@ val ScalaRegex = Regex(
 val SmalltalkRegex = Regex(
     "![\\w\\s]+methodsFor: "
 )
-val SQLPLRegexs = setOf(
+val SqlplRegexs = setOf(
     Regex(
         "(alter module)|(language sql)|(begin( NOT)+ atomic)",
         RegexOption.IGNORE_CASE
@@ -196,35 +196,35 @@ val SQLPLRegexs = setOf(
         RegexOption.IGNORE_CASE
     )
 )
-val StandardMLRegex = Regex(
+val StandardMlRegex = Regex(
     "=> |case\\s+(\\S+\\s)+of"
 )
-val SuperColliderRegexs = setOf(
+val SupercolliderRegexs = setOf(
     Regex("\\^(this|super)\\."),
     Regex("^\\s*(\\+|\\*)\\s*\\w+\\s*\\{", RegexOption.MULTILINE),
     Regex("^\\s*~\\w+\\s*=\\.", RegexOption.MULTILINE)
 )
-val TeXRegex = Regex(
+val TexRegex = Regex(
     "\\\\\\w+\\{"
 )
-val TypeScriptRegex = Regex(
+val TypescriptRegex = Regex(
     "^\\s*(import.+(from\\s+|require\\()['\"]react|\\/\\/\\/\\s*<reference\\s)",
     RegexOption.MULTILINE
 )
-val XMLPropsRegex = Regex(
+val XmlPropsRegex = Regex(
     "^(\\s*)(<Project|<Import|<Property|<?xml|xmlns)",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val XMLTsRegex = Regex(
+val XmltsRegex = Regex(
     "<TS\\b"
 )
 // Mystical \uFEFF 'ZERO WIDTH NO-BREAK SPACE' unicode character may appear
 // in beginning of files.
-val XMLRegex = Regex(
+val XmlRegex = Regex(
     "^\\uFEFF?\\s*<\\?xml\\s+version",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val XPMRegex = Regex(
+val XpmRegex = Regex(
     "^\\s*\\/\\* XPM \\*\\/",
     RegexOption.MULTILINE
 )
@@ -248,7 +248,7 @@ object Heuristics
         if (extractorFactory != null) {
             extractor = extractorFactory(buf)
         } else {
-            if (XMLRegex.containsMatchIn(buf)) {
+            if (XmlRegex.containsMatchIn(buf)) {
                 extractor = CommonExtractor(Lang.XML)
             }
         }
@@ -289,7 +289,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PERL)
     },
     "as" to { buf ->
-        if (ActionScriptRegex.containsMatchIn(buf)) {
+        if (ActionscriptRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.ACTIONSCRIPT)
         } else CommonExtractor(Lang.ANGELSCRIPT)
     },
@@ -356,7 +356,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.CLOJURE)
     },
     "cls" to { buf ->
-        if (TeXRegex.containsMatchIn(buf)) {
+        if (TexRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.TEX)
         } else {
             CommonExtractor(Lang.VISUALBASIC)
@@ -411,7 +411,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "d" to { buf ->
         if (DRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.D)
-        } else if (DTraceRegex.containsMatchIn(buf)) {
+        } else if (DtraceRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.DTRACE)
         } else if (MakefileRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.MAKEFILE)
@@ -424,9 +424,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SQLPL)
     },
     "ddl" to { buf ->
-        if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
+        if (PlsqlRegexs.any { re -> re.containsMatchIn(buf)}) {
             CommonExtractor(Lang.PLSQL)  // Oracle
-        } else if (!NotSQLRegex.containsMatchIn(buf)) {
+        } else if (!NotSqlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.SQL)  // Generic SQL
         } else null
     },
@@ -455,10 +455,10 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.ERLANG)
     },
     "ex" to { _ ->
-        CommonExtractor(Lang.ELIXIR)
+        ElixirExtractor
     },
     "exs" to { _ ->
-        CommonExtractor(Lang.ELIXIR)
+        ElixirExtractor
     },
     "f" to { buf ->
         if (ForthRegex.containsMatchIn(buf)) {
@@ -527,7 +527,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             CommonExtractor(Lang.FORTH)
         } else if (FSharpRegex.containsMatchIn(buf)) {
             FSharpExtractor()
-        } else if (GLSLRegex.containsMatchIn(buf)) {
+        } else if (GlslRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.GLSL)
         } else if (FilterscriptRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.FILTERSCRIPT)
@@ -560,7 +560,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "h" to { buf ->
         if (ObjectiveCRegex.containsMatchIn(buf)) {
             ObjectiveCExtractor()
-        } else if (CPlusPlusRegex.containsMatchIn(buf)) {
+        } else if (CppRegex.containsMatchIn(buf)) {
             CppExtractor()
         } else CExtractor()
     },
@@ -604,9 +604,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.J)
     },
     "inc" to { buf ->
-        if (PHPRegex.containsMatchIn(buf)) {
+        if (PhpRegex.containsMatchIn(buf)) {
             PhpExtractor()
-        } else if (POVRaySDLRegex.containsMatchIn(buf)) {
+        } else if (PovRaySdlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.POVRAYSDL)
         } else if (PascalRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.PASCAL)
@@ -683,7 +683,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             ObjectiveCExtractor()
         } else if (buf.contains(":- module")) {
             CommonExtractor(Lang.MERCURY)
-        } else if (MUFRegex.containsMatchIn(buf)) {
+        } else if (MufRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.MUF)
         } else if (MRegexs.any { re -> re.containsMatchIn(buf)}) {
             CommonExtractor(Lang.M)
@@ -703,13 +703,16 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "makefile" to { _ ->
         CommonExtractor(Lang.MAKEFILE)
     },
+    "mat" to { _ ->
+        CommonExtractor(Lang.MATLAB)
+    },
     "mjml" to { _ ->
         CommonExtractor(Lang.XML)
     },
     "ml" to { buf ->
-        if (OCamlRegex.containsMatchIn(buf)) {
+        if (OcamlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.OCAML)
-        } else if (StandardMLRegex.containsMatchIn(buf)) {
+        } else if (StandardMlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.STANDARDML)
         } else null
     },
@@ -829,7 +832,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             CommonExtractor(Lang.PERL)
         } else if (Perl6Regex.containsMatchIn(buf)) {
             CommonExtractor(Lang.PERL6)
-        } else if (XPMRegex.containsMatchIn(buf)) {
+        } else if (XpmRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XPM)
         } else null
     },
@@ -859,7 +862,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
             CommonExtractor(Lang.INI)
         } else if (buf.contains("HEADERS") || buf.contains("SOURCES")) {
             CommonExtractor(Lang.QMAKE)
-        } else if (IDLRegex.containsMatchIn(buf)) {
+        } else if (IdlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.IDL)
         } else null
     },
@@ -867,9 +870,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PROLOG)
     },
     "props" to { buf ->
-        if (XMLPropsRegex.containsMatchIn(buf)) {
+        if (XmlPropsRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XML)
-        } else if (INIPropsRegex.containsMatchIn(buf)) {
+        } else if (IniPropsRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.INI)
         } else null
     },
@@ -930,7 +933,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "rs" to { buf ->
         if (RustRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.RUST)
-        } else if (RenderScriptRegex.containsMatchIn(buf)) {
+        } else if (RenderscriptRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.RENDERSCRIPT)
         } else null
     },
@@ -953,7 +956,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SCALA)
     },
     "sc" to { buf ->
-        if (SuperColliderRegexs.any { re -> re.containsMatchIn(buf) }) {
+        if (SupercolliderRegexs.any { re -> re.containsMatchIn(buf) }) {
             CommonExtractor(Lang.SUPERCOLLIDER)
         } else if (ScalaRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.SCALA)
@@ -999,14 +1002,14 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SCHEME)
     },
     "sql" to { buf ->
-        if (PLpgSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
-            CommonExtractor(Lang.PLPGSQL)  // POSTGRES
-        } else if (SQLPLRegexs.any { re -> re.containsMatchIn(buf)}) {
-            CommonExtractor(Lang.SQLPL)  // IDB DB2
-        } else if (PLSQLRegexs.any { re -> re.containsMatchIn(buf)}) {
-            CommonExtractor(Lang.PLSQL)  // Oracle
+        if (PlpgsqlRegexs.any { re -> re.containsMatchIn(buf)}) {
+            PlpgsqlExtractor  // PostgreSQL.
+        } else if (SqlplRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.SQLPL)  // IBM DB2.
+        } else if (PlsqlRegexs.any { re -> re.containsMatchIn(buf)}) {
+            CommonExtractor(Lang.PLSQL)  // Oracle.
         } else {
-            CommonExtractor(Lang.SQL)  // GENERIC SQL
+            CommonExtractor(Lang.SQL)  // Generic SQL.
         }
     },
     "ss" to { _ ->
@@ -1016,7 +1019,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.SMALLTALK)
     },
     "swift" to { _ ->
-        SwiftExtractor()
+        SwiftExtractor
     },
     "t" to { buf ->
         if (Perl6Regex.containsMatchIn(buf)) {
@@ -1056,16 +1059,16 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PLSQL)
     },
     "ts" to { buf ->
-        if (XMLTsRegex.containsMatchIn(buf)) {
+        if (XmltsRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XML)
         } else {
             CommonExtractor(Lang.TYPESCRIPT)
         }
     },
     "tsx" to { buf ->
-        if (TypeScriptRegex.containsMatchIn(buf)) {
+        if (TypescriptRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.TYPESCRIPT)
-        } else if (XMLRegex.containsMatchIn(buf)) {
+        } else if (XmlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XML)
         } else null
     },

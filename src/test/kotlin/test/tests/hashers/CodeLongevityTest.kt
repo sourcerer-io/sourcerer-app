@@ -527,7 +527,6 @@ class CodeLongevityTest : Spek({
                                   api = mockApi)
 
         it("'t1'") {
-          println(mockApi.receivedFacts)
             assertTrue(mockApi.receivedFacts.contains(
                 Fact(repo = serverRepo,
                      code = FactCodes.LINE_LONGEVITY_REPO,

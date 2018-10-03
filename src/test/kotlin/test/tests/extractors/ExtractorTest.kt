@@ -86,12 +86,6 @@ class ExtractorTest : Spek({
                 line, ObjectiveCExtractor())
         }
 
-        it("swift extractor extracts the library") {
-            val line = "class City: RLMObject {"
-            assertExtractsLineLibraries("swift.realm",
-                line, SwiftExtractor())
-        }
-
         it("cpp extractor extracts the library") {
             val line1 = "leveldb::Options options;"
             assertExtractsLineLibraries("cpp.level-db",
@@ -174,11 +168,6 @@ class ExtractorTest : Spek({
             assertExtractsNoLibraries(line, PhpExtractor())
         }
 
-        it("swift extractor returns empty list") {
-            val line = "import Foundation"
-            assertExtractsNoLibraries(line, SwiftExtractor())
-        }
-
         it("csharp extractor returns empty list") {
             val line = "static void Main(string[] args)"
             assertExtractsNoLibraries(line, CSharpExtractor())
@@ -202,23 +191,6 @@ class ExtractorTest : Spek({
         it("kotlin extractor returns empty list") {
             val line = "val password = \"P@\$\\\$vv0|2|)\""
             assertExtractsNoLibraries(line, KotlinExtractor())
-        }
-    }
-
-    given("import name.h") {
-        it("imports name") {
-            val line = "#include \"protobuf.h\""
-            assertExtractsImport("protobuf", line, CppExtractor())
-        }
-    }
-
-    given("import library with multiple ways to import") {
-        it("imports in both cases") {
-            val line1 = "#include \"opencv/module/header.h\""
-
-            assertExtractsImport("opencv", line1, CppExtractor())
-            val line2 = "#include \"opencv2/module/header.h\""
-            assertExtractsImport("opencv2", line2, CppExtractor())
         }
     }
 
@@ -287,8 +259,32 @@ class ExtractorTest : Spek({
         }
     }
 
-    given("Qt import in cpp file") {
-        it("extracts library name") {
+    given("Cpp") {
+        it("imports name.h") {
+            val import = "protobuf.h"
+            val line = "#include \"$import\""
+            assertExtractsImport(import, line, CppExtractor())
+        }
+
+        it("imports library with multiple ways to import") {
+            val lib = "cpp.open-cv"
+            val import1 = "opencv/module/header.h"
+            val import2 = "opencv2/module/header.h"
+            val line1 = "#include \"$import1\""
+            val line2 = "#include \"$import2\""
+            val extractor = CppExtractor()
+
+            assertExtractsImport(import1, line1, extractor)
+            assertExtractsImport(import2, line2, extractor)
+
+            var actualImport = extractor.extractImports(listOf(line1))[0]
+            assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
+            actualImport = extractor.extractImports(listOf(line2))[0]
+            assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
+
+        }
+
+        it("extracts Qt library") {
             val lib = "cpp.qt"
             val import = "QFileDialog"
             val line = "#include <$import>"
@@ -296,6 +292,101 @@ class ExtractorTest : Spek({
             assertExtractsImport(import, line, extractor)
             val actualImport = extractor.extractImports(listOf(line))[0]
             assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
+        }
+    }
+
+    given("Elixir") {
+        it("Elixir comment") {
+            var lines = listOf("# use Ecto.Repo")
+            var actualLineImports = ElixirExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.ELIXIR, ElixirExtractor)
+            }
+        }
+        it("Elixir use") {
+            var line = " use Ecto.Repo"
+            val import = "Ecto"
+            assertExtractsImport(import, line, ElixirExtractor)
+        }
+        it("Elixir import") {
+            var line = " import Ecto.Repo"
+            val import = "Ecto"
+            assertExtractsImport(import, line, ElixirExtractor)
+        }
+        it("Elixir require") {
+            var line = " require Ecto.Repo"
+            val import = "Ecto"
+            assertExtractsImport(import, line, ElixirExtractor)
+        }
+    }
+
+    given("PLpgSQL") {
+        it("PLpgSQL single-line comment") {
+            var lines = listOf("-- CREATE EXTENSION ltree")
+            var actualLineImports = PlpgsqlExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.PLPGSQL, PlpgsqlExtractor)
+            }
+        }
+        it("PLpgSQL multi-line comment") {
+            var lines = listOf("/* CREATE EXTENSION ltree */")
+            var actualLineImports = PlpgsqlExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.PLPGSQL, PlpgsqlExtractor)
+            }
+        }
+        it("PLpgSQL extension") {
+            var line = """ execute("CREATE EXTENSION ltree")"""
+            val import = "ltree"
+            assertExtractsImport(import, line, PlpgsqlExtractor)
+        }
+        it("PLpgSQL language") {
+            var line = """ execute("CREATE LANGUAGE plr")"""
+            val import = "plr"
+            assertExtractsImport(import, line, PlpgsqlExtractor)
+        }
+    }
+
+    given("Rust") {
+        it("Rust imports") {
+            var lines = listOf(
+                    "extern crate foo;",
+                    "extern crate boo;"
+            )
+            var actualLineImports = RustExtractor().extractImports(lines)
+            assertEquals(actualLineImports, listOf("foo", "boo"))
+
+            lines = listOf(
+                    "// extern crate foo;",
+                    "/* extern crate boo; */"
+            )
+            actualLineImports = RustExtractor().extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+    }
+
+    given("Swift") {
+        it("Swift single-line comment") {
+            var lines = listOf("// class City: RLMObject {")
+            var actualLineImports = SwiftExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Swift multi-line comment") {
+            var lines = listOf("/* class City: RLMObject { */")
+            var actualLineImports = SwiftExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Swift imports") {
+            var line = "import UIKit"
+            assertExtractsImport("UIKit", line, SwiftExtractor)
+        }
+        it("Swift no libraries") {
+            val line = "import Foundation"
+            assertExtractsNoLibraries(line, SwiftExtractor)
+        }
+        it("Swift libraries") {
+            val line = "class City: RLMObject {"
+            assertExtractsLineLibraries("swift.realm", line, SwiftExtractor)
         }
     }
 })
