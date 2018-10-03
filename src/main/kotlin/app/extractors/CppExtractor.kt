@@ -9,7 +9,7 @@ class CppExtractor : ExtractorInterface {
         const val LANGUAGE_NAME = Lang.CPP
         val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val extractImportRegex = Regex("""#include\s+["<](\w+)[/\w+]*(\.\w+)?[">]""")
+        val extractImportRegex = Regex("""#include\s+["<](\w+[/\w+]*(\.\w+)?)[">]""")
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

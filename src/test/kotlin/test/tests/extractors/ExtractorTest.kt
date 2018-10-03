@@ -194,23 +194,6 @@ class ExtractorTest : Spek({
         }
     }
 
-    given("import name.h") {
-        it("imports name") {
-            val line = "#include \"protobuf.h\""
-            assertExtractsImport("protobuf", line, CppExtractor())
-        }
-    }
-
-    given("import library with multiple ways to import") {
-        it("imports in both cases") {
-            val line1 = "#include \"opencv/module/header.h\""
-
-            assertExtractsImport("opencv", line1, CppExtractor())
-            val line2 = "#include \"opencv2/module/header.h\""
-            assertExtractsImport("opencv2", line2, CppExtractor())
-        }
-    }
-
     given("line contains import") {
         it("kotlin extractor extracts import") {
             val import = "kategory.optics."
@@ -276,8 +259,32 @@ class ExtractorTest : Spek({
         }
     }
 
-    given("Qt import in cpp file") {
-        it("extracts library name") {
+    given("Cpp") {
+        it("imports name.h") {
+            val import = "protobuf.h"
+            val line = "#include \"$import\""
+            assertExtractsImport(import, line, CppExtractor())
+        }
+
+        it("imports library with multiple ways to import") {
+            val lib = "cpp.open-cv"
+            val import1 = "opencv/module/header.h"
+            val import2 = "opencv2/module/header.h"
+            val line1 = "#include \"$import1\""
+            val line2 = "#include \"$import2\""
+            val extractor = CppExtractor()
+
+            assertExtractsImport(import1, line1, extractor)
+            assertExtractsImport(import2, line2, extractor)
+
+            var actualImport = extractor.extractImports(listOf(line1))[0]
+            assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
+            actualImport = extractor.extractImports(listOf(line2))[0]
+            assertMapsIndex(lib, actualImport, Lang.CPP, extractor)
+
+        }
+
+        it("extracts Qt library") {
             val lib = "cpp.qt"
             val import = "QFileDialog"
             val line = "#include <$import>"
