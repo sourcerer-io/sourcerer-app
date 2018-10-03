@@ -53,6 +53,8 @@ class ClassifierManager {
                 prob > 0.91
             } else if (libId.startsWith(Lang.PLPGSQL)) {
                 prob > 0.7
+            } else if (libId == "js.q") {
+                prob > 0.9
             }
             else {
                 prob > 0.5
