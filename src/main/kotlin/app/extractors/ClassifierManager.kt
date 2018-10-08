@@ -49,6 +49,7 @@ class ClassifierManager {
             val prob = prediction[cache[libId]!!.libraries.indexOf(libId)]
             // Define lower bound of classifier output
             // that depends on data used to create the model.
+            // TODO(lyaronskaya): move thresholds to protobuf.
             if (libId == "rb.rails") {
                 prob > 0.91
             } else if (libId.startsWith(Lang.PLPGSQL)) {
@@ -56,6 +57,8 @@ class ClassifierManager {
             } else if (libId.startsWith(Lang.PHP)) {
                 prob > 0.75
             } else if (libId == "js.q") {
+                prob > 0.9
+            } else if (libId == "cpp.gflags") {
                 prob > 0.9
             }
             else {
