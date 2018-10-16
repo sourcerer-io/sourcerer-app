@@ -44,16 +44,19 @@ fi
 
 VERSION=0
 if which java > /dev/null ; then
-	VERSION_STR=\$(java -version 2>&1 | awk -F '"' '/version/ {print \$2}')
-	if [[ "\$VERSION_STR" = "10" || "\$VERSION_STR" > "10" ]]; then  # Format: 10
-    	VERSION=10
-	elif [[ "\$VERSION_STR" > "9." ]]; then  # Format: 9.0.1
-	    VERSION=9
-	elif [[ "\$VERSION_STR" > "1.8." ]]; then  # Format: 1.8.1
-	    VERSION=8
-	else
-	    echo "Installed version of Java is not supported."
-	fi
+  VERSION_STR=\$(java -version 2>&1 | awk -F '"' '/version/ {print \$2}')
+  MAJOR_VERSION=\$(echo \$VERSION_STR | cut -d. -f1)
+  MINOR_VERSION=\$(echo \$VERSION_STR | cut -d. -f2)
+
+  if [[ "\$MAJOR_VERSION" = "10" || "\$MAJOR_VERSION" > "10" ]]; then  # Format: 10
+    VERSION=10
+  elif [[ "\$MAJOR_VERSION" = "9" ]]; then  # Format: 9.0.1
+    VERSION=9
+  elif [[ "\$MAJOR_VERSION" = "1" && "\$MINOR_VERSION" = "8" ]]; then  # Format: 1.8.1
+    VERSION=8
+  else
+    echo "Installed $VERSION_STR version of Java is not supported."
+  fi
 fi
 
 if [ \$VERSION = 0 ] ; then

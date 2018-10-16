@@ -4,6 +4,9 @@
 
 package app.extractors
 
+import app.model.CommitStats
+import app.model.DiffFile
+
 class JavascriptExtractor : ExtractorInterface {
     companion object {
         const val LANGUAGE_NAME = Lang.JAVASCRIPT
@@ -19,6 +22,21 @@ class JavascriptExtractor : ExtractorInterface {
         val fileTokens = multilineCommentRegex.replace(
             twoOrMoreWordsRegex.replace(line, ""), "").split(splitRegex)
         return fileTokens.distinct()
+    }
+
+    override fun extractLibStats(files: List<DiffFile>): List<CommitStats> {
+        val vueExtension = ".vue"
+        val vueFiles = files.filter { it.path.endsWith(vueExtension) }
+        val otherFiles = files.filter { !it.path.endsWith(vueExtension) }
+
+        // Add stats from *.vue files.
+        val vueStats = listOf(CommitStats(
+            numLinesAdded = vueFiles.map { it.getAllAdded().size }.sum(),
+            numLinesDeleted = vueFiles.map { it.getAllDeleted().size }.sum(),
+            type = ExtractorInterface.TYPE_LIBRARY,
+            tech = "js.vue"
+        )).filter { it.numLinesAdded > 0 || it.numLinesDeleted > 0 }
+        return vueStats + super.extractLibStats(otherFiles)
     }
 
     override fun tokenize(line: String): List<String> {
