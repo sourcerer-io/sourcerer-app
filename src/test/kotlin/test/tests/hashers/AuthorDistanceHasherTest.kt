@@ -8,6 +8,7 @@ import app.api.MockApi
 import app.hashers.AuthorDistanceHasher
 import app.hashers.CommitCrawler
 import app.model.Author
+import app.model.AuthorDistance
 import app.model.Fact
 import app.model.Repo
 import org.eclipse.jgit.api.Git
@@ -62,21 +63,15 @@ class AuthorDistanceHasherTest : Spek({
                     hashSetOf(author2.email)).updateFromObservable(observable,
                     onError = { _ -> fail("exception") })
 
-            assertTrue(api.receivedFacts.contains(
-                    Fact(repo = serverRepo,
-                            code = FactCodes.COLLEAGUES,
-                            author = author2,
-                            value = author1.email,
-                            value2 = (1.0).toString())
-            ))
+            assertTrue(api.receivedDistances.contains(
+                    AuthorDistance(repo = serverRepo,
+                                   email = author1.email,
+                                   score = 1.0)))
 
-            assertTrue(api.receivedFacts.contains(
-                    Fact(repo = serverRepo,
-                            code = FactCodes.COLLEAGUES,
-                            author = author2,
-                            value = author3.email,
-                            value2 = (0.0).toString())
-            ))
+            assertTrue(api.receivedDistances.contains(
+                    AuthorDistance(repo = serverRepo,
+                                   email = author3.email,
+                                   score = 0.0)))
         }
 
         afterGroup {

@@ -6,6 +6,7 @@ package app.hashers
 import app.FactCodes
 import app.api.Api
 import app.model.Author
+import app.model.AuthorDistance
 import app.model.Fact
 import app.model.Repo
 import io.reactivex.Observable
@@ -42,12 +43,10 @@ class AuthorDistanceHasher(
                 authorScores[email] = authorScores[email]!! + score
             }
         }, onError, {
-            val stats = mutableListOf<Fact>()
-            val author = Author(email = userEmails.toList()[0])
+            val stats = mutableListOf<AuthorDistance>()
             authorScores.forEach { email, value ->
                 if (email !in userEmails) {
-                    stats.add(Fact(serverRepo, FactCodes.COLLEAGUES, value =
-                    email, value2 = value.toString(), author = author))
+                    stats.add(AuthorDistance(serverRepo, email, value))
                 }
             }
 
@@ -55,9 +54,9 @@ class AuthorDistanceHasher(
         })
     }
 
-    private fun postDistancesToServer(stats: List<Fact>) {
+    private fun postDistancesToServer(stats: List<AuthorDistance>) {
         if (stats.isNotEmpty()) {
-            api.postFacts(stats).onErrorThrow()
+            api.postAuthorDistances(stats).onErrorThrow()
         }
     }
 }
