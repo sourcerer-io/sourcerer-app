@@ -6,16 +6,7 @@ package app.api
 import app.BuildConfig
 import app.Logger
 import app.config.Configurator
-import app.model.Author
-import app.model.AuthorGroup
-import app.model.Commit
-import app.model.CommitGroup
-import app.model.Fact
-import app.model.FactGroup
-import app.model.Process
-import app.model.ProcessEntry
-import app.model.Repo
-import app.model.User
+import app.model.*
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Method
 import com.github.kittinunf.fuel.core.Request
@@ -125,6 +116,13 @@ class ServerApi (private val configurator: Configurator) : Api {
                                .body(process.serialize())
     }
 
+    private fun createRequestPostAuthorDistances(distances:
+                                                 AuthorDistanceGroup):
+            Request {
+        return post("/distances").header(getContentTypeHeader())
+                .body(distances.serialize())
+    }
+
     private fun <T> makeRequest(request: Request,
                                 requestName: String,
                                 parser: (ByteArray) -> T): Result<T> {
@@ -214,4 +212,10 @@ class ServerApi (private val configurator: Configurator) : Api {
         return makeRequest(createRequestPostProcess(process), "postProcess", {})
     }
 
+    override fun postAuthorDistances(authorDistanceList: List<AuthorDistance>):
+            Result<Unit> {
+        val distances = AuthorDistanceGroup(authorDistanceList)
+        return makeRequest(createRequestPostAuthorDistances(distances),
+                "postDistances", {})
+    }
 }

@@ -61,6 +61,7 @@ buildConfig {
     buildConfigField 'boolean', 'LONGEVITY_ENABLED', project.hasProperty('longevity-enabled') ? project.property('longevity-enabled').toString() : 'false'
     buildConfigField 'long', 'HEARTBEAT_RATE', project.hasProperty('heartbeat-rate') ? project.property('heartbeat-rate').toString() : '60000'
     buildConfigField 'boolean', 'META_HASHER_ENABLED', project.hasProperty('meta-hasher-enabled') ? project.property('meta-hasher-enabled').toString() : 'true'
+    buildConfigField 'boolean', 'DISTANCES_ENABLED', project.hasProperty('distances-enabled') ? project.property('distances-enabled').toString() : 'true'
 
     buildConfig
 }

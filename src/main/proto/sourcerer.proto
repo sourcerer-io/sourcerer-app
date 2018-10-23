@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer, Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
 syntax = "proto3";
 
@@ -154,4 +155,14 @@ message ProcessEntry {
     uint32 id = 1;
     uint32 status = 2;
     uint32 error_code = 3;
+}
+
+message AuthorDistance {
+    string email = 1;
+    double score = 2;
+    string repo_rehash = 3;
+}
+
+message AuthorDistanceGroup {
+    repeated AuthorDistance author_distances = 1;
 }

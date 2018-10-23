@@ -7,8 +7,6 @@ import app.BuildConfig
 import app.Logger
 import app.api.Api
 import app.config.Configurator
-import app.extractors.Extractor
-import app.extractors.Heuristics
 import app.model.Author
 import app.model.LocalRepo
 import app.model.ProcessEntry
@@ -97,6 +95,12 @@ class RepoHasher(private val api: Api,
                     .calculateAndSendFacts(authors = authors,
                                            commitsCount = commitsCount,
                                            userEmails = userEmail)
+            }
+            if (BuildConfig.DISTANCES_ENABLED) {
+                val userEmails = configurator.getUser().emails.map { it.email }.toHashSet()
+                val pathsObservable = CommitCrawler.getJGitPathsObservable(git)
+                AuthorDistanceHasher(serverRepo, api, emails, userEmails)
+                        .updateFromObservable(pathsObservable, onError)
             }
 
             // Start and synchronously wait until all subscribers complete.

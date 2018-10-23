@@ -4,13 +4,7 @@
 package app.api
 
 import app.Logger
-import app.model.Author
-import app.model.Commit
-import app.model.Repo
-import app.model.Fact
-import app.model.Process
-import app.model.ProcessEntry
-import app.model.User
+import app.model.*
 
 class MockApi(  // GET requests.
     var mockUser: User = User(),
@@ -25,6 +19,7 @@ class MockApi(  // GET requests.
     var receivedUsers: MutableList<User> = mutableListOf()
     var receivedProcessCreate: MutableList<Process> = mutableListOf()
     var receivedProcess: MutableList<Process> = mutableListOf()
+    var receivedDistances: MutableList<AuthorDistance> = mutableListOf()
 
     // DELETE requests.
     var receivedDeletedCommits: MutableList<Commit> = mutableListOf()
@@ -91,6 +86,14 @@ class MockApi(  // GET requests.
         Logger.debug { "MockApi: postProcess request (${processEntries.size} " +
             "entries updated)" }
         receivedProcess.add(Process(entries = processEntries))
+        return Result()
+    }
+
+    override fun postAuthorDistances(authorDistanceList:
+                                     List<AuthorDistance>): Result<Unit> {
+        Logger.debug { "MockApi: postAuthorDistances request (${authorDistanceList
+                .size} distances)" }
+        receivedDistances.addAll(authorDistanceList)
         return Result()
     }
 }
