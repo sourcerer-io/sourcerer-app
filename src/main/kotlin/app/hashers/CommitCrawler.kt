@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
 package app.hashers
 
@@ -29,7 +30,12 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.util.LinkedList
 
-data class JgitPair(val commit: RevCommit, val list: List<JgitDiff>)
+data class JgitData(var commit: RevCommit? = null,
+                    var list: List<JgitDiff>? = null,
+                    var paths: List<String>? = null,
+                    var date: Long? = null,
+                    var email: String? = null)
+
 data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 
 /**
@@ -96,9 +102,14 @@ object CommitCrawler {
 
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
+                          extractCommit: Boolean = true,
+                          extractDiffs: Boolean = true,
+                          extractPaths: Boolean = false,
+                          extractDate: Boolean = false,
+                          extractEmail: Boolean = false,
                           filteredEmails: HashSet<String>? = null,
                           tail : RevCommit? = null) :
-        Observable<JgitPair> = Observable.create { subscriber ->
+        Observable<JgitData> = Observable.create { subscriber ->
         val repo: Repository = git.repository
         val revWalk = RevWalk(repo)
         val head: RevCommit =
@@ -156,9 +167,9 @@ object CommitCrawler {
                 commit = parentCommit
                 continue
             }
+            val paths = mutableListOf<String>()
 
             val diffEntries = df.scan(parentCommit, commit)
-            val diffEdits = diffEntries
             .filter { diff ->
                 diff.changeType != DiffEntry.ChangeType.COPY
             }
@@ -199,24 +210,46 @@ object CommitCrawler {
                         getIgnoredPaths(repo, diff.getNewId().toObjectId())
                 }
 
-                !ignoredPaths.any { path ->
+                if (!ignoredPaths.any { path ->
                     if (path.endsWith("/")) {
                         filePath.startsWith(path)
                     }
                     else {
                         path == filePath
                     }
+                }) {
+                    paths.add(filePath)
+                    true
+                } else false
+            }
+
+            val jgitData = JgitData()
+            if (extractCommit) {
+                jgitData.commit = commit
+            }
+            if (extractDiffs) {
+                val diffEdits = diffEntries
+                .map { diff ->
+                    JgitDiff(diff, df.toFileHeader(diff).toEditList())
                 }
+                .filter { diff ->
+                    diff.editList.fold(0) { acc, edit ->
+                        acc + edit.lengthA + edit.lengthB
+                    } < MAX_DIFF_SIZE
+                }
+                jgitData.list = diffEdits
             }
-            .map { diff ->
-                JgitDiff(diff, df.toFileHeader(diff).toEditList())
+            if (extractPaths) {
+                jgitData.paths = paths
             }
-            .filter { diff ->
-                diff.editList.fold(0) { acc, edit ->
-                    acc + edit.lengthA + edit.lengthB
-                } < MAX_DIFF_SIZE
+            if (extractDate) {
+                jgitData.date = commit.authorIdent.getWhen().time / 1000
             }
-            subscriber.onNext(JgitPair(commit, diffEdits))
+            if (extractEmail) {
+                jgitData.email = email
+            }
+
+            subscriber.onNext(jgitData)
             commit = parentCommit
         }
 
@@ -229,12 +262,12 @@ object CommitCrawler {
     }
 
     fun getObservable(git: Git,
-                      jgitObservable: Observable<JgitPair>,
+                      jgitObservable: Observable<JgitData>,
                       repo: Repo): Observable<Commit> {
-        return jgitObservable.map( { (jgitCommit, jgitDiffs) ->
+        return jgitObservable.map( { (jgitCommit, jgitDiffs, _) ->
             // Mapping and stats extraction.
-            val commit = Commit(jgitCommit)
-            commit.diffs = getDiffFiles(git.repository, jgitDiffs)
+            val commit = Commit(jgitCommit!!)
+            commit.diffs = getDiffFiles(git.repository, jgitDiffs!!)
 
             // Count lines on all non-binary files. This is additional
             // statistics to CommitStats because not all file extensions
@@ -249,118 +282,6 @@ object CommitCrawler {
 
             commit
         })
-    }
-
-    fun getJGitPathsObservable(git: Git,
-                               tail : RevCommit? = null) :
-            Observable<Triple<String, List<String>, Long>> = Observable.create {
-        subscriber ->
-        val repo: Repository = git.repository
-        val revWalk = RevWalk(repo)
-        val head: RevCommit =
-                try { revWalk.parseCommit(getDefaultBranchHead(git)) }
-                catch(e: Exception) { throw Exception("No head was found!") }
-
-        val df = DiffFormatter(DisabledOutputStream.INSTANCE)
-        df.setRepository(repo)
-        df.isDetectRenames = true
-
-        val confTreeWalk = TreeWalk(repo)
-        confTreeWalk.addTree(head.tree)
-        confTreeWalk.filter = PathFilter.create(CONF_FILE_PATH)
-
-        var ignoredPaths =
-                if (confTreeWalk.next()) {
-                    getIgnoredPaths(repo, confTreeWalk.getObjectId(0))
-                }
-                else {
-                    listOf()
-                }
-
-        var commitCount = 0
-        revWalk.markStart(head)
-        var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
-        while (commit != null && commit != tail) {
-            commitCount++
-            val parentCommit: RevCommit? = revWalk.next()
-
-            // Smart casts are not yet supported for a mutable variable captured
-            // in an inline lambda, see
-            // https://youtrack.jetbrains.com/issue/KT-7186.
-            if (Logger.isTrace) {
-                val commitName = commit.name
-                val commitMsg = commit.shortMessage
-                Logger.trace { "commit: $commitName; '$commitMsg'" }
-                if (parentCommit != null) {
-                    val parentCommitName = parentCommit.name
-                    val parentCommitMsg = parentCommit.shortMessage
-                    Logger.trace { "parent commit: $parentCommitName; " +
-                            "'$parentCommitMsg'" }
-                }
-                else {
-                    Logger.trace { "parent commit: null" }
-                }
-            }
-
-            val email = commit.authorIdent.emailAddress.toLowerCase()
-
-            val diffEntries = df.scan(parentCommit, commit)
-            val paths = diffEntries
-                    .filter { diff ->
-                        diff.changeType != DiffEntry.ChangeType.COPY
-                    }
-                    .filter { diff ->
-                        val path = diff.newPath
-                        for (cnv in VendorConventions) {
-                            if (cnv.containsMatchIn(path)) {
-                                return@filter false
-                            }
-                        }
-
-                        val fileId =
-                                if (path != DiffEntry.DEV_NULL) {
-                                    diff.newId.toObjectId()
-                                } else {
-                                    diff.oldId.toObjectId()
-                                }
-                        val stream = try {
-                            repo.open(fileId).openStream()
-                        } catch (e: Exception) {
-                            null
-                        }
-                        stream != null && !RawText.isBinary(stream)
-                    }
-                    .mapNotNull { diff ->
-                        val filePath =
-                                if (diff.getNewPath() != DiffEntry.DEV_NULL) {
-                                    diff.getNewPath()
-                                } else {
-                                    diff.getOldPath()
-                                }
-
-                        // Update ignored paths list. The config file has retroactive
-                        // force, i.e. if it was added at this commit, then we presume
-                        // it is applied to all commits, preceding this commit.
-                        if (diff.oldPath == CONF_FILE_PATH) {
-                            ignoredPaths =
-                                    getIgnoredPaths(repo, diff.newId.toObjectId())
-                        }
-
-                        if (!ignoredPaths.any { path ->
-                            if (path.endsWith("/")) {
-                                filePath.startsWith(path)
-                            }
-                            else {
-                                path == filePath
-                            }
-                        }) {filePath} else null
-                    }
-            val date = commit.authorIdent.getWhen().time / 1000
-            subscriber.onNext(Triple(email, paths, date))
-            commit = parentCommit
-        }
-
-        subscriber.onComplete()
     }
 
     private fun getDiffFiles(jgitRepo: Repository,

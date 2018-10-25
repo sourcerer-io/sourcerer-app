@@ -71,7 +71,7 @@ class RepoHasher(private val api: Api,
                 filteredEmails
             } else null
             val jgitObservable = CommitCrawler.getJGitObservable(git,
-                rehashes.size, crawlerEmails
+                rehashes.size, filteredEmails = crawlerEmails
             ).publish()
             val observable = CommitCrawler.getObservable(git,
                 jgitObservable, serverRepo)
@@ -98,7 +98,10 @@ class RepoHasher(private val api: Api,
             }
             if (BuildConfig.DISTANCES_ENABLED) {
                 val userEmails = configurator.getUser().emails.map { it.email }.toHashSet()
-                val pathsObservable = CommitCrawler.getJGitPathsObservable(git)
+                val pathsObservable = CommitCrawler.getJGitObservable(git,
+                        extractCommit = false, extractDate = true,
+                        extractDiffs = false, extractEmail = true,
+                        extractPaths = true)
                 AuthorDistanceHasher(serverRepo, api, emails, userEmails)
                         .updateFromObservable(pathsObservable, onError)
             }

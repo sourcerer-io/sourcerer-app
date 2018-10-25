@@ -58,7 +58,10 @@ class AuthorDistanceHasherTest : Spek({
 
         val gitHasher = Git.open(File(testRepoPath))
         it("extracts colleagues") {
-            val observable = CommitCrawler.getJGitPathsObservable(gitHasher)
+            val observable = CommitCrawler.getJGitObservable(gitHasher,
+                extractCommit = false, extractDate = true,
+                extractDiffs = false, extractEmail = true,
+                extractPaths = true)
             AuthorDistanceHasher(serverRepo, api, emails,
                     hashSetOf(author2.email)).updateFromObservable(observable,
                     onError = { _ -> fail("exception") })

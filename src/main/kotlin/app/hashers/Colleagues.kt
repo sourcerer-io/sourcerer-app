@@ -3,11 +3,8 @@
 
 package app.hashers
 
-import app.FactCodes
 import app.api.Api
-import app.model.Author
 import app.model.AuthorDistance
-import app.model.Fact
 import app.model.Repo
 import io.reactivex.Observable
 import java.util.concurrent.TimeUnit
@@ -17,15 +14,18 @@ class AuthorDistanceHasher(
         private val api: Api,
         private val emails: HashSet<String>,
         private val userEmails: HashSet<String>) {
-    fun updateFromObservable(observable: Observable<Triple<String,
-            List<String>, Long>>, onError: (Throwable) -> Unit) {
+    fun updateFromObservable(observable: Observable<JgitData>, onError: (Throwable)
+    -> Unit) {
         val authorScores = hashMapOf<String, Double>()
         emails.forEach { authorScores[it] = 0.0 }
 
         // Store the time of the earliest commit for a path by user.
         val authorPathLastContribution = hashMapOf<String, Long>()
 
-        observable.subscribe({ (email, paths, time) ->
+        observable.subscribe({
+            val email =  it.email!!
+            val paths = it.paths!!
+            val time = it.date!!
             if (email in userEmails) {
                 paths.forEach { path ->
                     authorPathLastContribution[path] = time
@@ -49,7 +49,6 @@ class AuthorDistanceHasher(
                     stats.add(AuthorDistance(serverRepo, email, value))
                 }
             }
-
             postDistancesToServer(stats)
         })
     }
