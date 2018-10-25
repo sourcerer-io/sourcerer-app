@@ -365,6 +365,31 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Scala") {
+        it("Scala single-line comment") {
+            var lines = listOf("// import users._")
+            var actualLineImports = ScalaExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Scala multi-line comment") {
+            var lines = listOf("/* import users._ */")
+            var actualLineImports = ScalaExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Scala imports") {
+            var line = "import users._"
+            assertExtractsImport("users", line, ScalaExtractor)
+        }
+        it("Scala imports _root_") {
+            var line = "import _root_.users._"
+            assertExtractsImport("users", line, ScalaExtractor)
+        }
+        it("Scala imports compound name") {
+            var line = "import com.google.selfdrivingcar.camera.Lens"
+            assertExtractsImport("com.google.selfdrivingcar.camera", line, ScalaExtractor)
+        }
+    }
+
     given("Swift") {
         it("Swift single-line comment") {
             var lines = listOf("// class City: RLMObject {")

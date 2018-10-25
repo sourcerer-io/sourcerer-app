@@ -636,7 +636,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         KotlinExtractor()
     },
     "kojo" to { _ ->
-        CommonExtractor(Lang.SCALA)
+        ScalaExtractor
     },
     "l" to { buf ->
         if (CommonLispRegex.containsMatchIn(buf)) {
@@ -953,17 +953,17 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CssExtractor()
     },
     "sbt" to { _ ->
-        CommonExtractor(Lang.SCALA)
+        ScalaExtractor
     },
     "sc" to { buf ->
         if (SupercolliderRegexs.any { re -> re.containsMatchIn(buf) }) {
             CommonExtractor(Lang.SUPERCOLLIDER)
         } else if (ScalaRegex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.SCALA)
+            ScalaExtractor
         } else null
     },
     "scala" to { _ ->
-        CommonExtractor(Lang.SCALA)
+        ScalaExtractor
     },
     "scd" to { _ ->
         CommonExtractor(Lang.SUPERCOLLIDER)
