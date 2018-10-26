@@ -5,7 +5,9 @@ package app.extractors
 
 open class ExtractorBase(private val language: String,
                          private val importRegex: Regex,
-                         private val commentRegex: Regex) : ExtractorInterface {
+                         private val commentRegex: Regex,
+                         private val importStartsWith: Boolean = false) :
+        ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
         val imports = mutableSetOf<String>()
 
@@ -25,6 +27,10 @@ open class ExtractorBase(private val language: String,
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
+    }
+
+    override fun mapImportToIndex(import: String, lang: String, startsWith: Boolean): String? {
+        return super.mapImportToIndex(import, language, startsWith = importStartsWith)
     }
 
     override fun getLanguageName(): String? {
