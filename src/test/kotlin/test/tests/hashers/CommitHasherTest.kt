@@ -239,7 +239,8 @@ class CommitHasherTest : Spek({
 
     given("commits with syntax stats") {
 
-        val lines = listOf("x = [i**2 for i range(9999)]", "def fn()", "x = 1",
+        val lines = listOf("x = [i**2 for i in range(9999)]", "def fn()", "x " +
+                "= 1",
                 "x = map(lambda x: x**2, range(9999))",
                 "x = map(lambda x: x**2, map(lambda x: x**3, range(10))",
                 "x = map(lambda x: x**2, range(10))," +
