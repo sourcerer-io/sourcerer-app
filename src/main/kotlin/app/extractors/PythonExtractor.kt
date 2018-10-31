@@ -18,6 +18,7 @@ class PythonExtractor : ExtractorInterface {
         val extractImportRegex = Regex("""(from\s+(\w+)[.\w+]*\s+import|""" +
             """import\s+(\w+(,\s*\w+)*))(as\s+)*""")
         val mapRegex = Regex("""(map\([^,]+?,)""")
+        val listRegex = Regex("""\[.+? for .+? in .+?]""")
         val lineEndRegex = Regex(""",\s*""")
     }
 
@@ -34,9 +35,9 @@ class PythonExtractor : ExtractorInterface {
             total + mapRegex.findAll(line).toList().size }
 
         val listAllAdded = allAdded.fold(0) { total, line ->
-            total + line.count { c -> c == '[' } }
+            total + listRegex.findAll(line).toList().size }
         val listAllDeleted = allDeleted.fold(0) { total, line ->
-            total + line.count { c -> c == '[' } }
+            total + listRegex.findAll(line).toList().size }
 
         if (mapAllAdded > 0 || mapAllDeleted > 0) {
             stats.add(CommitStats(

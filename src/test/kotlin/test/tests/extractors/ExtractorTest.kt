@@ -365,19 +365,59 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Scala") {
+        it("Scala single-line comment") {
+            val lines = listOf("// import users._")
+            val actualLineImports = ScalaExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Scala multi-line comment") {
+            val lines = listOf("/* import users._ */")
+            val actualLineImports = ScalaExtractor.extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Scala imports") {
+            val line = "import users._"
+            assertExtractsImport("users.", line, ScalaExtractor)
+        }
+        it("Scala imports _root_") {
+            val line = "import _root_.users._"
+            assertExtractsImport("users.", line, ScalaExtractor)
+        }
+        it("Scala imports compound name") {
+            val line = "import com.google.selfdrivingcar.camera.Lens"
+            assertExtractsImport("com.google.selfdrivingcar.camera.", line,
+                    ScalaExtractor)
+        }
+        it("Scala imports multiple import") {
+            val line = "import akka.stream.scaladsl.{Flow, Sink, Source}"
+            assertExtractsImport("akka.stream.scaladsl.", line, ScalaExtractor)
+        }
+        it("maps import to index") {
+            val lib = "scala.slick"
+            val line = "import slick.jdbc.JdbcProfile"
+            val extractor = ScalaExtractor
+
+            assertExtractsImport("slick.jdbc.", line, extractor)
+
+            val actualImport = extractor.extractImports(listOf(line))[0]
+            assertMapsIndex(lib, actualImport, Lang.SCALA, extractor)
+        }
+    }
+
     given("Swift") {
         it("Swift single-line comment") {
-            var lines = listOf("// class City: RLMObject {")
-            var actualLineImports = SwiftExtractor.extractImports(lines)
+            val lines = listOf("// class City: RLMObject {")
+            val actualLineImports = SwiftExtractor.extractImports(lines)
             assertTrue(actualLineImports.isEmpty())
         }
         it("Swift multi-line comment") {
-            var lines = listOf("/* class City: RLMObject { */")
-            var actualLineImports = SwiftExtractor.extractImports(lines)
+            val lines = listOf("/* class City: RLMObject { */")
+            val actualLineImports = SwiftExtractor.extractImports(lines)
             assertTrue(actualLineImports.isEmpty())
         }
         it("Swift imports") {
-            var line = "import UIKit"
+            val line = "import UIKit"
             assertExtractsImport("UIKit", line, SwiftExtractor)
         }
         it("Swift no libraries") {

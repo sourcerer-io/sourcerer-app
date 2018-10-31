@@ -12,7 +12,7 @@ A visual profile for software engineers.
 <br>
 
 <p align="center">
-  <img alt="sergey" src="https://user-images.githubusercontent.com/20287615/42118899-cc2c0b94-7bbb-11e8-86a8-96dcd044b5e2.gif">
+  <img alt="sergey" src="https://user-images.githubusercontent.com/20287615/47371068-c70f5a00-d6ef-11e8-8988-dcdca71bf83c.gif">
 </p>
 
 Features
@@ -33,7 +33,7 @@ Get started
 ===========
 The easiest way to get started is with your open source repos. Go to [sourcerer.io/start](https://sourcerer.io/start), and select *Build with GitHub* and watch your profile build. 
 
-For closed source repos, you will need to use this app. If you already created an account using GitHub, you would have received an email with credentials for the app. If not, You will need a new account, which you can get at [sourcerer.io/join](https://sourcerer.io/join>).
+For closed source repos, you will need to use this app. If you already created an account using GitHub, you would have received an email with credentials for the app. If not, You will need a new account, which you can get at [sourcerer.io/join](https://sourcerer.io/join).
 
 Showcase
 ========
