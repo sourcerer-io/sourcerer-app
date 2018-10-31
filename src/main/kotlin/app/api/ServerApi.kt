@@ -117,8 +117,7 @@ class ServerApi (private val configurator: Configurator) : Api {
     }
 
     private fun createRequestPostAuthorDistances(distances:
-                                                 AuthorDistanceGroup):
-            Request {
+        AuthorDistanceGroup): Request {
         return post("/distances").header(getContentTypeHeader())
                 .body(distances.serialize())
     }
