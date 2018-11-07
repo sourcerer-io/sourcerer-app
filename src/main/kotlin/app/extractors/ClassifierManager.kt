@@ -62,6 +62,8 @@ class ClassifierManager {
                 prob > 0.9
             } else if (libId == "cpp.gflags") {
                 prob > 0.9
+            } else if (libId == "dart.flutter") {
+                prob > 0.85
             }
             else {
                 prob > 0.5
