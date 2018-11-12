@@ -14,8 +14,8 @@ class AuthorDistanceHasher(
         private val api: Api,
         private val emails: HashSet<String>,
         private val userEmails: HashSet<String>) {
-    fun updateFromObservable(observable: Observable<JgitData>, onError: (Throwable)
-    -> Unit) {
+    fun updateFromObservable(observable: Observable<JgitData>,
+                             onError: (Throwable) -> Unit) {
         val authorScores = hashMapOf<String, Double>()
         emails.forEach { authorScores[it] = 0.0 }
 
