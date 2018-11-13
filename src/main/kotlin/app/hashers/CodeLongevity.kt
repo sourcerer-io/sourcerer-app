@@ -320,7 +320,7 @@ class CodeLongevity(
     /**
      * Scans the repo to extract code line ages.
      */
-    fun updateFromObservable(diffObservable: Observable<JgitPair> =
+    fun updateFromObservable(diffObservable: Observable<JgitData> =
                                 CommitCrawler.getJGitObservable(git),
                              onError: (Throwable) -> Unit = {},
                              api: Api,
@@ -396,7 +396,7 @@ class CodeLongevity(
      * the revisions of the repo.
      */
     fun getLinesList(tail : RevCommit? = null,
-                     diffObservable: Observable<JgitPair> =
+                     diffObservable: Observable<JgitData> =
                         CommitCrawler.getJGitObservable(git),
                      onError: (Throwable) -> Unit = {}) : List<CodeLine> {
         val codeLines: MutableList<CodeLine> = mutableListOf()
@@ -411,7 +411,7 @@ class CodeLongevity(
      * the revisions of the repo.
      */
     fun getLinesObservable(tail : RevCommit? = null,
-                           diffObservable: Observable<JgitPair>,
+                           diffObservable: Observable<JgitData>,
                            onError: (Throwable) -> Unit)
         : Observable<CodeLine> =
         Observable.create { subscriber ->
@@ -448,7 +448,7 @@ class CodeLongevity(
             // to the diff. Traverse the diffs backwards to handle double
             // renames properly.
             // TODO(alex): cover file renames by tests (see APP-132 issue).
-            for ((diff, editList) in diffs.asReversed()) {
+            for ((diff, editList) in diffs!!.asReversed()) {
                 val oldPath = diff.oldPath
                 val oldId = diff.oldId.toObjectId()
                 val newPath = diff.newPath
@@ -483,7 +483,7 @@ class CodeLongevity(
                         Logger.trace { "ins ($insStart, $insEnd)" }
 
                         for (idx in insStart until insEnd) {
-                            val from = RevCommitLine(commit, newId,
+                            val from = RevCommitLine(commit!!, newId,
                                                      newPath, idx, false)
                             try {
                                 val to = lines[idx]
@@ -514,7 +514,7 @@ class CodeLongevity(
 
                         val tmpLines = ArrayList<RevCommitLine>(delCount)
                         for (idx in delStart until delEnd) {
-                            tmpLines.add(RevCommitLine(commit, oldId,
+                            tmpLines.add(RevCommitLine(commit!!, oldId,
                                                        oldPath, idx, true))
                         }
                         lines.addAll(delStart, tmpLines)
