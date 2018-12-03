@@ -56,6 +56,8 @@ class ClassifierManager {
                 prob > 0.7
             } else if (libId.startsWith(Lang.PHP)) {
                 prob > 0.75
+            } else if (libId.startsWith(Lang.PYTHON)) {
+                prob > 0.75
             } else if (libId.startsWith(Lang.SCALA)) {
                 prob > 0.85
             } else if (libId == "js.q") {
