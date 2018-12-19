@@ -18,6 +18,7 @@ data class Commit(
         // Tree rehash used for adjustments of stats due to rebase and fraud.
         var treeRehash: String = "",
         var author: Author = Author(),
+        var coauthors: List<Author> = mutableListOf(),
         var dateTimestamp: Long = 0,
         var dateTimeZoneOffset: Int = 0,
         var isQommit: Boolean = false,
@@ -29,7 +30,8 @@ data class Commit(
     var raw: RevCommit? = null  // Not sent to sever.
     var diffs: List<DiffFile> = listOf()
 
-    constructor(revCommit: RevCommit) : this() {
+    constructor(revCommit: RevCommit, coauthorsList: List<Author>? = null) :
+            this() {
         raw = revCommit
 
         rehash = DigestUtils.sha256Hex(revCommit.id.name)
@@ -38,6 +40,9 @@ data class Commit(
         dateTimestamp = revCommit.authorIdent.getWhen().time / 1000
         dateTimeZoneOffset = revCommit.authorIdent.timeZoneOffset
         treeRehash = DigestUtils.sha256Hex(revCommit.tree.name)
+        if (coauthorsList != null) {
+            coauthors = coauthorsList
+        }
     }
 
     @Throws(InvalidParameterException::class)

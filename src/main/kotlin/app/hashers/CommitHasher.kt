@@ -58,6 +58,17 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             // with 10x margin of safety.
             .buffer(20, TimeUnit.SECONDS, 1000)
             .subscribe({ commitsBundle ->  // OnNext.
+                val coauthorsCommits = commitsBundle
+                    .filter { it.coauthors.isNotEmpty() }
+                    .fold(mutableListOf<Commit>()) { acc, commit ->
+                        acc.addAll(commit.coauthors.map { coauthor ->
+                            val newCommit = commit.copy()
+                            newCommit.author = coauthor
+                            newCommit
+                        })
+                        acc
+                    }
+                commitsBundle.addAll(coauthorsCommits)
                 postCommitsToServer(commitsBundle)  // Send ready commits.
             }, onError)
     }

@@ -71,7 +71,8 @@ class RepoHasher(private val api: Api,
                 filteredEmails
             } else null
             val jgitObservable = CommitCrawler.getJGitObservable(git,
-                rehashes.size, filteredEmails = crawlerEmails
+                rehashes.size, filteredEmails = crawlerEmails,
+                extractCoauthors = true
             ).publish()
             val observable = CommitCrawler.getObservable(git,
                 jgitObservable, serverRepo)
