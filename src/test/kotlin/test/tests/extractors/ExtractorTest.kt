@@ -241,6 +241,28 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Dart") {
+        it("Dart single-line comment") {
+            var lines = listOf("// import 'dart:math';")
+            var actualLineImports = DartExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.DART, DartExtractor)
+            }
+        }
+        it("Dart multi-line comment") {
+            var lines = listOf("/* import 'dart:math'; */")
+            var actualLineImports = DartExtractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.DART, DartExtractor)
+            }
+        }
+        it("Dart import") {
+            var line = "import 'dart:math';"
+            val import = "dart:math"
+            assertExtractsImport(import, line, DartExtractor)
+        }
+    }
+
     given("js comment line") {
         it("doesn't extract libraries") {
             var lines = listOf("// It doesn't use Ember 1")

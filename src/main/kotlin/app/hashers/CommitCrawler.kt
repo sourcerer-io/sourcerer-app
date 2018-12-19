@@ -1,5 +1,6 @@
 // Copyright 2017 Sourcerer Inc. All Rights Reserved.
 // Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
 
 package app.hashers
 
@@ -29,7 +30,13 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.util.LinkedList
 
-data class JgitPair(val commit: RevCommit, val list: List<JgitDiff>)
+data class JgitData(var commit: RevCommit? = null,
+                    var list: List<JgitDiff>? = null,
+                    var paths: List<String>? = null,
+                    var date: Long? = null,
+                    var email: String? = null,
+                    var coauthors: List<Author>? = null)
+
 data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 
 /**
@@ -44,6 +51,7 @@ object CommitCrawler {
                               LOCAL_MASTER_BRANCH, LOCAL_HEAD)
     private val CONF_FILE_PATH = ".sourcerer-conf"
     private val MAX_DIFF_SIZE = 600000
+    private val coauthoredRegex = Regex("""Co-authored-by: (.+) <(.+)>""")
 
     fun getDefaultBranchHead(git: Git): ObjectId {
         for (ref in REFS) {
@@ -67,6 +75,7 @@ object CommitCrawler {
         val emails = hashSetOf<String>()
         val names = hashMapOf<String, String>()
         val commitsCount = hashMapOf<String, Int>()
+        val coauthorsList = mutableListOf<Author>()
 
         var commit: RevCommit? = revWalk.next()
         while (commit != null) {
@@ -81,6 +90,9 @@ object CommitCrawler {
                     names[email] = name
                 }
             }
+            val coauthors = getCoauthors(commit.fullMessage)
+            coauthorsList.addAll(coauthors)
+
             commitsCount[email] = commitsCount.getOrDefault(email, 0) + 1
 
             commit.disposeBody()
@@ -90,15 +102,22 @@ object CommitCrawler {
 
         val authors = emails.map { email -> Author(names[email]!!, email) }
             .toHashSet()
+        authors.addAll(coauthorsList)
 
         return Triple(commitsRehashes, authors, commitsCount)
     }
 
     fun getJGitObservable(git: Git,
                           totalCommitCount: Int = 0,
+                          extractCommit: Boolean = true,
+                          extractDiffs: Boolean = true,
+                          extractPaths: Boolean = false,
+                          extractDate: Boolean = false,
+                          extractEmail: Boolean = false,
+                          extractCoauthors: Boolean = false,
                           filteredEmails: HashSet<String>? = null,
                           tail : RevCommit? = null) :
-        Observable<JgitPair> = Observable.create { subscriber ->
+        Observable<JgitData> = Observable.create { subscriber ->
         val repo: Repository = git.repository
         val revWalk = RevWalk(repo)
         val head: RevCommit =
@@ -156,9 +175,9 @@ object CommitCrawler {
                 commit = parentCommit
                 continue
             }
+            val paths = mutableListOf<String>()
 
             val diffEntries = df.scan(parentCommit, commit)
-            val diffEdits = diffEntries
             .filter { diff ->
                 diff.changeType != DiffEntry.ChangeType.COPY
             }
@@ -199,24 +218,49 @@ object CommitCrawler {
                         getIgnoredPaths(repo, diff.getNewId().toObjectId())
                 }
 
-                !ignoredPaths.any { path ->
+                if (!ignoredPaths.any { path ->
                     if (path.endsWith("/")) {
                         filePath.startsWith(path)
                     }
                     else {
                         path == filePath
                     }
+                }) {
+                    paths.add(filePath)
+                    true
+                } else false
+            }
+
+            val jgitData = JgitData()
+            if (extractCommit) {
+                jgitData.commit = commit
+            }
+            if (extractDiffs) {
+                val diffEdits = diffEntries
+                .map { diff ->
+                    JgitDiff(diff, df.toFileHeader(diff).toEditList())
                 }
+                .filter { diff ->
+                    diff.editList.fold(0) { acc, edit ->
+                        acc + edit.lengthA + edit.lengthB
+                    } < MAX_DIFF_SIZE
+                }
+                jgitData.list = diffEdits
             }
-            .map { diff ->
-                JgitDiff(diff, df.toFileHeader(diff).toEditList())
+            if (extractPaths) {
+                jgitData.paths = paths
             }
-            .filter { diff ->
-                diff.editList.fold(0) { acc, edit ->
-                    acc + edit.lengthA + edit.lengthB
-                } < MAX_DIFF_SIZE
+            if (extractDate) {
+                jgitData.date = commit.authorIdent.getWhen().time / 1000
             }
-            subscriber.onNext(JgitPair(commit, diffEdits))
+            if (extractEmail) {
+                jgitData.email = email
+            }
+            if (extractCoauthors) {
+                jgitData.coauthors = getCoauthors(commit.fullMessage)
+            }
+
+            subscriber.onNext(jgitData)
             commit = parentCommit
         }
 
@@ -229,12 +273,12 @@ object CommitCrawler {
     }
 
     fun getObservable(git: Git,
-                      jgitObservable: Observable<JgitPair>,
+                      jgitObservable: Observable<JgitData>,
                       repo: Repo): Observable<Commit> {
-        return jgitObservable.map( { (jgitCommit, jgitDiffs) ->
+        return jgitObservable.map( { jgitData ->
             // Mapping and stats extraction.
-            val commit = Commit(jgitCommit)
-            commit.diffs = getDiffFiles(git.repository, jgitDiffs)
+            val commit = Commit(jgitData.commit!!, jgitData.coauthors)
+            commit.diffs = getDiffFiles(git.repository, jgitData.list!!)
 
             // Count lines on all non-binary files. This is additional
             // statistics to CommitStats because not all file extensions
@@ -339,5 +383,18 @@ object CommitCrawler {
         catch(e: Exception) {
             listOf()
         }
+    }
+
+    private fun getCoauthors(message: String): List<Author> {
+        val coauthorsResult = coauthoredRegex.findAll(message)
+        val coauthors = mutableListOf<Author>()
+        if (coauthorsResult.toList().isNotEmpty()) {
+            coauthorsResult.toList().map { result ->
+                val coauthorName = result.groupValues[1]
+                val coauthorEmail = result.groupValues[2].toLowerCase()
+                coauthors.add(Author(coauthorName, coauthorEmail))
+            }
+        }
+        return coauthors
     }
 }

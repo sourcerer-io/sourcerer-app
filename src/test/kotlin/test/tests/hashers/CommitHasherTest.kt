@@ -19,6 +19,7 @@ import java.io.File
 import java.util.stream.StreamSupport.stream
 import kotlin.streams.toList
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class CommitHasherTest : Spek({
     fun getRepoRehash(git: Git, localRepo: LocalRepo): String {
@@ -39,8 +40,11 @@ class CommitHasherTest : Spek({
         Runtime.getRuntime().exec("src/test/delete_repo.sh").waitFor()
     }
 
-    val userName = "Contributor"
+    val userName = "First Contributor"
     val userEmail = "test@domain.com"
+
+    val secondUserName = "Second Contributor"
+    val secondUserEmail = "test2@domain.com"
 
     // Creation of test repo.
     cleanRepos()
@@ -58,7 +62,7 @@ class CommitHasherTest : Spek({
         LocalRepo(repoPath).also { it.author = Author(userName, userEmail) })
     val repo = Repo(rehash = repoRehash,
                     initialCommitRehash = initialCommit.rehash)
-    val emails = hashSetOf(userEmail)
+    val emails = hashSetOf(userEmail, secondUserEmail)
 
     given("repo with initial commit and no history") {
         repo.commits = listOf()
@@ -268,9 +272,7 @@ class CommitHasherTest : Spek({
 
             CommitHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
+
             assertEquals(0, errors.size)
 
             val syntaxStats = mockApi.receivedAddedCommits
@@ -293,6 +295,50 @@ class CommitHasherTest : Spek({
         afterGroup {
             testRepo.destroy()
         }
+    }
+
+    given("cpp repo") {
+        val testRepo = TestRepo("../testrepo-commit-hasher-cpp-stats")
+        val lines = listOf("#include <iostream>",
+                "template <typename s, Input... inputs>",
+                "struct Play<s, x, xs...> {",
+                "    using type = cons<s, play<step_t<x, s>, xs...>>;", "};",
+                "        template<typename x>")
+
+        val author = Author(userName, userEmail)
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.cpp"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author)
+            }
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+
+            val syntaxStats = mockApi.receivedAddedCommits
+                    .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                        allStats.addAll(commit.stats)
+                        allStats
+                    }.filter { it.type == ExtractorInterface.TYPE_SYNTAX }
+
+            val templateStats = syntaxStats.filter { it.tech == "cpp>template" }
+            assertEquals(2, templateStats.size)
+            assertEquals(2, templateStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, templateStats.map { it.numLinesDeleted }.sum())
+        }
+
     }
 
     given("commits with scss stats") {
@@ -322,9 +368,7 @@ class CommitHasherTest : Spek({
 
             CommitHasher(repo, mockApi, rehashes, emails)
                     .updateFromObservable(observable, { e -> errors.add(e) })
-            if (errors.size > 0) {
-                println(errors[0].message)
-            }
+
             assertEquals(0, errors.size)
 
             val syntaxStats = mockApi.receivedAddedCommits
@@ -341,6 +385,49 @@ class CommitHasherTest : Spek({
 
         afterGroup {
             testRepo.destroy()
+        }
+    }
+
+    given("commit with multiple authors") {
+        val lines = listOf("line 1", "line 2", "line 3", "line 4")
+
+        val author1 = Author(userName, userEmail)
+        val author2 = Author(secondUserName, secondUserEmail)
+
+        val testRepoPath = "../testrepo-multiple-authors"
+        val testRepo = TestRepo(testRepoPath)
+
+        val mockApi = MockApi(mockRepo = repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.ext"
+                testRepo.createFile(fileName, listOf(line))
+                val message = "$line in $fileName\n\nCo-authored-by: ${author2
+                        .name} <${author2.email}>"
+                testRepo.commit(message = message, author = author1)
+            }
+            val gitHasher = Git.open(File(testRepoPath))
+            val jgitObservable = CommitCrawler.getJGitObservable(gitHasher,
+                extractCoauthors = true)
+            val observable = CommitCrawler.getObservable(gitHasher,
+                    jgitObservable, repo)
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+
+            val stats = mockApi.receivedAddedCommits
+            val actualAuthors = stats.map { it.author }.toHashSet()
+            assertEquals(2, actualAuthors.size)
+            assertTrue(author1 in actualAuthors)
+            assertTrue(author2 in actualAuthors)
         }
     }
 

@@ -3,13 +3,7 @@
 
 package app.api
 
-import app.model.Author
-import app.model.Commit
-import app.model.Fact
-import app.model.Process
-import app.model.ProcessEntry
-import app.model.Repo
-import app.model.User
+import app.model.*
 
 interface Api {
     companion object {
@@ -36,4 +30,6 @@ interface Api {
     fun postAuthors(authorsList: List<Author>): Result<Unit>
     fun postProcessCreate(requestNumEntries: Int): Result<Process>
     fun postProcess(processEntries: List<ProcessEntry>): Result<Unit>
+    fun postAuthorDistances(authorDistanceList: List<AuthorDistance>):
+            Result<Unit>
 }

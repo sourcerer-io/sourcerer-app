@@ -71,8 +71,10 @@ if [ \$VERSION = 0 ] ; then
 fi
 
 # Java 9 and 10 requires additional parameters.
-if [[ \$VERSION = 9 || \$VERSION = 10 ]] ; then
+if [[ \$VERSION = 9 ]] ; then
   java --add-modules java.activation --add-opens java.base/java.nio=ALL-UNNAMED -jar $JAR_DIR/sourcerer.jar "\$@"
+elif [[ \$VERSION = 10 ]] ; then
+  java --add-opens java.base/java.nio=ALL-UNNAMED -jar $JAR_DIR/sourcerer.jar "\$@"
 else
   java -jar $JAR_DIR/sourcerer.jar "\$@"
 fi
