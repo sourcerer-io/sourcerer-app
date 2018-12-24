@@ -10,7 +10,8 @@ class RubyExtractor : ExtractorInterface {
         val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
         val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
         val extractImportRegex =
-            Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
+            Regex("""(require\s+'(.+)'|load\s+'(\w+)\.\w+')""")
+        val includeRegex = Regex("""include\s+(\w+)::.+""")
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {
@@ -21,6 +22,16 @@ class RubyExtractor : ExtractorInterface {
             if (res != null) {
                 val lineLib = res.groupValues.last { it != "" }
                 imports.add(lineLib)
+            }
+        }
+
+        // Try to parse `include ` when imports are in external file.
+        if (imports.isEmpty()) {
+            fileContent.forEach {
+                val res = includeRegex.find(it)
+                if (res != null) {
+                    imports.add(res.groupValues.last().toLowerCase())
+                }
             }
         }
 

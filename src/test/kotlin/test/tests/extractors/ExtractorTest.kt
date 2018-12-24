@@ -369,6 +369,15 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Ruby") {
+        it("Ruby imports") {
+            var line = "require 'dry-monads'"
+            assertExtractsImport("dry-monads", line, RubyExtractor())
+            line = "  include Apotomo::Rails::ControllerMethods"
+            assertExtractsImport("apotomo", line, RubyExtractor())
+        }
+    }
+
     given("Rust") {
         it("Rust imports") {
             var lines = listOf(
