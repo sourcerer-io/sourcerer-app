@@ -211,31 +211,32 @@ class ExtractorTest : Spek({
         }
     }
 
-    given("one line import in go file") {
-        it("extracts library name") {
+    given("Go") {
+        it("one line import") {
             val import = "macagon"
             val line = "import \"macagon\""
             assertExtractsImport(import, line, GoExtractor())
         }
-    }
-
-    given("multiline import in go file") {
-        it("extracts library name") {
+        it("multiline import") {
             val import = "macagon"
             val lines = listOf("import (",
-                "\"macagon\"",
-                "\"github.com/astaxie/beego\"",
-                ")")
+                    "\"macagon\"",
+                    "\"github.com/astaxie/beego\"",
+                    ")")
             val actualLineImports = GoExtractor().extractImports(lines)
             assertTrue(import in actualLineImports)
         }
-    }
-
-    given("github  url as import in go file") {
-        it("extracts github url") {
+        it("github url as import") {
             val url = "github.com/astaxie/beego"
             val lines = listOf("import (",
                     "\"macagon\"", "\"" + url + "\"", ")")
+            val actualLineImports = GoExtractor().extractImports(lines)
+            assertTrue(url in actualLineImports)
+        }
+        it("class from url") {
+            val url = "github.com/medium/medium-sdk-go"
+            val lines = listOf("import (",
+                    "medium \"$url\"", "log", ")")
             val actualLineImports = GoExtractor().extractImports(lines)
             assertTrue(url in actualLineImports)
         }
