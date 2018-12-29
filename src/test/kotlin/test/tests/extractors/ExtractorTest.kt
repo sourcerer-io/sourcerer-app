@@ -240,6 +240,12 @@ class ExtractorTest : Spek({
             val actualLineImports = GoExtractor().extractImports(lines)
             assertTrue(url in actualLineImports)
         }
+        it("maps import to library index") {
+            val url = "github.com/docker/docker/integration-cli/checker"
+            val lines = listOf("import \"$url\"")
+            val actualImport = GoExtractor().extractImports(lines)[0]
+            assertMapsIndex("go.docker", actualImport, Lang.GO, GoExtractor())
+        }
     }
 
     given("Dart") {

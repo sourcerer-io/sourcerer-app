@@ -9,7 +9,7 @@ class GoExtractor : ExtractorInterface {
         const val LANGUAGE_NAME = Lang.GO
         val importRegex = Regex("""^(.*import)\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val singleImportRegex = Regex("""import\s+"(\w+)"""")
+        val singleImportRegex = Regex("""import\s+"(.+?)"""")
         val multipleImportRegex = Regex("""import[\s\t\n]+\((.+?)\)""",
                 RegexOption.DOT_MATCHES_ALL)
         val separatorsRegex = Regex("""(\t+|\n+|\s+|")""")
@@ -40,6 +40,11 @@ class GoExtractor : ExtractorInterface {
         var newLine = importRegex.replace(line, "")
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
+    }
+
+    override fun mapImportToIndex(import: String, lang: String,
+                                  startsWith: Boolean): String? {
+        return super.mapImportToIndex(import, lang, startsWith = true)
     }
 
     override fun getLanguageName(): String? {
