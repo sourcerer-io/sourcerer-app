@@ -54,8 +54,8 @@ class ExtractorTest : Spek({
         }
 
         it("java extractor extracts the library") {
-            val line = "private JdbcTemplate jdbcTemplate=new JdbcTemplate();"
-            assertExtractsLineLibraries("java.spring-framework",
+            val line = "Parcelable wrapped = Parcels.wrap(new Example(\"Andy\", 42));"
+            assertExtractsLineLibraries("java.parceler",
                 line, JavaExtractor())
         }
 
