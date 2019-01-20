@@ -10,7 +10,7 @@ class ObjectiveCExtractor : ExtractorInterface {
         val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
         val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
         val sharpImportIncludeRegex =
-                Regex("""#(import|include)\s+[">](\w+)[/\w+]*\.\w+[">]""")
+                Regex("""[#@](import|include)\s+["<](\w+)[/\w+]*\.\w+[">]""")
         val atImportRegex = Regex("""@import\s+(\w+)""")
     }
 
