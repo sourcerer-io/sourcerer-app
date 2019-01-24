@@ -374,6 +374,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "cpp" to { _ ->
         CppExtractor()
     },
+    "cr" to { _ ->
+        CrystalExtractor()
+    },
     "cpy" to { _ ->
         CommonExtractor(Lang.COBOL)
     },

@@ -324,6 +324,27 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Crystal") {
+        it("Crystal require") {
+            var line = "require \"kemal\""
+            assertExtractsImport("kemal", line, CrystalExtractor())
+        }
+
+        it("Crystal include") {
+            var line = "  include JSON::Serializable"
+            assertExtractsImport("json", line, CrystalExtractor())
+        }
+
+        it("Crystal comment") {
+            var lines = listOf("# include JSON::Serializable")
+            val extractor = CrystalExtractor()
+            var actualLineImports = extractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.CRYSTAL, extractor)
+            }
+        }
+    }
+
     given("Elixir") {
         it("Elixir comment") {
             var lines = listOf("# use Ecto.Repo")
