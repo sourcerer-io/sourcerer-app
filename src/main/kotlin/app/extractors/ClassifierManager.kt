@@ -64,6 +64,8 @@ class ClassifierManager {
                 prob > 0.75
             } else if (libId.startsWith(Lang.JAVA)) {
                 prob > 0.9
+            } else if (libId.startsWith(Lang.CRYSTAL)) {
+                prob > 0.7
             } else if (libId.startsWith("rb.dry-")) {
                 prob > 0.85
             } else if (libId == "js.q") {
