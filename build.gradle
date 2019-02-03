@@ -36,8 +36,8 @@ buildConfig {
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
-    buildConfigField 'int', 'VERSION_CODE', '19'
-    buildConfigField 'String', 'VERSION', '0.3.7'
+    buildConfigField 'int', 'VERSION_CODE', '20'
+    buildConfigField 'String', 'VERSION', '0.3.8'
 
     // Logging.
     buildConfigField 'String', 'ENV', project.hasProperty('env') ? env : 'production'
