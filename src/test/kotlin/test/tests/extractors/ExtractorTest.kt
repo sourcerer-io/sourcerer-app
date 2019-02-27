@@ -54,8 +54,8 @@ class ExtractorTest : Spek({
         }
 
         it("java extractor extracts the library") {
-            val line = "private JdbcTemplate jdbcTemplate=new JdbcTemplate();"
-            assertExtractsLineLibraries("java.spring-framework",
+            val line = "Parcelable wrapped = Parcels.wrap(new Example(\"Andy\", 42));"
+            assertExtractsLineLibraries("java.parceler",
                 line, JavaExtractor())
         }
 
@@ -211,33 +211,40 @@ class ExtractorTest : Spek({
         }
     }
 
-    given("one line import in go file") {
-        it("extracts library name") {
+    given("Go") {
+        it("one line import") {
             val import = "macagon"
             val line = "import \"macagon\""
             assertExtractsImport(import, line, GoExtractor())
         }
-    }
-
-    given("multiline import in go file") {
-        it("extracts library name") {
+        it("multiline import") {
             val import = "macagon"
             val lines = listOf("import (",
-                "\"macagon\"",
-                "\"github.com/astaxie/beego\"",
-                ")")
+                    "\"macagon\"",
+                    "\"github.com/astaxie/beego\"",
+                    ")")
             val actualLineImports = GoExtractor().extractImports(lines)
             assertTrue(import in actualLineImports)
         }
-    }
-
-    given("github  url as import in go file") {
-        it("extracts github url") {
+        it("github url as import") {
             val url = "github.com/astaxie/beego"
             val lines = listOf("import (",
                     "\"macagon\"", "\"" + url + "\"", ")")
             val actualLineImports = GoExtractor().extractImports(lines)
             assertTrue(url in actualLineImports)
+        }
+        it("class from url") {
+            val url = "github.com/medium/medium-sdk-go"
+            val lines = listOf("import (",
+                    "medium \"$url\"", "log", ")")
+            val actualLineImports = GoExtractor().extractImports(lines)
+            assertTrue(url in actualLineImports)
+        }
+        it("maps import to library index") {
+            val url = "github.com/docker/docker/integration-cli/checker"
+            val lines = listOf("import \"$url\"")
+            val actualImport = GoExtractor().extractImports(lines)[0]
+            assertMapsIndex("go.docker", actualImport, Lang.GO, GoExtractor())
         }
     }
 
@@ -317,6 +324,27 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Crystal") {
+        it("Crystal require") {
+            var line = "require \"kemal\""
+            assertExtractsImport("kemal", line, CrystalExtractor())
+        }
+
+        it("Crystal include") {
+            var line = "  include JSON::Serializable"
+            assertExtractsImport("json", line, CrystalExtractor())
+        }
+
+        it("Crystal comment") {
+            var lines = listOf("# include JSON::Serializable")
+            val extractor = CrystalExtractor()
+            var actualLineImports = extractor.extractImports(lines)
+            actualLineImports.forEach {
+                assertMapsNothing(it, Lang.CRYSTAL, extractor)
+            }
+        }
+    }
+
     given("Elixir") {
         it("Elixir comment") {
             var lines = listOf("# use Ecto.Repo")
@@ -366,6 +394,15 @@ class ExtractorTest : Spek({
             var line = """ execute("CREATE LANGUAGE plr")"""
             val import = "plr"
             assertExtractsImport(import, line, PlpgsqlExtractor)
+        }
+    }
+
+    given("Ruby") {
+        it("Ruby imports") {
+            var line = "require 'dry-monads'"
+            assertExtractsImport("dry-monads", line, RubyExtractor())
+            line = "  include Apotomo::Rails::ControllerMethods"
+            assertExtractsImport("apotomo", line, RubyExtractor())
         }
     }
 

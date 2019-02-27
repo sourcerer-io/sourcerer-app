@@ -11,6 +11,7 @@ object Lang {
     const val C = "c"  // C
     const val COQ = "coq"  // Coq
     const val CPP = "cpp"  // C++
+    const val CRYSTAL = "crystal"  // Crystal
     const val CSHARP = "csharp"  // C#
     const val CSS = "css"  // CSS
     const val CLOJURE = "clojure"  // Clojure

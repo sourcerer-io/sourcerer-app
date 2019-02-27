@@ -71,7 +71,6 @@ var ignoredSamplesWildcards = listOf(
     "*/Component Pascal/*",
     "*/Cool/*",
     "*/Creole/*",
-    "*/Crystal/*",
     "*/Csound/*",
     "*/Csound Document/*",
     "*/Csound Score/*",

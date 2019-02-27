@@ -1,16 +1,14 @@
-// Copyright 2017 Sourcerer Inc. All Rights Reserved.
-// Author: Liubov Yaronskaya (lyaronskaya@sourcerer.io)
-// Author: Anatoly Kislov (anatoly@sourcerer.io)
+// Copyright 2019 Sourcerer Inc. All Rights Reserved.
+// Author: Anton Maminov (anton.maminov@gmail.com)
 
 package app.extractors
 
-class RubyExtractor : ExtractorInterface {
+class CrystalExtractor : ExtractorInterface {
     companion object {
-        const val LANGUAGE_NAME = Lang.RUBY
-        val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
+        const val LANGUAGE_NAME = Lang.CRYSTAL
+        val importRegex = Regex("""require\s+\"(\w+)\"""")
         val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
-        val extractImportRegex =
-            Regex("""(require\s+'(.+)'|load\s+'(\w+)\.\w+')""")
+        val extractImportRegex = Regex("""require\s+\"(.+)\"""")
         val includeRegex = Regex("""include\s+(\w+)::.+""")
     }
 
@@ -25,7 +23,6 @@ class RubyExtractor : ExtractorInterface {
             }
         }
 
-        // Try to parse `include ` when imports are in external file.
         if (imports.isEmpty()) {
             fileContent.forEach {
                 val res = includeRegex.find(it)
@@ -43,18 +40,10 @@ class RubyExtractor : ExtractorInterface {
         newLine = commentRegex.replace(newLine, "")
         return super.tokenize(newLine)
     }
-    
+
     override fun mapImportToIndex(import: String, lang: String,
                                   startsWith: Boolean): String? {
         return super.mapImportToIndex(import, lang, startsWith = true)
-    }
-
-    override fun determineLibs(line: String,
-                               importedLibs: List<String>): List<String> {
-        // TODO(lyaronskaya): Case with no imports.
-        val libraries = importedLibs + "rb.rails"
-
-        return super.determineLibs(line, libraries)
     }
 
     override fun getLanguageName(): String? {

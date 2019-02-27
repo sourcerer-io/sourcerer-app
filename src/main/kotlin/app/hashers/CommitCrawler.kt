@@ -184,7 +184,8 @@ object CommitCrawler {
             .filter { diff ->
                 val path = diff.newPath
                 for (cnv in VendorConventions) {
-                    if (cnv.containsMatchIn(path)) {
+                    if (cnv.containsMatchIn(path) ||
+                        cnv.containsMatchIn(diff.oldPath)) {
                         return@filter false
                     }
                 }
