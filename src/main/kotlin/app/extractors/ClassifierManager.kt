@@ -52,6 +52,8 @@ class ClassifierManager {
             // TODO(lyaronskaya): move thresholds to protobuf.
             if (libId == "rb.rails") {
                 prob > 0.91
+            } else if (libId == "py.flask") {
+                prob > 0.95
             } else if (libId.startsWith(Lang.PLPGSQL)) {
                 prob > 0.7
             } else if (libId.startsWith(Lang.PHP)) {
