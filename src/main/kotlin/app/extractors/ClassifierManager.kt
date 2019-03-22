@@ -77,6 +77,9 @@ class ClassifierManager {
             } else if (libId == "dart.flutter") {
                 prob > 0.85
             }
+            else if (libId.startsWith(Lang.CPP)) {
+                prob > 0.8
+            }
             else {
                 prob > 0.5
             }
