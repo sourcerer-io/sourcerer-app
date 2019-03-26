@@ -1,1 +1,1 @@
-export REPLICAS="1"
+export REPLICAS="0"
