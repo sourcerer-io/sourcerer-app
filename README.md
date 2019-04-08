@@ -62,16 +62,20 @@ or
 
 * Linux or macOS or Windows
 * Java 8+ Platform ([JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) for Linux and Windows or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) for macOS)
+* Bash for Windows (`git bash` should suffice)
 
 Usage
 =====
-To install sourcerer run the following command:
+To install sourcerer run the following command in bash:
 
 ```
 curl -s https://sourcerer.io/app/install | bash
 ```
 
-To run wizard use `sourcerer` command
+To run wizard use `sourcerer` command for macOS and Linux, `java -jar sourcerer.jar` in folder `Users\user\.sourcerer` for Windows.
+
+Use parameter `--help` for additional info.
+
 
 Internals
 =========
