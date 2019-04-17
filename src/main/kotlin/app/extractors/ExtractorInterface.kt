@@ -15,6 +15,7 @@ interface ExtractorInterface {
         const val SEPARATOR = ">"
 
         private val classifierManager = ClassifierManager()
+        private val tokenizer = CachingTokenizer()
 
         val stringRegex = Regex("""(".+?"|'.+?')""")
         val splitRegex = Regex("""\s|,|;|\*|\n|\(|\)|\[|]|\{|}|\+|=|&|\$|""" +
@@ -25,7 +26,9 @@ interface ExtractorInterface {
     fun determineLibs(line: String, importedLibs: List<String>): List<String> {
         val lang = getLanguageName()
         if (lang != null) {
-            return classifierManager.estimate(tokenize(line), importedLibs)
+//            val tokenizedLine = tokenizer.tokenize(line, this)
+            val tokenizedLine = tokenize(line)
+            return classifierManager.estimate(tokenizedLine, importedLibs)
         }
         return listOf()
     }
@@ -106,9 +109,24 @@ interface ExtractorInterface {
     fun tokenize(line: String): List<String> {
         // TODO(lyaronskaya): Multiline comment regex.
         val newLine = stringRegex.replace(line, "")
-        val tokens = splitRegex.split(newLine).filter {
+//        val tokens = splitRegex.split(newLine).filter {
+//            it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
+//                it != "-" && it != "@"
+//        }
+        val splitTokens = listOf('[', ',', ';', '*', '\n', ')', '(',
+                '[', ']', '}', '{', '+', '-', '=', '&', '$', '!',
+        '.', '>', '<', '#', '@', ':', '?', ']')
+        var splittedLine = newLine.split(" ")
+        for (token in splitTokens) {
+            splittedLine = splittedLine.fold(mutableListOf<String>()) { acc, s: String   ->
+                acc.addAll(s.split(token))
+                acc
+            }
+
+        }
+        val tokens = splittedLine.filter {
             it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
-                it != "-" && it != "@"
+                    it != "-" && it != "@"
         }
         return tokens
     }

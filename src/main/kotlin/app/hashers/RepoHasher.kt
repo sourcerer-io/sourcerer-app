@@ -19,11 +19,14 @@ import app.utils.batch
 import org.eclipse.jgit.api.Git
 import java.io.File
 import java.io.IOException
+import java.time.Duration
+import java.time.LocalDateTime
 import kotlin.collections.HashSet
 
 class RepoHasher(private val api: Api,
                  private val configurator: Configurator) {
     fun update(localRepo: LocalRepo) {
+        val startTime = LocalDateTime.now()
         Logger.debug { "RepoHasher.update call: $localRepo" }
         val processEntryId = localRepo.processEntryId
 
@@ -116,6 +119,10 @@ class RepoHasher(private val api: Api,
             }
             Logger.info(Logger.Events.HASHING_REPO_SUCCESS)
                 { "Hashing repo completed" }
+            val endTime = LocalDateTime.now()
+            val elapsed = Duration.between(startTime, endTime).toMillis()
+            Logger.info {"Hashing took $elapsed milliseconds"}
+
             updateProcess(processEntryId, Api.PROCESS_STATUS_COMPLETE)
         } catch (e: EmptyRepoException) {
             updateProcess(processEntryId, Api.PROCESS_STATUS_FAIL,
@@ -127,6 +134,7 @@ class RepoHasher(private val api: Api,
         } finally {
             closeGit(git)
         }
+
     }
 
     private fun loadGit(path: String): Git {
