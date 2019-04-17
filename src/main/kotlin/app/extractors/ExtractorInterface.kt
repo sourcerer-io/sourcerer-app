@@ -105,11 +105,18 @@ interface ExtractorInterface {
 
     fun tokenize(line: String): List<String> {
         // TODO(lyaronskaya): Multiline comment regex.
+
+        // TODO(anatoly): Optimize this regex, better to get rid of it.
         val newLine = stringRegex.replace(line, "")
-        val tokens = splitRegex.split(newLine).filter {
-            it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
+
+        val tokens = newLine.split(' ', '[', ',', ';', '*', '\n', ')', '(',
+            '[', ']', '}', '{', '+', '-', '=', '&', '$', '!', '.', '>', '<',
+            '#', '@', ':', '?', ']')
+            .filter {
+                it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
                 it != "-" && it != "@"
-        }
+            }
+
         return tokens
     }
 
