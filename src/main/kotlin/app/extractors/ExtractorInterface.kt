@@ -4,7 +4,11 @@
 
 package app.extractors
 
+import app.Logger
+import app.Measurements
 import app.model.*
+import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
 
 interface ExtractorInterface {
     companion object {
@@ -108,27 +112,74 @@ interface ExtractorInterface {
 
     fun tokenize(line: String): List<String> {
         // TODO(lyaronskaya): Multiline comment regex.
-        val newLine = stringRegex.replace(line, "")
-//        val tokens = splitRegex.split(newLine).filter {
-//            it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
-//                it != "-" && it != "@"
-//        }
+        var newLine = ""
+        val time1 = measureNanoTime {
+            newLine = stringRegex.replace(line, "")
+        }
+        Logger.info { "T1: Time to string replace with regex: $time1"}
+        Measurements.addMeasurement(1, time1)
+
+        // Regex
+        var tokensRegex: List<String> = listOf()
+        val time2 = measureNanoTime {
+            tokensRegex = splitRegex.split(newLine).filter {
+                it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
+                    it != "-" && it != "@"
+            }
+        }
+        Logger.info { "T2: Time to split and filter with regex: $time2"}
+        Measurements.addMeasurement(2, time2)
+
+        // Plain
         val splitTokens = listOf('[', ',', ';', '*', '\n', ')', '(',
                 '[', ']', '}', '{', '+', '-', '=', '&', '$', '!',
         '.', '>', '<', '#', '@', ':', '?', ']')
-        var splittedLine = newLine.split(" ")
-        for (token in splitTokens) {
-            splittedLine = splittedLine.fold(mutableListOf<String>()) { acc, s: String   ->
-                acc.addAll(s.split(token))
-                acc
-            }
+        var splittedLine: List<String> = listOf()
+        val time3 = measureTimeMillis {
+            splittedLine = newLine.split(" ")
+        }
+        Logger.info { "T3: Time to plain split by spaces: $time3"}
+        Measurements.addMeasurement(3, time3)
 
+        val time4 = measureNanoTime {
+            for (token in splitTokens) {
+                splittedLine = splittedLine.fold(mutableListOf<String>()) { acc, s: String ->
+                    acc.addAll(s.split(token))
+                    acc
+                }
+
+            }
         }
-        val tokens = splittedLine.filter {
-            it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
+        Logger.info { "T4: Time to plain split by other symbols: $time4"}
+        Measurements.addMeasurement(4, time4)
+
+        var tokensPlain: List<String> = listOf()
+        val time5 = measureNanoTime {
+            tokensPlain = splittedLine.filter {
+                it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
                     it != "-" && it != "@"
+            }
         }
-        return tokens
+        Logger.info { "T5: Time to plain filter: $time5"}
+        Measurements.addMeasurement(5, time5)
+
+        var tokenPlainMultiSplit = listOf<String>()
+        val time6 = measureNanoTime {
+            tokenPlainMultiSplit = newLine.split(' ', '[', ',', ';', '*', '\n',
+                ')', '(', '[', ']', '}', '{', '+', '-', '=', '&', '$', '!',
+                '.', '>', '<', '#', '@', ':', '?', ']')
+        }
+        Logger.info { "T6: Time to plain multi split: $time6"}
+        Measurements.addMeasurement(6, time6)
+        Logger.info { "Token plain multi split: ${tokenPlainMultiSplit.size}" }
+
+        Logger.info {
+            "Tokens by regex: ${tokensRegex.size}, " +
+                "tokens by plain: ${tokensPlain.size}, " +
+                "is equal: ${tokensRegex.size == tokensPlain.size}"
+        }
+
+        return tokensPlain
     }
 
     fun getLanguageName(): String? {

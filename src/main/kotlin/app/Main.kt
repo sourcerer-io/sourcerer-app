@@ -79,6 +79,15 @@ class Main(argv: Array<String>) {
         }
 
         Logger.info(Logger.Events.EXIT) { "App finished" }
+
+        Measurements.showMeasurements(mapOf(
+            1 to "string replace with regex",
+            2 to "split and filter with regex",
+            3 to " plain split by spaces",
+            4 to "plain split by other symbols",
+            5 to "plain filter",
+            6 to "plain multi split"
+        ))
     }
 
     private fun startUi() {
