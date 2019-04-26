@@ -1,18 +1,18 @@
 package app
 
 object Measurements {
-    private val measureMap: MutableMap<Int, Long> = mutableMapOf()
+    private val measureMap: HashMap<String, Long> = hashMapOf()
 
-    fun addMeasurement(code: Int, value: Long) {
-        if (!measureMap.containsKey(code)) {
-            measureMap[code] = 0
+    fun addMeasurement(key: String, value: Long) {
+        if (!measureMap.containsKey(key)) {
+            measureMap[key] = 0
         }
-        measureMap[code] = measureMap[code]!! + value
+        measureMap[key] = measureMap[key]!! + value
     }
 
-    fun showMeasurements(codeDescs: Map<Int, String>) {
-        codeDescs.forEach { code, name ->
-            Logger.info { "$code $name -> ${measureMap[code]}"}
+    fun showAllMeasurements() {
+        measureMap.forEach { key, value ->
+            Logger.info { "$key -> $value" }
         }
     }
 }
