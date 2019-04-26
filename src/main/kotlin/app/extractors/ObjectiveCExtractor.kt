@@ -4,14 +4,28 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class ObjectiveCExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "ObjectiveCExtractor-"
         const val LANGUAGE_NAME = Lang.OBJECTIVEC
-        val importRegex = Regex("""^([^\n]*[#@](import|include))\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val sharpImportIncludeRegex =
-                Regex("""[#@](import|include)\s+["<](\w+)[/\w+]*\.\w+[">]""")
-        val atImportRegex = Regex("""@import\s+(\w+)""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^([^\n]*[#@](import|include))\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val sharpImportIncludeRegex = RegexMeasured(
+            CLASS_TAG + "sharpImportIncludeRegex",
+            """[#@](import|include)\s+["<](\w+)[/\w+]*\.\w+[">]"""
+        )
+        val atImportRegex = RegexMeasured(
+            CLASS_TAG + "atImportRegex",
+            """@import\s+(\w+)"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

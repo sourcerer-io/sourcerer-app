@@ -4,11 +4,13 @@
 
 package app.extractors
 
+import app.RegexMeasured
 import app.model.CommitStats
 import app.model.DiffFile
 
 class JavaExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "JavaExtractor-"
         const val LANGUAGE_NAME = Lang.JAVA
         val KEYWORDS = listOf("abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized", "boolean",
@@ -18,10 +20,22 @@ class JavaExtractor : ExtractorInterface {
             "extends", "int", "short", "try", "char", "final", "interface",
             "static", "void", "class", "finally", "long", "strictfp",
             "volatile", "const", "float", "native", "super", "while")
-        val importRegex = Regex("""^(.*import)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val packageRegex = Regex("""^(.*package)\s[^\n]*""")
-        val extractImportRegex = Regex("""import\s+(\w+[.\w+]*)""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^(.*import)\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val packageRegex = RegexMeasured(
+            CLASS_TAG + "packageRegex",
+            """^(.*package)\s[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """import\s+(\w+[.\w+]*)"""
+        )
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

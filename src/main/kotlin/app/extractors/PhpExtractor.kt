@@ -4,15 +4,30 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class PhpExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "PhpExtractor-"
         const val LANGUAGE_NAME = Lang.PHP
-        val importRegex = Regex("""^(.*require|require_once|include|""" +
-            """include_once|use)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val useRegex = Regex("""use\s+(\w+)[\\\w+]*""")
-        val requireIncludeRegex = Regex("""(require|require_once|include|""" +
-                """"include_once)\s*[(]?'(\w+)[.\w+]*'[)]?""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^(.*require|require_once|include|""" +
+            """include_once|use)\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val useRegex = RegexMeasured(
+            CLASS_TAG + "useRegex",
+            """use\s+(\w+)[\\\w+]*"""
+        )
+        val requireIncludeRegex = RegexMeasured(
+            CLASS_TAG + "requireIncludeRegex",
+            """(require|require_once|include|""" +
+                """"include_once)\s*[(]?'(\w+)[.\w+]*'[)]?"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

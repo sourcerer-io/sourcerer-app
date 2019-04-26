@@ -3,7 +3,16 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 object DartExtractor : ExtractorBase(
     language = Lang.DART,
-    importRegex = Regex("""^import ['"](.+)['"];$"""),
-    commentRegex = Regex("(//.+$)|(/[*].*?[*]/)"))
+    importRegex = RegexMeasured(
+        "DartExtractor-importRegex",
+        """^import ['"](.+)['"];$"""
+    ),
+    commentRegex = RegexMeasured(
+        "DartExtractor-commentRegex",
+        "(//.+$)|(/[*].*?[*]/)"
+    )
+)

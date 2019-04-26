@@ -4,17 +4,32 @@
 
 package app.extractors
 
+import app.RegexMeasured
+import app.contains
 import app.model.CommitStats
 import app.model.DiffFile
 
 class CppExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "CppExtractor-"
         const val LANGUAGE_NAME = Lang.CPP
         const val TEMPLATE = "template"
-        val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val extractImportRegex = Regex("""#include\s+["<](\w+[/\w+]*(\.\w+)?)[">]""")
-        val templateRegex = Regex("""template\s*<""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^([^\n]*#include)\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """#include\s+["<](\w+[/\w+]*(\.\w+)?)[">]"""
+        )
+        val templateRegex = RegexMeasured(
+            CLASS_TAG + "templateRegex",
+            """template\s*<"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

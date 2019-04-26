@@ -3,13 +3,28 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class CrystalExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "CrystalExtractor-"
         const val LANGUAGE_NAME = Lang.CRYSTAL
-        val importRegex = Regex("""require\s+\"(\w+)\"""")
-        val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
-        val extractImportRegex = Regex("""require\s+\"(.+)\"""")
-        val includeRegex = Regex("""include\s+(\w+)::.+""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """require\s+\"(\w+)\""""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*#)[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """require\s+\"(.+)\""""
+        )
+        val includeRegex = RegexMeasured(
+            CLASS_TAG + "includeRegex",
+            """include\s+(\w+)::.+"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

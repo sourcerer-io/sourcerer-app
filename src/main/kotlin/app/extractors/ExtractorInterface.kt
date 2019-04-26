@@ -4,10 +4,12 @@
 
 package app.extractors
 
+import app.RegexMeasured
 import app.model.*
 
 interface ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "ExtractorInterface-"
         const val TYPE_LANGUAGE = 1
         const val TYPE_LIBRARY = 2
         const val TYPE_KEYWORD = 3
@@ -17,9 +19,15 @@ interface ExtractorInterface {
         private val classifierManager = ClassifierManager()
         private val tokenizer = CachingTokenizer()
 
-        val stringRegex = Regex("""(".+?"|'.+?')""")
-        val splitRegex = Regex("""\s|,|;|\*|\n|\(|\)|\[|]|\{|}|\+|=|&|\$|""" +
-            """!=|\.|>|<|#|@|:|\?|!""")
+        val stringRegex = RegexMeasured(
+            CLASS_TAG + "stringRegex",
+            """(".+?"|'.+?')"""
+        )
+        val splitRegex = RegexMeasured(
+            CLASS_TAG + "splitRegex",
+            """\s|,|;|\*|\n|\(|\)|\[|]|\{|}|\+|=|&|\$|""" +
+            """!=|\.|>|<|#|@|:|\?|!"""
+        )
     }
 
     // Identify libs used in a line with classifiers.

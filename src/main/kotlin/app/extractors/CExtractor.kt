@@ -4,13 +4,23 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class CExtractor : ExtractorInterface {
     companion object {
         const val LANGUAGE_NAME = Lang.C
-        val importRegex = Regex("""^([^\n]*#include)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val extractImportRegex =
-            Regex("""#include\s+["<](\w+)[/\w+]*\.\w+[">]""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^([^\n]*#include)\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImport",
+            """#include\s+["<](\w+)[/\w+]*\.\w+[">]"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

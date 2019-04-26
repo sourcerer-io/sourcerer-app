@@ -4,12 +4,14 @@
 package app.hashers
 
 import app.Logger
+import app.Measurements
 import app.api.Api
 import app.extractors.Extractor
 import app.model.Commit
 import app.model.Repo
 import io.reactivex.Observable
 import java.util.concurrent.TimeUnit
+import kotlin.system.measureNanoTime
 
 /**
  * CommitHasher hashes repository and uploads stats to server.
@@ -18,6 +20,8 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
                    private val api: Api,
                    private val rehashes: List<String>,
                    private val emails: HashSet<String>) {
+
+    val CLASS_TAG = "CommitHasher-"
 
     init {
         // Delete locally missing commits from server. If found at least one
@@ -40,16 +44,19 @@ class CommitHasher(private val serverRepo: Repo = Repo(),
             // Hash only commits made by authors with specified emails.
             .filter { commit -> emails.contains(commit.author.email) }
             .map { commit ->
-                Logger.printCommitDetail("Extracting stats")
+                val time = measureNanoTime {
+                    Logger.printCommitDetail("Extracting stats")
 
-                // Mapping and stats extraction.
-                commit.stats = Extractor().extract(commit.diffs)
-                val statsNumStr = if (commit.stats.isNotEmpty()) {
-                    commit.stats.size.toString()
-                } else "No"
+                    // Mapping and stats extraction.
+                    commit.stats = Extractor().extract(commit.diffs)
+                    val statsNumStr = if (commit.stats.isNotEmpty()) {
+                        commit.stats.size.toString()
+                    } else "No"
 
-                Logger.printCommitDetail("$statsNumStr technology stats found")
-                Logger.debug { commit.stats.toString() }
+                    Logger.printCommitDetail("$statsNumStr technology stats found")
+                    Logger.debug { commit.stats.toString() }
+                }
+                Measurements.addMeasurement(CLASS_TAG + "MapCommit", time)
 
                 commit
             }

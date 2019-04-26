@@ -4,14 +4,28 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class RubyExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "RubyExtractor-"
         const val LANGUAGE_NAME = Lang.RUBY
-        val importRegex = Regex("""(require\s+'(\w+)'|load\s+'(\w+)\.\w+')""")
-        val commentRegex = Regex("""^([^\n]*#)[^\n]*""")
-        val extractImportRegex =
-            Regex("""(require\s+'(.+)'|load\s+'(\w+)\.\w+')""")
-        val includeRegex = Regex("""include\s+(\w+)::.+""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """(require\s+'(\w+)'|load\s+'(\w+)\.\w+')"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*#)[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """(require\s+'(.+)'|load\s+'(\w+)\.\w+')"""
+        )
+        val includeRegex = RegexMeasured(
+            CLASS_TAG + "includeRegex",
+            """include\s+(\w+)::.+"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

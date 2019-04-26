@@ -3,12 +3,24 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class RustExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "RustExtractor-"
         const val LANGUAGE_NAME = Lang.RUST
-        val importRegex = Regex("""^extern crate \w+;$""")
-        val commentRegex = Regex("(//.+$)|(/[*].*?[*]/)")
-        val extractImportRegex = Regex("""^extern crate (\w+);$""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^extern crate \w+;$"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            "(//.+$)|(/[*].*?[*]/)"
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """^extern crate (\w+);$"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

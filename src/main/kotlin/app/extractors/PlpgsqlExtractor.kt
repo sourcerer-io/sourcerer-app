@@ -3,7 +3,16 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 object PlpgsqlExtractor : ExtractorBase(
     language = Lang.PLPGSQL,
-    importRegex = Regex(""".+CREATE (?:EXTENSION|LANGUAGE) ([a-zA-Z_][a-zA-Z0-9_]*)"""),
-    commentRegex = Regex("""(--.*$)|(/[*].*?[*]/)"""))
+    importRegex = RegexMeasured(
+        "PlpgsqlExtractor-commentRegex",
+        """.+CREATE (?:EXTENSION|LANGUAGE) ([a-zA-Z_][a-zA-Z0-9_]*)"""
+    ),
+    commentRegex = RegexMeasured(
+        "PlpgsqlExtractor-commentRegex",
+        """(--.*$)|(/[*].*?[*]/)"""
+    )
+)

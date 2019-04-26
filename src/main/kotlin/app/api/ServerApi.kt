@@ -5,6 +5,7 @@ package app.api
 
 import app.BuildConfig
 import app.Logger
+import app.Measurements
 import app.config.Configurator
 import app.model.*
 import com.github.kittinunf.fuel.core.FuelManager
@@ -13,9 +14,11 @@ import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.google.protobuf.InvalidProtocolBufferException
 import java.security.InvalidParameterException
+import kotlin.system.measureNanoTime
 
 class ServerApi (private val configurator: Configurator) : Api {
     companion object {
+        private val CLASS_TAG = "ServerApi-"
         private val HEADER_VERSION_CODE = "app-version-code"
         private val HEADER_CONTENT_TYPE = "Content-Type"
         private val HEADER_CONTENT_TYPE_PROTO = "application/octet-stream"
@@ -128,21 +131,24 @@ class ServerApi (private val configurator: Configurator) : Api {
         var error: ApiError? = null
         var data: T? = null
 
-        try {
-            Logger.debug { "Request $requestName initialized" }
-            val (_, res, result) = request.responseString()
-            val (_, e) = result
-            if (e == null) {
-                Logger.debug { "Request $requestName success" }
-                data = parser(res.data)
-            } else {
+        val time = measureNanoTime {
+            try {
+                Logger.debug { "Request $requestName initialized" }
+                val (_, res, result) = request.responseString()
+                val (_, e) = result
+                if (e == null) {
+                    Logger.debug { "Request $requestName success" }
+                    data = parser(res.data)
+                } else {
+                    error = ApiError(e)
+                }
+            } catch (e: InvalidProtocolBufferException) {
+                error = ApiError(e)
+            } catch (e: InvalidParameterException) {
                 error = ApiError(e)
             }
-        } catch (e: InvalidProtocolBufferException) {
-            error = ApiError(e)
-        } catch (e: InvalidParameterException) {
-            error = ApiError(e)
         }
+        Measurements.addMeasurement(CLASS_TAG + "MakeRequest", time)
 
         return Result(data, error)
     }

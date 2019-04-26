@@ -4,12 +4,18 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class CSharpExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "CSharpExtractor-"
         const val LANGUAGE_NAME = Lang.CSHARP
-        val importRegex = Regex("""^.*using\s+(\w+[.\w+]*)""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val extractImportRegex = Regex("""using\s+(\w+[.\w+]*)""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex","""^.*using\s+(\w+[.\w+]*)""")
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex","""^([^\n]*//)[^\n]*""")
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex","""using\s+(\w+[.\w+]*)""")
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

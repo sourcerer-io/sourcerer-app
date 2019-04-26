@@ -4,22 +4,43 @@
 
 package app.extractors
 
+import app.RegexMeasured
 import app.model.CommitStats
 import app.model.DiffFile
+import app.split
 
 class PythonExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "PythonExtractor-"
         const val LANGUAGE_NAME = Lang.PYTHON
         const val COMPREHENSION_MAP = "map"
         const val COMPREHENSION_LIST = "list"
-        val docImportRegex = Regex("""^([^\n]*#|\s*\"\"\"|\s*import|""" +
-            """\s*from)[^\n]*""")
-        val commentRegex = Regex("""^(.*#).*""")
-        val extractImportRegex = Regex("""(from\s+(\w+)[.\w+]*\s+import|""" +
-            """import\s+(\w+(,\s*\w+)*))(as\s+)*""")
-        val mapRegex = Regex("""(map\([^,]+?,)""")
-        val listRegex = Regex("""\[.+? for .+? in .+?]""")
-        val lineEndRegex = Regex(""",\s*""")
+        val docImportRegex = RegexMeasured(
+            CLASS_TAG + "docImportRegex",
+            """^([^\n]*#|\s*\"\"\"|\s*import|""" +
+            """\s*from)[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^(.*#).*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """(from\s+(\w+)[.\w+]*\s+import|""" +
+            """import\s+(\w+(,\s*\w+)*))(as\s+)*"""
+        )
+        val mapRegex = RegexMeasured(
+            CLASS_TAG + "mapRegex",
+            """(map\([^,]+?,)"""
+        )
+        val listRegex = RegexMeasured(
+            CLASS_TAG + "listRegex",
+            """\[.+? for .+? in .+?]"""
+        )
+        val lineEndRegex = RegexMeasured(
+            CLASS_TAG + "lineEndRegex",
+            """,\s*"""
+        )
     }
 
     override fun extract(files: List<DiffFile>): List<CommitStats> {

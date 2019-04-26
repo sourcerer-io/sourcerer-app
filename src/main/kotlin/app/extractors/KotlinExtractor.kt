@@ -4,13 +4,27 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 class KotlinExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "KotlinExtractor-"
         const val LANGUAGE_NAME = Lang.KOTLIN
-        val importRegex = Regex("""^(.*import)\s[^\n]*""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
-        val packageRegex = Regex("""^(.*package)\s[^\n]*""")
-        val extractImportRegex = Regex("""import\s+(\w+[.\w+]*)""")
+        val importRegex = RegexMeasured(
+            CLASS_TAG + "importRegex",
+            """^(.*import)\s[^\n]*"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
+        val packageRegex = RegexMeasured(
+            CLASS_TAG + "packageRegex",
+            """^(.*package)\s[^\n]*"""
+        )
+        val extractImportRegex = RegexMeasured(
+            CLASS_TAG + "extractImportRegex",
+            """import\s+(\w+[.\w+]*)""")
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

@@ -4,16 +4,31 @@
 
 package app.extractors
 
+import app.RegexMeasured
 import app.model.CommitStats
 import app.model.DiffFile
+import app.split
 
 class JavascriptExtractor : ExtractorInterface {
     companion object {
+        const val CLASS_TAG = "JavascriptExtractor-"
         const val LANGUAGE_NAME = Lang.JAVASCRIPT
-        val splitRegex = Regex("""\s+|,|;|:|\*|\n|\(|\)|\[|]|\{|}|\+|=|\.|>|<|#|@|\$""")
-        val multilineCommentRegex = Regex("""/\*.+?\*/""")
-        val twoOrMoreWordsRegex = Regex("""(".+?\s.+?"|'.+?\s.+?')""")
-        val commentRegex = Regex("""^([^\n]*//)[^\n]*""")
+        val splitRegex = RegexMeasured(
+            CLASS_TAG + "splitRegex",
+            """\s+|,|;|:|\*|\n|\(|\)|\[|]|\{|}|\+|=|\.|>|<|#|@|\$"""
+        )
+        val multilineCommentRegex = RegexMeasured(
+            CLASS_TAG + "multilineCommentRegex",
+            """/\*.+?\*/"""
+        )
+        val twoOrMoreWordsRegex = RegexMeasured(
+            CLASS_TAG + "twoOrMoreWordsRegex",
+            """(".+?\s.+?"|'.+?\s.+?')"""
+        )
+        val commentRegex = RegexMeasured(
+            CLASS_TAG + "commentRegex",
+            """^([^\n]*//)[^\n]*"""
+        )
     }
 
     override fun extractImports(fileContent: List<String>): List<String> {

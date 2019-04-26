@@ -3,228 +3,297 @@
 
 package app.extractors
 
+import app.RegexMeasured
 import app.model.DiffFile
 import app.model.CommitStats
 
-val ActionscriptRegex = Regex(
+const val CLASS_TAG = "Heuristics-"
+
+val ActionscriptRegex = RegexMeasured(
+    CLASS_TAG + "ActionscriptRegex",
     "^\\s*(package\\s+[a-z0-9_\\.]+|import\\s+[a-zA-Z0-9_\\.]+;|class\\s+[A-Za-z0-9_]+\\s+extends\\s+[A-Za-z0-9_]+)",
     RegexOption.MULTILINE
 )
-val CoqRegex = Regex(
+val CoqRegex = RegexMeasured(
+    CLASS_TAG + "CoqRegex",
     """^Require\s""",
     RegexOption.MULTILINE
 )
-val CommonLispRegex = Regex(
+val CommonLispRegex = RegexMeasured(
+    CLASS_TAG + "CommonLispRegex",
     "^\\s*\\((defun|in-package|defpackage) ",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val CppRegex = Regex(
+val CppRegex = RegexMeasured(
+    CLASS_TAG + "CppRegex",
     "(template |class |namespace |#include <c?std[^.]+>)",
     RegexOption.MULTILINE
 )
-val DRegex = Regex(
+val DRegex = RegexMeasured(
+    CLASS_TAG + "DRegex",
     "^module\\s+[\\w.]*\\s*;|import\\s+[\\w\\s,.:]*;|\\w+\\s+\\w+\\s*\\(.*\\)(?:\\(.*\\))?\\s*\\{[^}]*\\}|unittest\\s*(?:\\(.*\\))?\\s*\\{[^}]*\\}",
     RegexOption.MULTILINE
 )
-val DtraceRegex = Regex(
+val DtraceRegex = RegexMeasured(
+    CLASS_TAG + "DtraceRegex",
     "^(\\w+:\\w*:\\w*:\\w*|BEGIN|END|provider\\s+|(tick|profile)-\\w+\\s+\\{[^}]*\\}|#pragma\\s+D\\s+(option|attributes|depends_on)\\s|#pragma\\s+ident\\s)",
     RegexOption.MULTILINE
 )
-val FilterscriptRegex = Regex(
+val FilterscriptRegex = RegexMeasured(
+    CLASS_TAG + "FilterscriptRegex",
     "#include|#pragma\\s+(rs|version)|__attribute__"
 )
-val FSharpRegex = Regex(
+val FSharpRegex = RegexMeasured(
+    CLASS_TAG + "FSharpRegex",
     "^\\s*(#light|import|let|module|namespace|open|type)",
     RegexOption.MULTILINE
 )
-val ForthRegex = Regex(
+val ForthRegex = RegexMeasured(
+    CLASS_TAG + "ForthRegex",
     "^: "
 )
-val ForthFsRegex = Regex(
+val ForthFsRegex = RegexMeasured(
+    CLASS_TAG + "ForthFsRegex",
     "^(: |new-device)"
 )
-val FortranRegex = Regex(
+val FortranRegex = RegexMeasured(
+    CLASS_TAG + "FortranRegex",
     "^([c*][^abd-z]|      (subroutine|program|end|data)\\s|\\s*!)",
     RegexOption.IGNORE_CASE
 )
-val GlslRegex = Regex(
+val GlslRegex = RegexMeasured(
+    CLASS_TAG + "GlslRegex",
     "^\\s*(#version|precision|uniform|varying|vec[234])",
     RegexOption.IGNORE_CASE
 )
-val IdlRegex = Regex(
+val IdlRegex = RegexMeasured(
+    CLASS_TAG + "IdlRegex",
     "^\\s*function[ \\w,]+$",
     RegexOption.MULTILINE
 )
-val IniPropsRegex = Regex(
+val IniPropsRegex = RegexMeasured(
+    CLASS_TAG + "IniPropsRegex",
     "\\w+\\s*=\\s*",
     RegexOption.IGNORE_CASE
 )
-val LexRegex = Regex(
+val LexRegex = RegexMeasured(
+    CLASS_TAG + "LexRegex",
     "^(%[%{}]xs|<.*>)",
     RegexOption.MULTILINE
 )
-val LimboRegex = Regex(
+val LimboRegex = RegexMeasured(
+    CLASS_TAG + "LimboRegex",
     "^\\w+\\s*:\\s*module\\s*\\{",
     RegexOption.MULTILINE
 )
-val MathematicaRegex = Regex(
+val MathematicaRegex = RegexMeasured(
+    CLASS_TAG + "MathematicaRegex",
     "\\*\\)$",
     RegexOption.MULTILINE
 )
-val MatlabRegex = Regex(
+val MatlabRegex = RegexMeasured(
+    CLASS_TAG + "MatlabRegex",
     """(^\s*%)|(^end$)""",
     RegexOption.MULTILINE
 )
 val MRegexs = setOf(
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "MRegex1",
         "^\\s*;",
         RegexOption.MULTILINE
     ),
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "MRegex2",
         "^\\w+\\s;",
         RegexOption.MULTILINE
     )
 )
-val MakefileRegex = Regex(
+val MakefileRegex = RegexMeasured(
+    CLASS_TAG + "MakefileRegex",
     "([\\/\\\\].*:\\s+.*\\s\\\\$|: \\\\$|^ : |^[\\w\\s\\/\\\\.]+\\w+\\.\\w+\\s*:\\s+[\\w\\s\\/\\\\.]+\\w+\\.\\w+)"
 )
-val MufRegex =Regex(
+val MufRegex = RegexMeasured(
+    CLASS_TAG + "MufRegex",
     "^: ",
     RegexOption.MULTILINE
 )
-val NewLispRegex = Regex(
+val NewLispRegex = RegexMeasured(
+    CLASS_TAG + "NewLispRegex",
     "^\\s*\\(define ",
     RegexOption.MULTILINE
 )
-val NotSqlRegex = Regex(
+val NotSqlRegex = RegexMeasured(
+    CLASS_TAG + "NotSqlRegex",
     "begin|boolean|package|exception",
     RegexOption.IGNORE_CASE
 )
-val ObjectiveCRegex = Regex(
+val ObjectiveCRegex = RegexMeasured(
+    CLASS_TAG + "ObjectiveCRegex",
     "^\\s*(@(interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])",
     RegexOption.MULTILINE
 )
-val OcamlRegex = Regex(
+val OcamlRegex = RegexMeasured(
+    CLASS_TAG + "OcamlRegex",
     "(^\\s*module)|let rec |match\\s+(\\S+\\s)+with",
     RegexOption.MULTILINE
 )
-val PascalRegex = Regex(
+val PascalRegex = RegexMeasured(
+    CLASS_TAG + "PascalRegex",
     "(^\\s*uses)|(function)|(program)",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val Perl5Regex = Regex(
+val Perl5Regex = RegexMeasured(
+    CLASS_TAG + "Perl5Regex",
     "\\buse\\s+(?:strict\\b|v?5\\.)"
 )
-val Perl6Regex = Regex(
+val Perl6Regex = RegexMeasured(
+    CLASS_TAG + "Perl6Regex",
     "^\\s*(?:use\\s+v6\\b|\\bmodule\\b|\\b(?:my\\s+)?class\\b)",
     RegexOption.MULTILINE
 )
-val PhpRegex = Regex(
+val PhpRegex = RegexMeasured(
+    CLASS_TAG + "PhpRegex",
     "^<\\?(?:php)?"
 )
-val PicoLispRegex = Regex(
+val PicoLispRegex = RegexMeasured(
+    CLASS_TAG + "PicoLispRegex",
     "^\\((de|class|rel|code|data|must)\\s",
     RegexOption.MULTILINE
 )
 val PlpgsqlRegexs = setOf(
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "PlpgsqlRegex1",
         "^\\\\i\\b|AS \\$\\$|LANGUAGE '?plpgsql'?",
         setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
     ),
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "PlpgsqlRegex2",
         "SECURITY (DEFINER|INVOKER)",
         RegexOption.IGNORE_CASE
     ),
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "PlpgsqlRegex3",
         "BEGIN( WORK| TRANSACTION)?;",
         RegexOption.IGNORE_CASE
     )
 )
 val PlsqlRegexs = setOf(
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "PlsqlRegex1",
         "\\\$\\\$PLSQL_|XMLTYPE|sysdate|systimestamp|\\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)",
         RegexOption.IGNORE_CASE
     ),
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "PlsqlRegex2",
         "constructor\\W+function",
         RegexOption.IGNORE_CASE
     )
 )
-val PovRaySdlRegex = Regex(
+val PovRaySdlRegex = RegexMeasured(
+    CLASS_TAG + "PovRaySdlRegex",
     "^\\s*#(declare|local|macro|while)\\s", RegexOption.MULTILINE
 )
-val PrologRegex = Regex(
+val PrologRegex = RegexMeasured(
+    CLASS_TAG + "PrologRegex",
     "^[^#]*:-",
     RegexOption.MULTILINE
 )
-val PythonRegex = Regex(
+val PythonRegex = RegexMeasured(
+    CLASS_TAG + "PythonRegex",
     "(^(import|from|class|def)\\s)",
     RegexOption.MULTILINE
 )
-val RRegex = Regex(
+val RRegex = RegexMeasured(
+    CLASS_TAG + "RRegex",
     "<-|^\\s*#"
 )
-val RebolRegex = Regex(
+val RebolRegex = RegexMeasured(
+    CLASS_TAG + "RebolRegex",
     "\\bRebol\\b",
     RegexOption.IGNORE_CASE
 )
-val RoffRegex = Regex(
+val RoffRegex = RegexMeasured(
+    CLASS_TAG + "RoffRegex",
     "^\\.[a-z][a-z](\\s|$)",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val RustRegex = Regex(
+val RustRegex = RegexMeasured(
+    CLASS_TAG + "RustRegex",
     "^(use |fn |mod |pub |macro_rules|impl|#!?\\[)",
     RegexOption.MULTILINE
 )
-val RenderscriptRegex = Regex(
+val RenderscriptRegex = RegexMeasured(
+    CLASS_TAG + "RenderscriptRegex",
     "#include|#pragma\\s+(rs|version)|__attribute__"
 )
-val ScalaRegex = Regex(
+val ScalaRegex = RegexMeasured(
+    CLASS_TAG + "ScalaRegex",
     "^\\s*import (scala|java)\\./.match(data) || /^\\s*val\\s+\\w+\\s*=/.match(data) || /^\\s*class\\b",
     RegexOption.MULTILINE
 )
-val SmalltalkRegex = Regex(
+val SmalltalkRegex = RegexMeasured(
+    CLASS_TAG + "SmalltalkRegex",
     "![\\w\\s]+methodsFor: "
 )
 val SqlplRegexs = setOf(
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "SqlplRegex1",
         "(alter module)|(language sql)|(begin( NOT)+ atomic)",
         RegexOption.IGNORE_CASE
     ),
-    Regex(
+    RegexMeasured(
+        CLASS_TAG + "SqlplRegex2",
         "signal SQLSTATE '[0-9]+'",
         RegexOption.IGNORE_CASE
     )
 )
-val StandardMlRegex = Regex(
+val StandardMlRegex = RegexMeasured(
+    CLASS_TAG + "StandardMlRegex",
     "=> |case\\s+(\\S+\\s)+of"
 )
 val SupercolliderRegexs = setOf(
-    Regex("\\^(this|super)\\."),
-    Regex("^\\s*(\\+|\\*)\\s*\\w+\\s*\\{", RegexOption.MULTILINE),
-    Regex("^\\s*~\\w+\\s*=\\.", RegexOption.MULTILINE)
+    RegexMeasured(
+        CLASS_TAG + "SupercolliderRegex1",
+        "\\^(this|super)\\."
+    ),
+    RegexMeasured(
+        CLASS_TAG + "SupercolliderRegex2",
+        "^\\s*(\\+|\\*)\\s*\\w+\\s*\\{",
+        RegexOption.MULTILINE
+    ),
+    RegexMeasured(
+        CLASS_TAG + "SupercolliderRegex3",
+        "^\\s*~\\w+\\s*=\\.",
+        RegexOption.MULTILINE
+    )
 )
-val TexRegex = Regex(
+val TexRegex = RegexMeasured(
+    CLASS_TAG + "TexRegex",
     "\\\\\\w+\\{"
 )
-val TypescriptRegex = Regex(
+val TypescriptRegex = RegexMeasured(
+    CLASS_TAG + "TypescriptRegex",
     "^\\s*(import.+(from\\s+|require\\()['\"]react|\\/\\/\\/\\s*<reference\\s)",
     RegexOption.MULTILINE
 )
-val XmlPropsRegex = Regex(
+val XmlPropsRegex = RegexMeasured(
+    CLASS_TAG + "XmlPropsRegex",
     "^(\\s*)(<Project|<Import|<Property|<?xml|xmlns)",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val XmltsRegex = Regex(
+val XmltsRegex = RegexMeasured(
+    CLASS_TAG + "XmltsRegex",
     "<TS\\b"
 )
 // Mystical \uFEFF 'ZERO WIDTH NO-BREAK SPACE' unicode character may appear
 // in beginning of files.
-val XmlRegex = Regex(
+val XmlRegex = RegexMeasured(
+    CLASS_TAG + "XmlRegex",
     "^\\uFEFF?\\s*<\\?xml\\s+version",
     setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE)
 )
-val XpmRegex = Regex(
+val XpmRegex = RegexMeasured(
+    CLASS_TAG + "XpmRegex",
     "^\\s*\\/\\* XPM \\*\\/",
     RegexOption.MULTILINE
 )

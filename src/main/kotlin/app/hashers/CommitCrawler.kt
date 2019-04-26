@@ -5,6 +5,8 @@
 package app.hashers
 
 import app.Logger
+import app.Measurements
+import app.RegexMeasured
 import app.model.Author
 import app.model.Commit
 import app.model.DiffContent
@@ -29,6 +31,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.util.LinkedList
+import kotlin.system.measureNanoTime
 
 data class JgitData(var commit: RevCommit? = null,
                     var list: List<JgitDiff>? = null,
@@ -43,6 +46,8 @@ data class JgitDiff(val diffEntry: DiffEntry, val editList: EditList)
 * Iterates over the diffs between commits in the repo's history.
 */
 object CommitCrawler {
+    const val CLASS_TAG = "CommitCrawler-"
+
     private const val REMOTE_HEAD = "refs/remotes/origin/HEAD"
     private const val REMOTE_MASTER_BRANCH = "refs/remotes/origin/master"
     private const val LOCAL_MASTER_BRANCH = "refs/heads/master"
@@ -51,7 +56,10 @@ object CommitCrawler {
                               LOCAL_MASTER_BRANCH, LOCAL_HEAD)
     private val CONF_FILE_PATH = ".sourcerer-conf"
     private val MAX_DIFF_SIZE = 600000
-    private val coauthoredRegex = Regex("""Co-authored-by: (.+) <(.+)>""")
+    private val coauthoredRegex = RegexMeasured(
+        CLASS_TAG + "CoauthoredRegex",
+        """Co-authored-by: (.+) <(.+)>"""
+    )
 
     fun getDefaultBranchHead(git: Git): ObjectId {
         for (ref in REFS) {
@@ -145,25 +153,34 @@ object CommitCrawler {
         var commit: RevCommit? = revWalk.next()  // Move the walker to the head.
         while (commit != null && commit != tail) {
             commitCount++
-            val parentCommit: RevCommit? = revWalk.next()
+            var parentCommit: RevCommit? = null
 
-            // Smart casts are not yet supported for a mutable variable captured
-            // in an inline lambda, see
-            // https://youtrack.jetbrains.com/issue/KT-7186.
-            if (Logger.isTrace) {
-                val commitName = commit.name
-                val commitMsg = commit.shortMessage
-                Logger.trace { "commit: $commitName; '$commitMsg'" }
-                if (parentCommit != null) {
-                    val parentCommitName = parentCommit.name
-                    val parentCommitMsg = parentCommit.shortMessage
-                    Logger.trace { "parent commit: $parentCommitName; " +
-                        "'$parentCommitMsg'" }
-                }
-                else {
-                    Logger.trace { "parent commit: null" }
+            val timeWalkNext = measureNanoTime {
+                parentCommit = revWalk.next()
+            }
+            Measurements.addMeasurement(CLASS_TAG + "WalkNext", timeWalkNext)
+
+            val timeTraceLogs = measureNanoTime {
+                // Smart casts are not yet supported for a mutable variable captured
+                // in an inline lambda, see
+                // https://youtrack.jetbrains.com/issue/KT-7186.
+                if (Logger.isTrace) {
+                    val commitName = commit!!.name
+                    val commitMsg = commit!!.shortMessage
+                    Logger.trace { "commit: $commitName; '$commitMsg'" }
+                    if (parentCommit != null) {
+                        val parentCommitName = parentCommit!!.name
+                        val parentCommitMsg = parentCommit!!.shortMessage
+                        Logger.trace {
+                            "parent commit: $parentCommitName; " +
+                                "'$parentCommitMsg'"
+                        }
+                    } else {
+                        Logger.trace { "parent commit: null" }
+                    }
                 }
             }
+            Measurements.addMeasurement(CLASS_TAG + "TraceLogs", timeTraceLogs)
 
             val perc = if (totalCommitCount != 0) {
                 (commitCount.toDouble() / totalCommitCount) * 100
@@ -177,59 +194,73 @@ object CommitCrawler {
             }
             val paths = mutableListOf<String>()
 
-            val diffEntries = df.scan(parentCommit, commit)
-            .filter { diff ->
+            var diffEntriesAll:List<DiffEntry>? = null
+            val timeScan = measureNanoTime {
+                diffEntriesAll = df.scan(parentCommit, commit)
+            }
+            Measurements.addMeasurement(CLASS_TAG + "DiffScan", timeScan)
+
+            val diffEntries = diffEntriesAll!!.filter { diff ->
                 diff.changeType != DiffEntry.ChangeType.COPY
             }
             .filter { diff ->
-                val path = diff.newPath
-                for (cnv in VendorConventions) {
-                    if (cnv.containsMatchIn(path) ||
-                        cnv.containsMatchIn(diff.oldPath)) {
-                        return@filter false
+                var res = false
+                val time = measureNanoTime {
+                    val path = diff.newPath
+                    for (cnv in VendorConventions) {
+                        if (cnv.containsMatchIn(path) ||
+                            cnv.containsMatchIn(diff.oldPath)) {
+                            return@filter false
+                        }
                     }
-                }
 
-                val fileId =
-                    if (path != DiffEntry.DEV_NULL) {
-                        diff.newId.toObjectId()
-                    } else {
-                        diff.oldId.toObjectId()
+                    val fileId =
+                        if (path != DiffEntry.DEV_NULL) {
+                            diff.newId.toObjectId()
+                        } else {
+                            diff.oldId.toObjectId()
+                        }
+                    val stream = try {
+                        repo.open(fileId).openStream()
+                    } catch (e: Exception) {
+                        null
                     }
-                val stream = try {
-                    repo.open(fileId).openStream()
-                } catch (e: Exception) {
-                    null
+                    res = stream != null && !RawText.isBinary(stream)
                 }
-                stream != null && !RawText.isBinary(stream)
+                Measurements.addMeasurement(CLASS_TAG + "IsBinaryFilter", time)
+                res
             }
             .filter { diff ->
-                val filePath =
-                    if (diff.getNewPath() != DiffEntry.DEV_NULL) {
-                        diff.getNewPath()
-                    } else {
-                        diff.getOldPath()
+                var res = false
+                val time = measureNanoTime {
+                    val filePath =
+                        if (diff.getNewPath() != DiffEntry.DEV_NULL) {
+                            diff.getNewPath()
+                        } else {
+                            diff.getOldPath()
+                        }
+
+                    // Update ignored paths list. The config file has retroactive
+                    // force, i.e. if it was added at this commit, then we presume
+                    // it is applied to all commits, preceding this commit.
+                    if (diff.getOldPath() == CONF_FILE_PATH) {
+                        ignoredPaths =
+                            getIgnoredPaths(repo, diff.getNewId().toObjectId())
                     }
 
-                // Update ignored paths list. The config file has retroactive
-                // force, i.e. if it was added at this commit, then we presume
-                // it is applied to all commits, preceding this commit.
-                if (diff.getOldPath() == CONF_FILE_PATH) {
-                    ignoredPaths =
-                        getIgnoredPaths(repo, diff.getNewId().toObjectId())
+                    res = if (!ignoredPaths.any { path ->
+                            if (path.endsWith("/")) {
+                                filePath.startsWith(path)
+                            } else {
+                                path == filePath
+                            }
+                        }) {
+                        paths.add(filePath)
+                        true
+                    } else false
                 }
-
-                if (!ignoredPaths.any { path ->
-                    if (path.endsWith("/")) {
-                        filePath.startsWith(path)
-                    }
-                    else {
-                        path == filePath
-                    }
-                }) {
-                    paths.add(filePath)
-                    true
-                } else false
+                Measurements.addMeasurement(CLASS_TAG + "IgnorePathFilter", time)
+                res
             }
 
             val jgitData = JgitData()
@@ -237,16 +268,19 @@ object CommitCrawler {
                 jgitData.commit = commit
             }
             if (extractDiffs) {
-                val diffEdits = diffEntries
-                .map { diff ->
-                    JgitDiff(diff, df.toFileHeader(diff).toEditList())
+                val time = measureNanoTime {
+                    val diffEdits = diffEntries
+                        .map { diff ->
+                            JgitDiff(diff, df.toFileHeader(diff).toEditList())
+                        }
+                        .filter { diff ->
+                            diff.editList.fold(0) { acc, edit ->
+                                acc + edit.lengthA + edit.lengthB
+                            } < MAX_DIFF_SIZE
+                        }
+                    jgitData.list = diffEdits
                 }
-                .filter { diff ->
-                    diff.editList.fold(0) { acc, edit ->
-                        acc + edit.lengthA + edit.lengthB
-                    } < MAX_DIFF_SIZE
-                }
-                jgitData.list = diffEdits
+                Measurements.addMeasurement(CLASS_TAG + "ExtractDiffs", time)
             }
             if (extractPaths) {
                 jgitData.paths = paths
@@ -279,17 +313,24 @@ object CommitCrawler {
         return jgitObservable.map( { jgitData ->
             // Mapping and stats extraction.
             val commit = Commit(jgitData.commit!!, jgitData.coauthors)
-            commit.diffs = getDiffFiles(git.repository, jgitData.list!!)
+            val timeGetDiffFiles = measureNanoTime {
+                commit.diffs = getDiffFiles(git.repository, jgitData.list!!)
+            }
+            Measurements.addMeasurement(CLASS_TAG + "GetDiffFiles", timeGetDiffFiles)
 
             // Count lines on all non-binary files. This is additional
             // statistics to CommitStats because not all file extensions
             // may be supported.
-            commit.numLinesAdded = commit.diffs.fold(0) { total, file ->
-                total + file.getAllAdded().size
+            val timeFoldDiffs = measureNanoTime {
+                commit.numLinesAdded = commit.diffs.fold(0) { total, file ->
+                    total + file.getAllAdded().size
+                }
+                commit.numLinesDeleted = commit.diffs.fold(0) { total, file ->
+                    total + file.getAllDeleted().size
+                }
             }
-            commit.numLinesDeleted = commit.diffs.fold(0) { total, file ->
-                total + file.getAllDeleted().size
-            }
+            Measurements.addMeasurement(CLASS_TAG + "FoldDiffs", timeFoldDiffs)
+
             commit.repo = repo
 
             commit

@@ -3,8 +3,16 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 object ScalaExtractor : ExtractorBase(
     language = Lang.SCALA,
-    importRegex = Regex("""^import (?:_root_\.)?((?:\.?[a-z]+)+\.)"""),
-    commentRegex = Regex("(//.+$)|(/[*].*?[*]/)"),
+    importRegex = RegexMeasured(
+        "ScalaExtractor-importRegex",
+        """^import (?:_root_\.)?((?:\.?[a-z]+)+\.)"""
+    ),
+    commentRegex = RegexMeasured(
+        "ScalaExtractor-commentRegex",
+        "(//.+$)|(/[*].*?[*]/)"
+    ),
     importStartsWith = true)

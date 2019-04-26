@@ -4,7 +4,16 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 object SwiftExtractor : ExtractorBase(
     language = Lang.SWIFT,
-    importRegex = Regex("""import\s+(\w+)"""),
-    commentRegex = Regex("""^([^\n]*//)[^\n]*"""))
+    importRegex = RegexMeasured(
+        "SwiftExtractor-importRegex",
+        """import\s+(\w+)"""
+    ),
+    commentRegex = RegexMeasured(
+        "SwiftExtractor-commentRegex",
+        """^([^\n]*//)[^\n]*"""
+    )
+)

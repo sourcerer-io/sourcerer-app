@@ -6,7 +6,9 @@ package app.hashers
 
 import app.FactCodes
 import app.Logger
+import app.RegexMeasured
 import app.api.Api
+import app.contains
 import app.extractors.Extractor
 import app.model.Author
 import app.model.Commit
@@ -23,6 +25,8 @@ class FactHasher(private val serverRepo: Repo = Repo(),
                  private val api: Api,
                  private val rehashes: List<String>,
                  private val emails: HashSet<String>) {
+    private val CLASS_TAG = "FactHasher-"
+
     private val fsDayWeek = hashMapOf<String, Array<Int>>()
     private val fsDayTime = hashMapOf<String, Array<Int>>()
     private val fsRepoDateStart = hashMapOf<String, Long>()
@@ -114,7 +118,10 @@ class FactHasher(private val serverRepo: Repo = Repo(),
             val tokens = Extractor().tokenize(line)
             val underscores = tokens.count { it.contains('_') }
             val camelCases = tokens.count {
-                !it.contains('_') && it.contains(Regex("[a-z][A-Z]"))
+                !it.contains('_') && it.contains(RegexMeasured(
+                    CLASS_TAG + "VariableNaming",
+                    "[a-z][A-Z]"
+                ))
             }
             val others = tokens.size - underscores - camelCases
             fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_SNAKE_CASE] +=

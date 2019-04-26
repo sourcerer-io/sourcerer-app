@@ -11,8 +11,10 @@ object Measurements {
     }
 
     fun showAllMeasurements() {
-        measureMap.forEach { key, value ->
-            Logger.info { "$key -> $value" }
+        Logger.info { "Measurements:" }
+        Logger.info { measureMap.keys.joinToString(" ") }
+        measureMap.toList().sortedBy { it.second }.forEach {
+            Logger.info { "${it.first} -> ${it.second}" }
         }
     }
 }

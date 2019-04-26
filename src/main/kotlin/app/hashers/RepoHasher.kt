@@ -5,6 +5,7 @@ package app.hashers
 
 import app.BuildConfig
 import app.Logger
+import app.Measurements
 import app.api.Api
 import app.config.Configurator
 import app.model.Author
@@ -22,9 +23,12 @@ import java.io.IOException
 import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.collections.HashSet
+import kotlin.system.measureNanoTime
 
 class RepoHasher(private val api: Api,
                  private val configurator: Configurator) {
+    val CLASS_TAG = "RepoHasher-"
+
     fun update(localRepo: LocalRepo) {
         val startTime = LocalDateTime.now()
         Logger.debug { "RepoHasher.update call: $localRepo" }
@@ -82,8 +86,11 @@ class RepoHasher(private val api: Api,
 
             // Hash by all plugins.
             if (BuildConfig.COMMIT_HASHER_ENABLED) {
-                CommitHasher(serverRepo, api, rehashes, filteredEmails)
-                    .updateFromObservable(observable, onError)
+                val time = measureNanoTime {
+                    CommitHasher(serverRepo, api, rehashes, filteredEmails)
+                        .updateFromObservable(observable, onError)
+                }
+                Measurements.addMeasurement(CLASS_TAG + "CommitHasher", time)
             }
             if (BuildConfig.FACT_HASHER_ENABLED) {
                 FactHasher(serverRepo, api, rehashes, filteredEmails)

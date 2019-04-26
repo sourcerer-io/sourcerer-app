@@ -3,9 +3,11 @@
 
 package app.extractors
 
+import app.RegexMeasured
+
 open class ExtractorBase(private val language: String,
-                         private val importRegex: Regex,
-                         private val commentRegex: Regex,
+                         private val importRegex: RegexMeasured,
+                         private val commentRegex: RegexMeasured,
                          private val importStartsWith: Boolean = false) :
         ExtractorInterface {
     override fun extractImports(fileContent: List<String>): List<String> {
