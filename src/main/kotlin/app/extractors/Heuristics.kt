@@ -286,7 +286,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.ASSEMBLY)
     },
     "al" to { _ ->
-        CommonExtractor(Lang.PERL)
+        PerlExtractor(Lang.PERL)
     },
     "as" to { buf ->
         if (ActionscriptRegex.containsMatchIn(buf)) {
@@ -331,7 +331,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     },
     "cgi" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL)
+            PerlExtractor(Lang.PERL)
         } else null
     },
     "cl" to { _ ->
@@ -492,7 +492,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     },
     "fcgi" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL)
+            PerlExtractor(Lang.PERL)
         } else {
             CommonExtractor(Lang.LUA)
         }
@@ -764,7 +764,7 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         CommonExtractor(Lang.PROLOG)
     },
     "p6" to { _ ->
-        CommonExtractor(Lang.PERL6)
+        PerlExtractor(Lang.PERL6)
     },
     "p8" to { _ ->
         CommonExtractor(Lang.LUA)
@@ -816,9 +816,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         if (PrologRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.PROLOG)
         } else if (Perl6Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL6)
+            PerlExtractor(Lang.PERL6)
         } else {
-            CommonExtractor(Lang.PERL)
+            PerlExtractor(Lang.PERL)
         }
     },
     "plb" to { _ ->
@@ -832,15 +832,15 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     },
     "pm" to { buf ->
         if (Perl5Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL)
+            PerlExtractor(Lang.PERL)
         } else if (Perl6Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL6)
+            PerlExtractor(Lang.PERL6)
         } else if (XpmRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XPM)
         } else null
     },
     "pm6" to { _ ->
-        CommonExtractor(Lang.PERL6)
+        PerlExtractor(Lang.PERL6)
     },
     "pom" to { _ ->
         CommonExtractor(Lang.MAVENPOM)
@@ -1029,9 +1029,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     },
     "t" to { buf ->
         if (Perl6Regex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.PERL6)
+            PerlExtractor(Lang.PERL6)
         } else {
-            CommonExtractor(Lang.PERL)
+            PerlExtractor(Lang.PERL)
         }
     },
     "tab" to { _ ->

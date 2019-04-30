@@ -370,6 +370,19 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Perl") {
+        it("Perl single-line comment") {
+            var lines = listOf("#use Test::Base;")
+            var actualLineImports = PerlExtractor(Lang.PERL).extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Perl use") {
+            var line = """use Test::Base;"""
+            val import = "Test::Base"
+            assertExtractsImport(import, line, PerlExtractor(Lang.PERL))
+        }
+    }
+
     given("PLpgSQL") {
         it("PLpgSQL single-line comment") {
             var lines = listOf("-- CREATE EXTENSION ltree")
