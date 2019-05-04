@@ -131,12 +131,14 @@ interface ExtractorInterface {
 
         if (startsWith) {
             val map = libsMeta.importToIndexMap[lang]
-            val baseImport = map!!.keys.find { import.startsWith(it) }
-            if (baseImport != null) {
-                return map[baseImport]
+            val baseImports = map!!.keys.filter { import.startsWith(it) }
+            if (baseImports.isEmpty()) {
+                return null
             }
-
-            return null
+            val baseImport = baseImports.reduce { acc, s ->
+                if (s.length > acc.length) s else acc
+            }
+            return map[baseImport]
         }
 
         return libsMeta.importToIndexMap[lang]!![import]

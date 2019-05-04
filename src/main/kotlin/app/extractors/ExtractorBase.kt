@@ -30,7 +30,7 @@ open class ExtractorBase(private val language: String,
     }
 
     override fun mapImportToIndex(import: String, lang: String, startsWith: Boolean): String? {
-        return super.mapImportToIndex(import, language, startsWith = importStartsWith)
+        return super.mapImportToIndex(import, lang, startsWith = importStartsWith)
     }
 
     override fun getLanguageName(): String? {

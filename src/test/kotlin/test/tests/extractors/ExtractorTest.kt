@@ -381,6 +381,21 @@ class ExtractorTest : Spek({
             val import = "Test::Base"
             assertExtractsImport(import, line, PerlExtractor(Lang.PERL))
         }
+        it("Perl import with string") {
+            var line = "use Dancer2 ':syntax';"
+            val import = "Dancer2 ':syntax'"
+            assertExtractsImport(import, line, PerlExtractor(Lang.PERL))
+        }
+        it("maps import") {
+            val import = "Dancer2 ':syntax'"
+            assertMapsIndex("perl.Dancer2", import, Lang.PERL,
+                PerlExtractor(Lang.PERL))
+        }
+        it("maps import in perl6 language") {
+            val import = "Dancer2 ':syntax'"
+            assertMapsIndex("perl.Dancer2", import, Lang.PERL6,
+                PerlExtractor(Lang.PERL6))
+        }
     }
 
     given("PLpgSQL") {

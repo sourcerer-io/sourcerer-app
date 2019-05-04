@@ -68,6 +68,8 @@ class ClassifierManager {
                 prob > 0.9
             } else if (libId.startsWith(Lang.CRYSTAL)) {
                 prob > 0.7
+            } else if (libId.startsWith(Lang.PERL)) {
+                prob > 0.8
             } else if (libId.startsWith("rb.dry-")) {
                 prob > 0.85
             } else if (libId == "js.q") {
