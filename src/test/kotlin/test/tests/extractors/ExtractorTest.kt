@@ -370,6 +370,34 @@ class ExtractorTest : Spek({
         }
     }
 
+    given("Perl") {
+        it("Perl single-line comment") {
+            var lines = listOf("#use Test::Base;")
+            var actualLineImports = PerlExtractor(Lang.PERL).extractImports(lines)
+            assertTrue(actualLineImports.isEmpty())
+        }
+        it("Perl use") {
+            var line = """use Test::Base;"""
+            val import = "Test::Base"
+            assertExtractsImport(import, line, PerlExtractor(Lang.PERL))
+        }
+        it("Perl import with string") {
+            var line = "use Dancer2 ':syntax';"
+            val import = "Dancer2 ':syntax'"
+            assertExtractsImport(import, line, PerlExtractor(Lang.PERL))
+        }
+        it("maps import") {
+            val import = "Dancer2 ':syntax'"
+            assertMapsIndex("perl.Dancer2", import, Lang.PERL,
+                PerlExtractor(Lang.PERL))
+        }
+        it("maps import in perl6 language") {
+            val import = "Dancer2 ':syntax'"
+            assertMapsIndex("perl.Dancer2", import, Lang.PERL6,
+                PerlExtractor(Lang.PERL6))
+        }
+    }
+
     given("PLpgSQL") {
         it("PLpgSQL single-line comment") {
             var lines = listOf("-- CREATE EXTENSION ltree")

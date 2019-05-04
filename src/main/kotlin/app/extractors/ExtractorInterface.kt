@@ -105,11 +105,18 @@ interface ExtractorInterface {
 
     fun tokenize(line: String): List<String> {
         // TODO(lyaronskaya): Multiline comment regex.
+
+        // TODO(anatoly): Optimize this regex, better to get rid of it.
         val newLine = stringRegex.replace(line, "")
-        val tokens = splitRegex.split(newLine).filter {
-            it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
+
+        val tokens = newLine.split(' ', '[', ',', ';', '*', '\n', ')', '(',
+            '[', ']', '}', '{', '+', '-', '=', '&', '$', '!', '.', '>', '<',
+            '#', '@', ':', '?', ']')
+            .filter {
+                it.isNotBlank() && !it.contains('"') && !it.contains('\'') &&
                 it != "-" && it != "@"
-        }
+            }
+
         return tokens
     }
 
@@ -124,12 +131,14 @@ interface ExtractorInterface {
 
         if (startsWith) {
             val map = libsMeta.importToIndexMap[lang]
-            val baseImport = map!!.keys.find { import.startsWith(it) }
-            if (baseImport != null) {
-                return map[baseImport]
+            val baseImports = map!!.keys.filter { import.startsWith(it) }
+            if (baseImports.isEmpty()) {
+                return null
             }
-
-            return null
+            val baseImport = baseImports.reduce { acc, s ->
+                if (s.length > acc.length) s else acc
+            }
+            return map[baseImport]
         }
 
         return libsMeta.importToIndexMap[lang]!![import]

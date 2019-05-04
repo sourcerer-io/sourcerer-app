@@ -35,6 +35,8 @@ class FactHasher(private val serverRepo: Repo = Repo(),
     private val fsVariableNaming = hashMapOf<String, Array<Int>>()
     private val fsIndentation = hashMapOf<String, Array<Int>>()
 
+    private val varNamingRegex = Regex("[a-z][A-Z]")
+
     init {
         for (author in emails) {
             fsDayWeek[author] = Array(7) { 0 }
@@ -114,7 +116,7 @@ class FactHasher(private val serverRepo: Repo = Repo(),
             val tokens = Extractor().tokenize(line)
             val underscores = tokens.count { it.contains('_') }
             val camelCases = tokens.count {
-                !it.contains('_') && it.contains(Regex("[a-z][A-Z]"))
+                !it.contains('_') && it.contains(varNamingRegex)
             }
             val others = tokens.size - underscores - camelCases
             fsVariableNaming[email]!![FactCodes.VARIABLE_NAMING_SNAKE_CASE] +=
