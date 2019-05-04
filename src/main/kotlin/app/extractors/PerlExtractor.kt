@@ -6,4 +6,12 @@ package app.extractors
 class PerlExtractor(private val language: String) : ExtractorBase(
     language,
     importRegex = Regex("""^use (.+);"""),
-    commentRegex = Regex("""([^\n]*#.*$)"""))
+    commentRegex = Regex("""([^\n]*#.*$)"""),
+    importStartsWith = true) {
+
+    override fun mapImportToIndex(import: String, lang: String,
+                                  startsWith: Boolean): String? {
+        // Perl and Perl6 share libraries
+        return super.mapImportToIndex(import, Lang.PERL, startsWith)
+    }
+}
