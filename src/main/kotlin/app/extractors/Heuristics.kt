@@ -623,6 +623,9 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
     "ino" to { _ ->
         CommonExtractor(Lang.ARDUINO)
     },
+    "ipynb" to { _ ->
+        IPythonExtractor()
+    },
     "java" to { _ ->
         JavaExtractor()
     },

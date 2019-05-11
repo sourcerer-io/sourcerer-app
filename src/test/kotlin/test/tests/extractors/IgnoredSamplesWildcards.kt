@@ -177,7 +177,6 @@ var ignoredSamplesWildcards = listOf(
     "*/Jison Lex/*",
     "*/Jolie/*",
     "*/Julia/julia",
-    "*/Jupyter Notebook/*",
     "*/KRL/*",
     "*/KiCad Layout/*",
     "*/KiCad Legacy Layout/*",
