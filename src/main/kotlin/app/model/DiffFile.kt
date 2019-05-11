@@ -9,8 +9,8 @@ import org.eclipse.jgit.diff.DiffEntry
 class DiffFile(
     val path: String = "",
     val changeType: DiffEntry.ChangeType,
-    val old: DiffContent = DiffContent(),
-    val new: DiffContent = DiffContent(),
+    var old: DiffContent = DiffContent(),
+    var new: DiffContent = DiffContent(),
     var lang: String = ""
 ) {
     val extension: String = FileHelper.getFileExtension(path)

@@ -36,8 +36,8 @@ buildConfig {
     buildConfigField 'String', 'PROFILE_URL', 'https://sourcerer.io/'
 
     // App version.
-    buildConfigField 'int', 'VERSION_CODE', '24'
-    buildConfigField 'String', 'VERSION', '0.3.12'
+    buildConfigField 'int', 'VERSION_CODE', '25'
+    buildConfigField 'String', 'VERSION', '0.3.13'
 
     // Logging.
     buildConfigField 'String', 'ENV', project.hasProperty('env') ? env : 'production'
@@ -107,6 +107,7 @@ dependencies {
     compile 'org.eclipse.jgit:org.eclipse.jgit:4.9.0.201710071750-r'
     compile 'org.slf4j:slf4j-nop:1.7.2'
     compile 'io.sentry:sentry:1.7.3'
+    compile 'org.json:json:20180813'
 
     testCompile 'commons-io:commons-io:2.6'
     testCompile 'org.jetbrains.kotlin:kotlin-test'

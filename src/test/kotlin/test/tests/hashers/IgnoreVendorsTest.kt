@@ -4,19 +4,13 @@
 package test.tests.hashers
 
 import app.api.MockApi
-import app.extractors.Extractor
 import app.hashers.CommitHasher
 import app.hashers.CommitCrawler
 import app.model.*
-import app.utils.RepoHelper
-import org.eclipse.jgit.api.Git
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import test.utils.TestRepo
-import java.io.File
-import java.util.stream.StreamSupport.stream
-import kotlin.streams.toList
 import kotlin.test.assertEquals
 
 class IgnoreVendorsTest : Spek({
@@ -69,6 +63,52 @@ class IgnoreVendorsTest : Spek({
             assertEquals(1, mapStats.size)
             assertEquals(1, mapStats.map { it.numLinesAdded }.sum())
             assertEquals(0, mapStats.map { it.numLinesDeleted }.sum())
+        }
+
+        it("t2: ipynb files") {
+            val lines = """{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<style>.container { width:90% !important; }</style>"
+      ],
+      "text/plain": [
+       "<IPython.core.display.HTML object>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "from IPython.core.display import display, HTML",
+    "display(HTML(\"<style>.container { width:90% !important; }</style>\"))"
+   ]
+  }]}""".split("\n")
+
+            testRepo.createFile("lala.ipynb", lines)
+            testRepo.commit(message = "commit with ipython", author = author)
+
+            val errors = mutableListOf<Throwable>()
+            CommitHasher(serverRepo, mockApi, listOf("rehashes"), emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+            assertEquals(0, errors.size)
+
+            val stats = mockApi.receivedAddedCommits
+            .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                allStats.addAll(commit.stats)
+                allStats
+            }
+
+            assertEquals(3, stats.size)
+            assertEquals(4, stats.map { it.numLinesAdded }.sum())
+            assertEquals(0, stats.map { it.numLinesDeleted }.sum())
         }
 
         afterGroup {
