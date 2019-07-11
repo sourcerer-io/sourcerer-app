@@ -82,6 +82,9 @@ class ClassifierManager {
             else if (libId.startsWith(Lang.CPP)) {
                 prob > 0.8
             }
+            else if (libId.startsWith(Lang.JAVASCRIPT)) {
+                prob > 0.7
+            }
             else {
                 prob > 0.5
             }
