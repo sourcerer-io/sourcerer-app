@@ -340,6 +340,50 @@ class CommitHasherTest : Spek({
         }
 
     }
+    given("commits with svelte files") {
+        val lines = listOf("line 1", "line 2")
+
+        val author = Author(userName, userEmail)
+
+        val testRepoPath = "../testrepo-extractor-"
+        val testRepo = TestRepo(testRepoPath + "svelte")
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.svelte"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author)
+            }
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+
+            val syntaxStats = mockApi.receivedAddedCommits
+                    .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                        allStats.addAll(commit.stats)
+                        allStats
+                    }.filter { it.type == ExtractorInterface.TYPE_LIBRARY }
+
+            val svelteStats = syntaxStats.filter { it.tech == "js.svelte" }
+            assertEquals(2, svelteStats.size)
+            assertEquals(2, svelteStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, svelteStats.map { it.numLinesDeleted }.sum())
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
 
     given("commits with scss stats") {
 

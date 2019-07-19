@@ -26,8 +26,10 @@ class JavascriptExtractor : ExtractorInterface {
 
     override fun extractLibStats(files: List<DiffFile>): List<CommitStats> {
         val vueExtension = ".vue"
+        val svelteExtension = ".svelte"
         val vueFiles = files.filter { it.path.endsWith(vueExtension) }
-        val otherFiles = files.filter { !it.path.endsWith(vueExtension) }
+        val svelteFiles = files.filter { it.path.endsWith(svelteExtension) }
+        val otherFiles = files.filter { !it.path.endsWith(vueExtension) && !it.path.endsWith(svelteExtension) }
 
         // Add stats from *.vue files.
         val vueStats = listOf(CommitStats(
@@ -36,7 +38,16 @@ class JavascriptExtractor : ExtractorInterface {
             type = ExtractorInterface.TYPE_LIBRARY,
             tech = "js.vue"
         )).filter { it.numLinesAdded > 0 || it.numLinesDeleted > 0 }
-        return vueStats + super.extractLibStats(otherFiles)
+
+        // Add stats from *.svelte files.
+        val svelteStats = listOf(CommitStats(
+            numLinesAdded = svelteFiles.map { it.getAllAdded().size }.sum(),
+            numLinesDeleted = svelteFiles.map { it.getAllDeleted().size }.sum(),
+            type = ExtractorInterface.TYPE_LIBRARY,
+            tech = "js.svelte"
+        )).filter { it.numLinesAdded > 0 || it.numLinesDeleted > 0 }
+
+        return vueStats + svelteStats + super.extractLibStats(otherFiles)
     }
 
     override fun tokenize(line: String): List<String> {

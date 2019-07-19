@@ -105,6 +105,7 @@ object Lang {
     const val VHDL = "vhdl"  // VHDL
     const val VIML = "viml"  // Vim L
     const val VUE = "vue"  // Vue
+    const val SVELTE = "svelte" // Svelte
     const val WOLFRAM = "wolframlanguage"  // Wolfram Language
     const val XML = "xml"  // XML
     const val XPM = "xpm"  // XPM
