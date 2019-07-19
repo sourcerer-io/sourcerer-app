@@ -1,6 +1,7 @@
 react
 d3
 vue
+svelte
 angular
 jquery
 meteor
