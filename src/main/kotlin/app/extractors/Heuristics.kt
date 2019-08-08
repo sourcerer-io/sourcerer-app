@@ -1071,12 +1071,12 @@ val HeuristicsMap = mapOf<String, (String) -> ExtractorInterface?>(
         if (XmltsRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XML)
         } else {
-            CommonExtractor(Lang.TYPESCRIPT)
+            TypescriptExtractor()
         }
     },
     "tsx" to { buf ->
         if (TypescriptRegex.containsMatchIn(buf)) {
-            CommonExtractor(Lang.TYPESCRIPT)
+            TypescriptExtractor()
         } else if (XmlRegex.containsMatchIn(buf)) {
             CommonExtractor(Lang.XML)
         } else null
