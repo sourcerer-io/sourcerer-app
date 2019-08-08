@@ -65,6 +65,12 @@ class ExtractorTest : Spek({
                 line, JavascriptExtractor())
         }
 
+        it("typescript extractor extracts the library") {
+            val line = "new Vue({"
+            assertExtractsLineLibraries("js.vue",
+                    line, TypescriptExtractor())
+        }
+
         it("ruby extractor extracts the library") {
             val line1 = "img = Magick::Image.read_inline(Base64.encode64(image)).first"
             assertExtractsLineLibraries("rb.rmagick",

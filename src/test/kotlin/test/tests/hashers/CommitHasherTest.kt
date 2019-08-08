@@ -385,6 +385,56 @@ class CommitHasherTest : Spek({
         }
     }
 
+    given("commits with typescript files") {
+        val lines = listOf("new Vue({", "line 2")
+
+        val author = Author(userName, userEmail)
+
+        val testRepoPath = "../testrepo-extractor-"
+        val testRepo = TestRepo(testRepoPath + "typescript")
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            for (i in 0..lines.size - 1) {
+                val line = lines[i]
+                val fileName = "file$i.ts"
+                testRepo.createFile(fileName, listOf(line))
+                testRepo.commit(message = "$line in $fileName", author = author)
+            }
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+
+            val stats = mockApi.receivedAddedCommits
+                    .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                        allStats.addAll(commit.stats)
+                        allStats
+                    }
+            val languageStats = stats.filter { it.type == ExtractorInterface.TYPE_LANGUAGE }
+            val techStats = stats.filter { it.type == ExtractorInterface.TYPE_LIBRARY }
+            assertEquals(2, languageStats.size)
+            languageStats.forEach { stat ->
+                assertEquals("typescript", stat.tech)
+            }
+            assertEquals(1, techStats.map { it.numLinesAdded }.sum())
+            techStats.forEach { stat ->
+                assertEquals("js.vue", stat.tech)
+            }
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
+
     given("commits with scss stats") {
 
         val lines = listOf("first line in css file", "",
