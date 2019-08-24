@@ -27,13 +27,13 @@ class IPythonExtractor : ExtractorInterface{
         }?.filter {
             it.optString("cell_type") == "code"
         }?.map { it.optJSONArray("source").map {line -> line.toString()}}
-        val content = if (code != null) {
-            code!!.fold(mutableListOf<String>()) {
+
+        val content = code?.fold(mutableListOf()) {
                 acc: MutableList<String>, x: List<String> ->
                 acc.addAll(x)
                 acc
-            }
-        } else listOf<String>()
+            } ?: listOf<String>()
+
         return DiffContent(content = content,
                            ranges = listOf(DiffRange(0, content.size)),
                            imports = diffContent.imports)
