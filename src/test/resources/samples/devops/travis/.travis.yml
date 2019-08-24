@@ -1,0 +1,26 @@
+sudo: required
+
+language: ruby
+
+services:
+  - docker
+
+before_install:
+  - echo "Testing Docker Hub credentials"
+  - docker login -e=$DOCKER_EMAIL -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
+  - echo "Docker Hub credentials are working"
+  - docker build -t build-springxd-base .
+
+script:
+  - docker ps -a
+
+after_success:
+  - echo "Test Success - Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then echo -e "Push Container to Docker Hub"; fi
+  - docker login -e=$DOCKER_EMAIL -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
+  - export REPO=jayjohnson/springxd-base
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - docker build -f Dockerfile -t $REPO:$COMMIT .
+  - docker tag $REPO:$COMMIT $REPO:$TAG
+  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+  - docker push $REPO

@@ -86,16 +86,19 @@ class Main(argv: Array<String>) {
     }
 
     private fun doAdd(commandAdd: CommandAdd) {
-        val path = commandAdd.path?.toPath()
-        if (path != null && RepoHelper.isValidRepo(path)) {
-            val localRepo = LocalRepo(path.toString())
-            localRepo.hashAllContributors = commandAdd.hashAll
-            configurator.addLocalRepoPersistent(localRepo)
-            configurator.saveToFile()
-            Logger.print("Added git repository at $path.")
-            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
-        } else {
-            Logger.warn { "No valid git repository found at specified path" }
+        val paths = commandAdd.paths
+        paths.forEach {
+            val path = it.toPath()
+            if (RepoHelper.isValidRepo(path)) {
+                val localRepo = LocalRepo(path.toString())
+                localRepo.hashAllContributors = commandAdd.hashAll
+                configurator.addLocalRepoPersistent(localRepo)
+                configurator.saveToFile()
+                Logger.print("Added git repository at $path.")
+                Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
+            } else {
+                Logger.warn { "No valid git repository found at specified path $path" }
+            }
         }
     }
 

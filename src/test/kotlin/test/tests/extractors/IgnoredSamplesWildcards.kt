@@ -8,6 +8,7 @@ package test.tests.extractors
  * or fixed.
  */
 var ignoredSamplesWildcards = listOf(
+    "*/.DS_Store",
     "*/1C Enterprise/*",
     "*/ABAP/*",
     "*/AppleScript/*",

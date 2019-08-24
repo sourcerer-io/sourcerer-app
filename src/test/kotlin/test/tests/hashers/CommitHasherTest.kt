@@ -502,10 +502,10 @@ class CommitHasherTest : Spek({
                         .name} <${author2.email}>"
                 testRepo.commit(message = message, author = author1)
             }
-            val gitHasher = Git.open(File(testRepoPath))
-            val jgitObservable = CommitCrawler.getJGitObservable(gitHasher,
+            val gitHasherIn = Git.open(File(testRepoPath))
+            val jgitObservable = CommitCrawler.getJGitObservable(gitHasherIn,
                 extractCoauthors = true)
-            val observable = CommitCrawler.getObservable(gitHasher,
+            val observable = CommitCrawler.getObservable(gitHasherIn,
                     jgitObservable, repo)
 
             val errors = mutableListOf<Throwable>()

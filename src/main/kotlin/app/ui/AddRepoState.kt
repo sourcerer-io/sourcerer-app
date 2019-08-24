@@ -22,30 +22,37 @@ class AddRepoState constructor(private val context: Context,
         if (configurator.getLocalRepos().isNotEmpty()) return
 
         while (true) {
-            Logger.print("Type a path to repository, or hit Enter to continue.")
-            val pathString = readLine() ?: ""
+            Logger.print("")
+            Logger.print("Type one or more paths to repository. You can specify " +
+                    "multiple repository paths separated by space on the same line.")
+            Logger.print("If you finished specifying repositories, just hit 'Enter' to continue.")
+            val pathsString = readLine() ?: ""
 
-            if (pathString.isEmpty()) {
+            if (pathsString.isEmpty()) {
                 if (configurator.getLocalRepos().isEmpty()) {
                     Logger.print("Add at least one valid repository.")
                 } else {
+                    Logger.print("Finished processing git repositories")
                     break  // User finished to add repos.
                 }
             } else {
-                val path = pathString.toPath()
-                if (RepoHelper.isValidRepo(path)) {
-                    Logger.print("Added git repository at $path.")
-                    val localRepo = LocalRepo(path.toString())
-                    localRepo.hashAllContributors = UiHelper.confirm("Do you "
-                        + "want to hash commits of all contributors?",
-                        defaultIsYes = true)
-                    configurator.addLocalRepoPersistent(localRepo)
-                    configurator.saveToFile()
-                } else {
-                    Logger.print("Directory should contain a valid git " +
-                        "repository.")
-                    Logger.print("Make sure that master branch with at least " +
-                        "one commit exists.")
+                val paths: List<String> = pathsString.split(' ')
+                paths.forEach {
+                    val path = it.toPath()
+                    if (RepoHelper.isValidRepo(path)) {
+                        Logger.print("Added git repository at $path.")
+                        val localRepo = LocalRepo(path.toString())
+                        localRepo.hashAllContributors = UiHelper.confirm("Do you "
+                                + "want to hash commits of all contributors?",
+                                defaultIsYes = true)
+                        configurator.addLocalRepoPersistent(localRepo)
+                        configurator.saveToFile()
+                        Logger.print("Successfully processed $path")
+                    } else {
+                        Logger.warn { "No valid git repository found at specified path $path" }
+                        Logger.print("Make sure that master branch with at least " +
+                                "one commit exists.")
+                    }
                 }
             }
         }
