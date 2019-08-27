@@ -5,7 +5,6 @@ package app
 
 import app.api.ServerApi
 import app.config.FileConfigurator
-import app.extractors.Extractor
 import app.model.LocalRepo
 import app.ui.ConsoleUi
 import app.utils.CommandConfig
@@ -19,6 +18,8 @@ import app.utils.RepoHelper
 import app.utils.UiHelper
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.MissingCommandException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.security.GeneralSecurityException
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -89,16 +90,27 @@ class Main(argv: Array<String>) {
         val paths = commandAdd.paths
         paths.forEach {
             val path = it.toPath()
-            if (RepoHelper.isValidRepo(path)) {
-                val localRepo = LocalRepo(path.toString())
-                localRepo.hashAllContributors = commandAdd.hashAll
-                configurator.addLocalRepoPersistent(localRepo)
-                configurator.saveToFile()
-                Logger.print("Added git repository at $path.")
-                Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
+            val hashAll = commandAdd.hashAll
+            if (commandAdd.recursive) {
+                Files.walk(path)
+                        .filter { p -> RepoHelper.isValidGitRepo(p) }
+                        .forEach { p -> processPath(p, hashAll) }
             } else {
-                Logger.warn { "No valid git repository found at specified path $path" }
+                processPath(path, hashAll)
             }
+        }
+    }
+
+    private fun processPath(path: Path, hashAll: Boolean) {
+        if (RepoHelper.isValidRepo(path)) {
+            val localRepo = LocalRepo(path.toString())
+            localRepo.hashAllContributors = hashAll
+            configurator.addLocalRepoPersistent(localRepo)
+            configurator.saveToFile()
+            Logger.print("Added git repository at $path.")
+            Logger.info(Logger.Events.CONFIG_CHANGED) { "Config changed" }
+        } else {
+            Logger.warn { "No valid git repository found at specified path $path" }
         }
     }
 

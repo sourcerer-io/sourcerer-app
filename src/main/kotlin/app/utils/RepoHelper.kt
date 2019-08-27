@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -59,6 +60,9 @@ object RepoHelper {
             false
         }
     }
+
+    fun isValidGitRepo(p: Path) = (Files.isDirectory(p)
+            && p.fileName.toString().equals(".git", ignoreCase = true))
 
     /* To identify and distinguish different repos we calculate its rehash.
     Repos may have forks. Such repos should be tracked independently.

@@ -12,6 +12,10 @@ class CommandAdd {
     // Command name for CLI.
     val name = "add"
 
+    @Parameter(names = arrayOf("-r", "--recursive"),
+               description = "Should search recursively in the specified directory")
+    var recursive: Boolean = false
+
     // Path to analyzed repository.
     @Parameter(description = "REPOPATH")
     var paths: List<String> = arrayListOf()
