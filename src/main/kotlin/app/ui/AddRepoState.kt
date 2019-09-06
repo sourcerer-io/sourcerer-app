@@ -10,6 +10,8 @@ import app.model.LocalRepo
 import app.utils.FileHelper.toPath
 import app.utils.RepoHelper
 import app.utils.UiHelper
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Add repository dialog console UI state.
@@ -40,24 +42,34 @@ class AddRepoState constructor(private val context: Context,
                 paths.forEach {
                     val path = it.toPath()
                     if (RepoHelper.isValidRepo(path)) {
-                        Logger.print("Added git repository at $path.")
-                        val localRepo = LocalRepo(path.toString())
-                        localRepo.hashAllContributors = UiHelper.confirm("Do you "
-                                + "want to hash commits of all contributors?",
-                                defaultIsYes = true)
-                        configurator.addLocalRepoPersistent(localRepo)
-                        configurator.saveToFile()
-                        Logger.print("Successfully processed $path")
+                        processPath(path)
                     } else {
-                        Logger.warn { "No valid git repository found at specified path $path" }
-                        Logger.print("Make sure that master branch with at least " +
-                                "one commit exists.")
+                        Files.walk(path)
+                                .filter { p -> RepoHelper.isValidGitRepo(p) }
+                                .forEach { p -> processPath(p) }
                     }
                 }
             }
         }
 
         Logger.info(Logger.Events.CONFIG_SETUP) { "Config setup" }
+    }
+
+    private fun processPath(path: Path) {
+        if (RepoHelper.isValidRepo(path)) {
+            Logger.print("Added git repository at $path.")
+            val localRepo = LocalRepo(path.toString())
+            localRepo.hashAllContributors = UiHelper.confirm("Do you "
+                    + "want to hash commits of all contributors?",
+                    defaultIsYes = true)
+            configurator.addLocalRepoPersistent(localRepo)
+            configurator.saveToFile()
+            Logger.print("Successfully processed $path")
+        } else {
+            Logger.warn { "No valid git repository found at specified path $path" }
+            Logger.print("Make sure that master branch with at least " +
+                    "one commit exists.")
+        }
     }
 
     override fun next() {

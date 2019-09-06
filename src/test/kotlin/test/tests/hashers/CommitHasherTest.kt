@@ -385,6 +385,48 @@ class CommitHasherTest : Spek({
         }
     }
 
+    given("commits with quasar files") {
+        val lines = listOf("module.exports = function (ctx) { }")
+
+        val author = Author(userName, userEmail)
+
+        val testRepoPath = "../testrepo-extractor-"
+        val testRepo = TestRepo(testRepoPath + "quasar")
+
+        val mockApi = MockApi(mockRepo = repo)
+        val observable = CommitCrawler.getObservable(testRepo.git, repo)
+
+        it("sends stats") {
+            val fileName = "quasar.conf.js"
+            testRepo.createFile(fileName, lines)
+            testRepo.commit(message = "add quasar config", author = author)
+
+            val errors = mutableListOf<Throwable>()
+
+            val rehashes = (0..lines.size - 1).map { "r$it" }
+
+            CommitHasher(repo, mockApi, rehashes, emails)
+                    .updateFromObservable(observable, { e -> errors.add(e) })
+
+            assertEquals(0, errors.size)
+
+            val syntaxStats = mockApi.receivedAddedCommits
+                    .fold(mutableListOf<CommitStats>()) { allStats, commit ->
+                        allStats.addAll(commit.stats)
+                        allStats
+                    }.filter { it.type == ExtractorInterface.TYPE_LIBRARY }
+
+            val quasarStats = syntaxStats.filter { it.tech == "js.quasar" }
+            assertEquals(1, quasarStats.size)
+            assertEquals(1, quasarStats.map { it.numLinesAdded }.sum())
+            assertEquals(0, quasarStats.map { it.numLinesDeleted }.sum())
+        }
+
+        afterGroup {
+            testRepo.destroy()
+        }
+    }
+
     given("commits with typescript files") {
         val lines = listOf("new Vue({", "line 2")
 
