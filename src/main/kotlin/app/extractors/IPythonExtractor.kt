@@ -26,6 +26,8 @@ class IPythonExtractor : ExtractorInterface{
             0.until(it.length()).map { i -> it.optJSONObject(i) }
         }?.filter {
             it.optString("cell_type") == "code"
+        }?.filter {
+            it.optJSONArray("source") != null
         }?.map { it.optJSONArray("source").map {line -> line.toString()}}
 
         val content = code?.fold(mutableListOf()) {
