@@ -122,6 +122,9 @@ val Perl6Regex = Regex(
 val PhpRegex = Regex(
     "^<\\?(?:php)?"
 )
+val PhpIlluminateRegex = Regex(
+    "(Auth|Bootstrap|Bus|Console|Events|Exceptions|Http|Providers" +
+                "|Support|Testing|Validation)")
 val PicoLispRegex = Regex(
     "^\\((de|class|rel|code|data|must)\\s",
     RegexOption.MULTILINE
@@ -233,6 +236,11 @@ val k8sExp = { buf: String ->
     // Required fields in k8s config: apiVersion, kind, metadata.
     buf.contains("apiVersion") && buf.contains("kind")
         && buf.contains("metadata")
+}
+
+val bootstrapWebpackExp = { buf: String ->
+    // Handling php projects with bootstrap Webpack.
+    buf.contains("/******/ (function(modules) { // webpackBootstrap")
 }
 
 /**
@@ -638,8 +646,11 @@ val HeuristicsMap = mapOf<String, (String, String) -> ExtractorInterface?>(
     "jl" to { _, _ ->
         CommonExtractor(Lang.JULIA)
     },
-    "js" to { _, _ ->
-        JavascriptExtractor()
+    "js" to { buf, _ ->
+        if (bootstrapWebpackExp(buf)) {
+            null
+        }
+        else JavascriptExtractor()
     },
     "jsx" to { _, _ ->
         JavascriptExtractor()
@@ -793,10 +804,13 @@ val HeuristicsMap = mapOf<String, (String, String) -> ExtractorInterface?>(
     "pde" to { _, _ ->
         CommonExtractor(Lang.PROCESSING)
     },
-    "php" to { buf, _ ->
+    "php" to { buf, path ->
         if (buf.contains("<?hh")) {
             CommonExtractor(Lang.HACK)
-        } else {
+        } else if (PhpIlluminateRegex.containsMatchIn(path)) {
+            null
+        }
+        else {
             PhpExtractor()
         }
     },
