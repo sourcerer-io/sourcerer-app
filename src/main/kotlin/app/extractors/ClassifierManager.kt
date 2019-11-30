@@ -54,6 +54,8 @@ class ClassifierManager {
                 prob > 0.91
             } else if (libId == "py.flask") {
                 prob > 0.95
+            } else if (libId.startsWith(Lang.KOTLIN)) {
+                prob > 0.8
             } else if (libId.startsWith(Lang.PLPGSQL)) {
                 prob > 0.7
             } else if (libId.startsWith(Lang.PHP)) {
