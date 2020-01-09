@@ -16,5 +16,6 @@ val dirToLangMap = mapOf(
     "POV-Ray SDL" to "pov-ray_sdl",
     "Ren'Py" to "renpy",
     "Visual Basic" to "visualbasic",
-    "Wolfram Language" to "wolframlanguage"
+    "Wolfram Language" to "wolframlanguage",
+    "DM" to "dm"
 )
