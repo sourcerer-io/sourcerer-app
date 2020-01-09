@@ -77,7 +77,6 @@ var ignoredSamplesWildcards = listOf(
     "*/Csound Score/*",
     "*/Cycript/*",
     "*/DIGITAL Command Language/*",
-    "*/DM/*",
     "*/DNS Zone/*",
     "*/DataWeave/*",
     "*/Diff/*",

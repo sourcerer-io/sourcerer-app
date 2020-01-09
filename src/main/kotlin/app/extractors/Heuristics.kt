@@ -451,13 +451,13 @@ val HeuristicsMap = mapOf<String, (String, String) -> ExtractorInterface?>(
         CommonExtractor(Lang.IDL)
     },
     "dm" to { _, _ ->
-        DMExtractor(Lang.DM)
+        DMExtractor()
     },
     "dmm" to { _, _ ->
-        DMExtractor(Lang.DM)
+        DMExtractor()
     },
     "dmi" to { _, _ ->
-        DMExtractor(Lang.DM)
+        DMExtractor()
     },
     "dpr" to { _, _ ->
         CommonExtractor(Lang.PASCAL)
