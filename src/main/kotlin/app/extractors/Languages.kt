@@ -21,6 +21,7 @@ object Lang {
     const val CUDA = "cuda"  // Cuda
     const val D = "d"  // D
     const val DART = "dart"  // Dart
+    const val DM = "dm"  // DM Language
     const val DOSBATCH = "dosbatch"  // DOS Batch
     const val DTRACE = "dtrace"  // DTrace
     const val ELIXIR = "elixir"  // Elixir
